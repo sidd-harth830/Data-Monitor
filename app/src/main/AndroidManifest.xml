@@ -168,6 +168,25 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Tombstones for old removed aliases to prevent crash during upgrade -->
+        <activity-alias
+            android:name=".MainActivityDefault"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityComplex"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityMinimal"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
     </application>
 
 </manifest>
