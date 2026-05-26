@@ -43,12 +43,16 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupDailyWorker() {
-        // Enqueue the daily worker
-        val workRequest = PeriodicWorkRequestBuilder<DataUsageSyncWorker>(1, TimeUnit.DAYS).build()
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            "daily_data_sync_worker",
-            androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
+        try {
+            // Enqueue the daily worker
+            val workRequest = PeriodicWorkRequestBuilder<DataUsageSyncWorker>(1, TimeUnit.DAYS).build()
+            WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+                "daily_data_sync_worker",
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
