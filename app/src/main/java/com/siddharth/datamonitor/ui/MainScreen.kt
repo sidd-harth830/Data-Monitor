@@ -59,6 +59,10 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     }
 
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             if (hasPermission) {
@@ -83,7 +87,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     ) { paddingValues ->
         Box(modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = paddingValues.calculateBottomPadding())) {
+            .padding(paddingValues)) {
             
             if (!hasPermission) {
                 PermissionRequestScreen(
@@ -257,7 +261,6 @@ fun GlassTopAppBar() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(top = 12.dp, start = 24.dp, end = 24.dp, bottom = 4.dp)
             .height(56.dp)
             .graphicsLayer { alpha = 0.9f }

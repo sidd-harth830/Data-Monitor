@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,7 +33,7 @@ fun changeAppIcon(context: Context, iconChoice: String) {
     
     val targets = mapOf(
         "DEFAULT" to "$basePackage.MainActivityDefault",
-        "NEON" to "$basePackage.MainActivityNeon",
+        "COMPLEX" to "$basePackage.MainActivityComplex",
         "MINIMAL" to "$basePackage.MainActivityMinimal"
     )
     
@@ -76,7 +77,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 120.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
             .navigationBarsPadding()
             .testTag("configs_parent_column")
     ) {
@@ -372,7 +373,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 ) {
                     val iconOptions = listOf(
                         "DEFAULT" to "Default",
-                        "NEON" to "Neon",
+                        "COMPLEX" to "Complex",
                         "MINIMAL" to "Minimal"
                     )
                     
@@ -403,23 +404,22 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                val circleColor = when (iconKey) {
-                                    "DEFAULT" -> PrimaryNeon
-                                    "NEON" -> CyberpunkPrimary
-                                    "MINIMAL" -> LightPrimary
-                                    else -> PrimaryNeon
+                                val iconRes = when (iconKey) {
+                                    "DEFAULT" -> com.siddharth.datamonitor.R.drawable.ic_launcher_default
+                                    "COMPLEX" -> com.siddharth.datamonitor.R.drawable.ic_launcher_complex
+                                    "MINIMAL" -> com.siddharth.datamonitor.R.drawable.ic_launcher_minimal
+                                    else -> com.siddharth.datamonitor.R.drawable.ic_launcher_default
                                 }
                                 Box(
                                     modifier = Modifier
                                         .size(30.dp)
-                                        .background(circleColor, RoundedCornerShape(8.dp)),
+                                        .clip(RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = iconKey.take(1),
-                                        color = Color.White,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
+                                    androidx.compose.foundation.Image(
+                                        painter = androidx.compose.ui.res.painterResource(id = iconRes),
+                                        contentDescription = label,
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
