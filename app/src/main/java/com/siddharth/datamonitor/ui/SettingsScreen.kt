@@ -43,24 +43,16 @@ suspend fun changeAppIcon(context: Context, iconChoice: String) {
         "DEFAULT" to "$basePackage.MainActivityIconDefault",
         "ICON_1" to "$basePackage.MainActivityIcon1",
         "ICON_2" to "$basePackage.MainActivityIcon2",
-        "ICON_3" to "$basePackage.MainActivityIcon3"
+        "ICON_3" to "$basePackage.MainActivityIcon3",
+        "ICON_4" to "$basePackage.MainActivityIcon4",
+        "ICON_5" to "$basePackage.MainActivityIcon5"
     )
     
-    // 1. Enable the requested target first
     val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
-    try {
-        pm.setComponentEnabledSetting(
-            ComponentName(context, targetClass),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
     
-    // 2. Disable all other targets
+    // 1. Disable all OTHER targets
     targets.forEach { (key, aliasClass) ->
-        if (key != iconChoice) {
+        if (aliasClass != targetClass) {
             try {
                 pm.setComponentEnabledSetting(
                     ComponentName(context, aliasClass),
@@ -71,6 +63,17 @@ suspend fun changeAppIcon(context: Context, iconChoice: String) {
                 e.printStackTrace()
             }
         }
+    }
+
+    // 2. Enable the requested target
+    try {
+        pm.setComponentEnabledSetting(
+            ComponentName(context, targetClass),
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }
 
@@ -163,7 +166,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 text = theme.name.replace("_", " "),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (theme == AppTheme.SPRING || theme == AppTheme.DESERT || theme == AppTheme.SOLARIZED_LIGHT || theme == AppTheme.LAVENDER_HAZE) Color.Black else Color.White
+                                color = com.siddharth.datamonitor.ui.theme.palettes[theme]?.text ?: Color.White
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -191,6 +194,35 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         
         // App Icon Selection
         val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
+        var showIconConfirmDialog by remember { mutableStateOf<String?>(null) }
+        
+        if (showIconConfirmDialog != null) {
+            AlertDialog(
+                onDismissRequest = { showIconConfirmDialog = null },
+                title = { Text("Change App Icon") },
+                text = { Text("The app must close to apply the new home screen icon. Continue?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val iconToApply = showIconConfirmDialog!!
+                        showIconConfirmDialog = null
+                        scope.launch {
+                            themeManager.setAppIcon(iconToApply)
+                            changeAppIcon(context, iconToApply)
+                        }
+                    }) {
+                        Text("Continue")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showIconConfirmDialog = null }) {
+                        Text("Cancel")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onBackground,
+                textContentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        }
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "APP ICON",
@@ -208,9 +240,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             ) {
                 val icons = listOf(
                     Triple("DEFAULT", "Studio Default", R.drawable.ic_launcher_spring),
-                    Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_desert),
-                    Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_forest),
-                    Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_cyberpunk)
+                    Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_custom1),
+                    Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_custom2),
+                    Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_custom3),
+                    Triple("ICON_4", "Custom 4", R.drawable.ic_launcher_custom4),
+                    Triple("ICON_5", "Custom 5", R.drawable.ic_launcher_custom5)
                 )
 
                 icons.forEach { (key, label, drawRes) ->
@@ -218,10 +252,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(
                             onClick = {
-                                scope.launch {
-                                    themeManager.setAppIcon(key)
-                                    changeAppIcon(context, key)
-                                }
+                                showIconConfirmDialog = key
                             },
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
@@ -232,7 +263,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 Icon(
                                     painter = painterResource(id = drawRes),
                                     contentDescription = label,
-                                    tint = Color.Unspecified,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(48.dp)
                                 )
                             }

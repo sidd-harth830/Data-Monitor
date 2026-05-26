@@ -11,6 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +31,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.ImageView
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private val iconCache = java.util.concurrent.ConcurrentHashMap<String, android.graphics.drawable.Drawable>()
 
@@ -61,6 +65,7 @@ fun AppIconImage(packageName: String, modifier: Modifier = Modifier) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val mobileUsage by viewModel.todayMobile.collectAsStateWithLifecycle()
@@ -77,13 +82,30 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dataLimitBytes = (dataLimitMBStr.toLongOrNull() ?: 2000L) * 1024L * 1024L
     val bytesLeft = (dataLimitBytes - totalUsage).coerceAtLeast(0L)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
-            .navigationBarsPadding()
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullToRefreshState = rememberPullToRefreshState()
+    val scope = rememberCoroutineScope()
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = {
+            scope.launch {
+                isRefreshing = true
+                viewModel.checkPermission()
+                kotlinx.coroutines.delay(800)
+                isRefreshing = false
+            }
+        },
+        state = pullToRefreshState,
+        modifier = Modifier.fillMaxSize()
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+                .navigationBarsPadding()
+        ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -157,6 +179,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             }
         }
     }
+}
 }
 
 @Composable

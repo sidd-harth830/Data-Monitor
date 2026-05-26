@@ -223,14 +223,14 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
         Text(
             text = "ACCESS REQUIRED",
             style = MaterialTheme.typography.titleLarge,
-            color = PrimaryNeon,
+            color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Enable usage access to monitor real-time network traffic and provide insights.",
             style = MaterialTheme.typography.bodyLarge,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(48.dp))
@@ -240,7 +240,7 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
         ) {
             Button(
                 onClick = onRequest,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = PrimaryNeon),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
                 Text("AUTHENTICATE", fontWeight = FontWeight.Bold, letterSpacing = 2.sp)

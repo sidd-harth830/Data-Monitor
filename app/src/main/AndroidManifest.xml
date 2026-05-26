@@ -45,8 +45,8 @@
         <activity-alias
             android:name=".MainActivityIcon1"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_desert"
-            android:roundIcon="@drawable/ic_launcher_desert"
+            android:icon="@drawable/ic_launcher_custom1"
+            android:roundIcon="@drawable/ic_launcher_custom1"
             android:label="@string/app_name"
             android:exported="true"
             android:enabled="false">
@@ -59,8 +59,8 @@
         <activity-alias
             android:name=".MainActivityIcon2"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_forest"
-            android:roundIcon="@drawable/ic_launcher_forest"
+            android:icon="@drawable/ic_launcher_custom2"
+            android:roundIcon="@drawable/ic_launcher_custom2"
             android:label="@string/app_name"
             android:exported="true"
             android:enabled="false">
@@ -73,8 +73,36 @@
         <activity-alias
             android:name=".MainActivityIcon3"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_cyberpunk"
-            android:roundIcon="@drawable/ic_launcher_cyberpunk"
+            android:icon="@drawable/ic_launcher_custom3"
+            android:roundIcon="@drawable/ic_launcher_custom3"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        
+        <activity-alias
+            android:name=".MainActivityIcon4"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:icon="@drawable/ic_launcher_custom4"
+            android:roundIcon="@drawable/ic_launcher_custom4"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:enabled="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        
+        <activity-alias
+            android:name=".MainActivityIcon5"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:icon="@drawable/ic_launcher_custom5"
+            android:roundIcon="@drawable/ic_launcher_custom5"
             android:label="@string/app_name"
             android:exported="true"
             android:enabled="false">
