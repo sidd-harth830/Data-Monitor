@@ -22,14 +22,16 @@ class ThemeManager(private val context: Context) {
         val ALERTS_ENABLED_KEY = booleanPreferencesKey("alerts_enabled")
         val TRACK_SEPARATED_KEY = booleanPreferencesKey("track_separated")
         val BILLING_CYCLE_DAY_KEY = intPreferencesKey("billing_cycle_day")
+        val DASHBOARD_LAYOUT_KEY = stringPreferencesKey("dashboard_layout")
+        val APP_ICON_KEY = stringPreferencesKey("app_icon")
     }
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data.map { preferences ->
         when (preferences[THEME_KEY]) {
-            AppTheme.CYBERPUNK_NEON.name -> AppTheme.CYBERPUNK_NEON
-            AppTheme.MINIMALIST_NORD.name -> AppTheme.MINIMALIST_NORD
-            AppTheme.LIGHT_GLASS.name -> AppTheme.LIGHT_GLASS
-            else -> AppTheme.OLED_PITCH_BLACK
+            AppTheme.CYBER_NEON.name -> AppTheme.CYBER_NEON
+            AppTheme.MINIMAL_LIGHT.name -> AppTheme.MINIMAL_LIGHT
+            AppTheme.PREMIUM_GLASS.name -> AppTheme.PREMIUM_GLASS
+            else -> AppTheme.OLED_DARK
         }
     }
 
@@ -39,6 +41,17 @@ class ThemeManager(private val context: Context) {
             AppFont.JETBRAINS_MONO.name -> AppFont.JETBRAINS_MONO
             else -> AppFont.ACORN
         }
+    }
+
+    val dashboardLayoutFlow: Flow<DashboardLayoutPreference> = context.dataStore.data.map { preferences ->
+        when (preferences[DASHBOARD_LAYOUT_KEY]) {
+            DashboardLayoutPreference.PRO.name -> DashboardLayoutPreference.PRO
+            else -> DashboardLayoutPreference.STANDARD
+        }
+    }
+
+    val appIconFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[APP_ICON_KEY] ?: "DEFAULT"
     }
 
     val dataLimitFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -69,6 +82,18 @@ class ThemeManager(private val context: Context) {
         }
     }
 
+    suspend fun setDashboardLayout(layout: DashboardLayoutPreference) {
+        context.dataStore.edit { preferences ->
+            preferences[DASHBOARD_LAYOUT_KEY] = layout.name
+        }
+    }
+
+    suspend fun setAppIcon(iconName: String) {
+        context.dataStore.edit { preferences ->
+            preferences[APP_ICON_KEY] = iconName
+        }
+    }
+
     suspend fun setDataLimit(limit: String) {
         context.dataStore.edit { preferences ->
             preferences[DATA_LIMIT_KEY] = limit
@@ -95,10 +120,10 @@ class ThemeManager(private val context: Context) {
 }
 
 enum class AppTheme {
-    OLED_PITCH_BLACK,
-    CYBERPUNK_NEON,
-    MINIMALIST_NORD,
-    LIGHT_GLASS
+    OLED_DARK,
+    CYBER_NEON,
+    MINIMAL_LIGHT,
+    PREMIUM_GLASS
 }
 
 enum class AppFont {
@@ -106,3 +131,9 @@ enum class AppFont {
     INTER,
     JETBRAINS_MONO
 }
+
+enum class DashboardLayoutPreference {
+    STANDARD,
+    PRO
+}
+

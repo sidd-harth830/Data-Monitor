@@ -7,49 +7,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 fun createTypography(fontSelection: AppFont): Typography {
-    val titleFont = when (fontSelection) {
+    val fontFamily = when (fontSelection) {
         AppFont.ACORN -> FontFamily.Serif
         AppFont.INTER -> FontFamily.SansSerif
         AppFont.JETBRAINS_MONO -> FontFamily.Monospace
     }
     
-    val bodyFont = FontFamily.SansSerif
+    val base = Typography()
 
     return Typography(
-        bodyLarge = TextStyle(
-            fontFamily = bodyFont,
-            fontWeight = FontWeight.Normal,
-            fontSize = 16.sp,
-            lineHeight = 24.sp,
-            letterSpacing = 0.3.sp
-        ),
-        bodyMedium = TextStyle(
-            fontFamily = bodyFont,
-            fontWeight = FontWeight.Normal,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-            letterSpacing = 0.2.sp
-        ),
-        titleMedium = TextStyle(
-            fontFamily = titleFont,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 20.sp,
-            lineHeight = 28.sp,
-            letterSpacing = 0.5.sp
-        ),
-        titleLarge = TextStyle(
-            fontFamily = titleFont,
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            lineHeight = 32.sp,
-            letterSpacing = 1.sp
-        ),
-        displaySmall = TextStyle(
-            fontFamily = titleFont,
-            fontWeight = FontWeight.Bold,
-            fontSize = 36.sp,
-            lineHeight = 44.sp,
-            letterSpacing = 0.sp
-        )
+        displayLarge = base.displayLarge.copy(fontFamily = fontFamily),
+        displayMedium = base.displayMedium.copy(fontFamily = fontFamily),
+        displaySmall = base.displaySmall.copy(fontFamily = fontFamily),
+        headlineLarge = base.headlineLarge.copy(fontFamily = fontFamily),
+        headlineMedium = base.headlineMedium.copy(fontFamily = fontFamily),
+        headlineSmall = base.headlineSmall.copy(fontFamily = fontFamily),
+        titleLarge = base.titleLarge.copy(fontFamily = fontFamily, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp),
+        titleMedium = base.titleMedium.copy(fontFamily = fontFamily, fontWeight = FontWeight.SemiBold, letterSpacing = 0.2.sp),
+        titleSmall = base.titleSmall.copy(fontFamily = fontFamily, fontWeight = FontWeight.Medium),
+        bodyLarge = base.bodyLarge.copy(fontFamily = fontFamily, fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.3.sp),
+        bodyMedium = base.bodyMedium.copy(fontFamily = fontFamily, fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.2.sp),
+        bodySmall = base.bodySmall.copy(fontFamily = fontFamily, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp),
+        labelLarge = base.labelLarge.copy(fontFamily = fontFamily, fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
+        labelMedium = base.labelMedium.copy(fontFamily = fontFamily, letterSpacing = 0.5.sp),
+        labelSmall = base.labelSmall.copy(fontFamily = fontFamily, letterSpacing = 0.5.sp)
     )
 }
+

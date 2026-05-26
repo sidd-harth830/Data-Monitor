@@ -56,7 +56,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     }
 
     Scaffold(
-        containerColor = DarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (hasPermission) {
                 FloatingBottomNav(

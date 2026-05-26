@@ -25,19 +25,6 @@ private val OledColorScheme = darkColorScheme(
     onSurface = TextPrimary,
 )
 
-private val NordColorScheme = darkColorScheme(
-    primary = NordPrimary,
-    secondary = NordSecondary,
-    tertiary = NordPrimary,
-    background = NordBackground,
-    surface = NordBackground,
-    onPrimary = NordBackground,
-    onSecondary = TextPrimary,
-    onTertiary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-)
-
 private val CyberpunkColorScheme = darkColorScheme(
     primary = CyberpunkPrimary,
     secondary = CyberpunkSecondary,
@@ -51,7 +38,7 @@ private val CyberpunkColorScheme = darkColorScheme(
     onSurface = TextPrimary,
 )
 
-private val LightGlassColorScheme = lightColorScheme(
+private val MinimalLightColorScheme = lightColorScheme(
     primary = LightPrimary,
     secondary = LightSecondary,
     tertiary = LightPrimary,
@@ -64,17 +51,30 @@ private val LightGlassColorScheme = lightColorScheme(
     onSurface = LightTextPrimary,
 )
 
+private val PremiumGlassColorScheme = darkColorScheme(
+    primary = androidx.compose.ui.graphics.Color(0xFFA855F7), // Purple Neon
+    secondary = androidx.compose.ui.graphics.Color(0xFF3B82F6), // Vibrant Blue
+    tertiary = androidx.compose.ui.graphics.Color(0xFFA855F7),
+    background = androidx.compose.ui.graphics.Color(0xFF0D0B18), // High contrast deep space
+    surface = androidx.compose.ui.graphics.Color(0xFF161426),
+    onPrimary = androidx.compose.ui.graphics.Color(0xFF0D0B18),
+    onSecondary = TextPrimary,
+    onTertiary = TextPrimary,
+    onBackground = TextPrimary,
+    onSurface = TextPrimary,
+)
+
 @Composable
 fun DataMonitorTheme(
-    theme: AppTheme = AppTheme.OLED_PITCH_BLACK,
+    theme: AppTheme = AppTheme.OLED_DARK,
     font: AppFont = AppFont.ACORN,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (theme) {
-        AppTheme.OLED_PITCH_BLACK -> OledColorScheme
-        AppTheme.MINIMALIST_NORD -> NordColorScheme
-        AppTheme.CYBERPUNK_NEON -> CyberpunkColorScheme
-        AppTheme.LIGHT_GLASS -> LightGlassColorScheme
+        AppTheme.OLED_DARK -> OledColorScheme
+        AppTheme.CYBER_NEON -> CyberpunkColorScheme
+        AppTheme.MINIMAL_LIGHT -> MinimalLightColorScheme
+        AppTheme.PREMIUM_GLASS -> PremiumGlassColorScheme
     }
     
     val typography = createTypography(font)
@@ -83,7 +83,7 @@ fun DataMonitorTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = theme == AppTheme.LIGHT_GLASS
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = (theme == AppTheme.MINIMAL_LIGHT)
         }
     }
 
@@ -99,8 +99,9 @@ fun DynamicThemeProvider(
     themeManager: ThemeManager,
     content: @Composable () -> Unit
 ) {
-    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_PITCH_BLACK)
+    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
     val currentFont by themeManager.fontFlow.collectAsStateWithLifecycle(initialValue = AppFont.ACORN)
 
     DataMonitorTheme(theme = currentTheme, font = currentFont, content = content)
 }
+
