@@ -1,0 +1,392 @@
+package com.example.ui
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.theme.*
+import com.example.ui.theme.ThemeManager
+import com.example.utils.AppUsageInfo
+import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.ImageView
+import java.util.Locale
+
+private val iconCache = java.util.concurrent.ConcurrentHashMap<String, android.graphics.drawable.Drawable>()
+
+@Composable
+fun AppIconImage(packageName: String, modifier: Modifier = Modifier) {
+    AndroidView(
+        factory = { ctx ->
+            ImageView(ctx).apply {
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+        },
+        modifier = modifier,
+        update = { imageView ->
+            val cachedIcon = iconCache[packageName]
+            if (cachedIcon != null) {
+                imageView.setImageDrawable(cachedIcon)
+            } else {
+                try {
+                    if (packageName == "uid_removed" || packageName == "uid_tethering" || packageName == "android") {
+                        imageView.setImageResource(android.R.drawable.sym_def_app_icon)
+                    } else {
+                        val icon = imageView.context.packageManager.getApplicationIcon(packageName)
+                        iconCache[packageName] = icon
+                        imageView.setImageDrawable(icon)
+                    }
+                } catch (e: Exception) {
+                    imageView.setImageResource(android.R.drawable.sym_def_app_icon)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
+    val mobileUsage by viewModel.todayMobile.collectAsStateWithLifecycle()
+    val wifiUsage by viewModel.todayWifi.collectAsStateWithLifecycle()
+    val downloadSpeed by viewModel.downloadSpeed.collectAsStateWithLifecycle()
+    val uploadSpeed by viewModel.uploadSpeed.collectAsStateWithLifecycle()
+    val dataLimitMBStr by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
+    val topApps by viewModel.topApps.collectAsStateWithLifecycle()
+    val isUnlimited5GActive by viewModel.isUnlimited5GActive.collectAsStateWithLifecycle()
+
+    val totalUsage = mobileUsage + wifiUsage
+    val dataLimitBytes = (dataLimitMBStr.toLongOrNull() ?: 2000L) * 1024L * 1024L
+    val bytesLeft = (dataLimitBytes - totalUsage).coerceAtLeast(0L)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(top = 48.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "DASHBOARD",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            if (isUnlimited5GActive) {
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "⚡ UNLIMITED 5G ACTIVE",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            UsageRing(
+                mobileBytes = mobileUsage,
+                wifiBytes = wifiUsage,
+                dataLimitBytes = dataLimitBytes,
+                is5G = isUnlimited5GActive
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Data Left Card
+        GlassCard(modifier = Modifier.fillMaxWidth().height(84.dp)) {
+            Row(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = if (isUnlimited5GActive) "CURRENT NETWORK PLAN" else "ESTIMATED DATA LEFT",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 10.sp,
+                        letterSpacing = 1.5.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isUnlimited5GActive) "Bypassing warnings on 5G" else "Resets inside monthly cycle", 
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f), 
+                        fontSize = 12.sp
+                    )
+                }
+                Text(
+                    text = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontFamily = MaterialTheme.typography.displaySmall.fontFamily,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "LIVE NETWORK SPEED",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            LiveSpeedCard(
+                title = "DOWNLOAD",
+                speedColor = MaterialTheme.colorScheme.primary,
+                speedBytes = downloadSpeed,
+                modifier = Modifier.weight(1f)
+            )
+            LiveSpeedCard(
+                title = "UPLOAD",
+                speedColor = MaterialTheme.colorScheme.secondary,
+                speedBytes = uploadSpeed,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "TOP DATA HUNGRY APPS",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (topApps.isEmpty()) {
+                    Text(
+                        text = "Calculating system metrics...",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                } else {
+                    topApps.forEach { app ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            AppIconImage(
+                                packageName = app.packageName,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                                    .padding(4.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = app.appName,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { (app.bytes.toFloat() / dataLimitBytes.toFloat()).coerceIn(0f, 1f) },
+                                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.surface
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = formatBytes(app.bytes),
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LiveSpeedCard(title: String, speedColor: androidx.compose.ui.graphics.Color, speedBytes: Long, modifier: Modifier = Modifier) {
+    GlassCard(modifier = modifier.height(100.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(title, color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = formatSpeed(speedBytes),
+                    color = speedColor,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = MaterialTheme.typography.titleLarge.fontFamily
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("/s", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 4.dp))
+            }
+        }
+    }
+}
+
+fun formatSpeed(bytes: Long): String {
+    return when {
+        bytes >= 1_048_576 -> String.format(Locale.getDefault(), "%.1f MB", bytes / 1_048_576.0)
+        bytes >= 1_024 -> String.format(Locale.getDefault(), "%.0f KB", bytes / 1_024.0)
+        else -> "$bytes B"
+    }
+}
+
+@Composable
+fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Boolean) {
+    var animatedMobileTarget by remember { mutableStateOf(0f) }
+    var animatedWifiTarget by remember { mutableStateOf(0f) }
+
+    LaunchedEffect(mobileBytes, wifiBytes, dataLimitBytes) {
+        animatedMobileTarget = if (dataLimitBytes == 0L) 0f else mobileBytes.toFloat() / dataLimitBytes.toFloat()
+        animatedWifiTarget = if (dataLimitBytes == 0L) 0f else wifiBytes.toFloat() / dataLimitBytes.toFloat()
+    }
+
+    val mobileFraction by animateFloatAsState(
+        targetValue = animatedMobileTarget.coerceAtMost(1f),
+        animationSpec = tween(durationMillis = 1000),
+        label = "mobileFraction"
+    )
+
+    val wifiFraction by animateFloatAsState(
+        targetValue = animatedWifiTarget.coerceAtMost(1f - mobileFraction),
+        animationSpec = tween(durationMillis = 1000, delayMillis = 400),
+        label = "wifiFraction"
+    )
+
+    Box(
+        modifier = Modifier.size(280.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 16.dp.toPx()
+            
+            // Background track
+            drawArc(
+                color = GlassWhite,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            )
+            
+            // Glow Effect Cellular
+            if (mobileFraction > 0f) {
+                drawArc(
+                    color = MobileActive.copy(alpha = 0.3f),
+                    startAngle = 135f,
+                    sweepAngle = mobileFraction * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth * 2f, cap = StrokeCap.Round)
+                )
+            }
+            
+            // Glow Effect Wi-Fi
+            if (wifiFraction > 0f) {
+                drawArc(
+                    color = WifiActive.copy(alpha = 0.3f),
+                    startAngle = 135f + (mobileFraction * 360f),
+                    sweepAngle = wifiFraction * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth * 2f, cap = StrokeCap.Round)
+                )
+            }
+
+            // Cellular Usage
+            if (mobileFraction > 0f) {
+                drawArc(
+                    color = MobileActive,
+                    startAngle = 135f,
+                    sweepAngle = mobileFraction * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+            
+            // Wi-Fi Usage
+            if (wifiFraction > 0f) {
+                drawArc(
+                    color = WifiActive,
+                    startAngle = 135f + (mobileFraction * 360f),
+                    sweepAngle = wifiFraction * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                )
+            }
+        }
+        
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = if (is5G) "Unlimited 5G" else formatBytes(mobileBytes + wifiBytes),
+                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (is5G) "Active" else "Total Tracked",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                letterSpacing = 1.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(8.dp).background(MobileActive, RoundedCornerShape(4.dp)))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Cellular", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Box(modifier = Modifier.size(8.dp).background(WifiActive, RoundedCornerShape(4.dp)))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Wi-Fi", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
+            }
+        }
+    }
+}

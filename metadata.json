@@ -1,0 +1,6 @@
+{
+  "name": "Data Monitor",
+  "description": "An Android application that monitors daily mobile and Wi-Fi data usage, displays the data on an interactive graph, and maintains a history of previous usage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
