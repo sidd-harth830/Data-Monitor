@@ -1,4 +1,4 @@
-package com.example.ui
+package com.siddharth.datamonitor.ui
 
 import android.app.Application
 import android.content.Context
@@ -6,19 +6,19 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.data.AppDatabase
-import com.example.data.DataUsageRecord
-import com.example.data.HourlyUsageLog
-import com.example.data.DataUsageRepository
-import com.example.utils.NetworkUsageTracker
-import com.example.utils.PermissionsUtils
-import com.example.ui.theme.ThemeManager
+import com.siddharth.datamonitor.data.AppDatabase
+import com.siddharth.datamonitor.data.DataUsageRecord
+import com.siddharth.datamonitor.data.HourlyUsageLog
+import com.siddharth.datamonitor.data.DataUsageRepository
+import com.siddharth.datamonitor.utils.NetworkUsageTracker
+import com.siddharth.datamonitor.utils.PermissionsUtils
+import com.siddharth.datamonitor.ui.theme.ThemeManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.utils.AppUsageInfo
+import com.siddharth.datamonitor.utils.AppUsageInfo
 
 class DataUsageViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DataUsageRepository

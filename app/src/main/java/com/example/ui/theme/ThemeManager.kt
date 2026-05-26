@@ -1,4 +1,4 @@
-package com.example.ui.theme
+package com.siddharth.datamonitor.ui.theme
 
 import android.content.Context
 import androidx.datastore.core.DataStore

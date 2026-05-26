@@ -1,4 +1,4 @@
-package com.example.ui
+package com.siddharth.datamonitor.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.theme.*
-import com.example.ui.theme.ThemeManager
-import com.example.utils.AppUsageInfo
+import com.siddharth.datamonitor.ui.theme.*
+import com.siddharth.datamonitor.ui.theme.ThemeManager
+import com.siddharth.datamonitor.utils.AppUsageInfo
 import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.ImageView
 import java.util.Locale

@@ -1,4 +1,4 @@
-package com.example.ui
+package com.siddharth.datamonitor.ui
 
 import android.content.ComponentName
 import android.content.Context
@@ -22,12 +22,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.theme.*
+import com.siddharth.datamonitor.ui.theme.*
 import kotlinx.coroutines.launch
 
 fun changeAppIcon(context: Context, iconChoice: String) {
     val pm = context.packageManager
-    val basePackage = "com.example" // match the main namespace package path
+    val basePackage = "com.siddharth.datamonitor" // match the main namespace package path
     
     val targets = mapOf(
         "DEFAULT" to "$basePackage.MainActivityDefault",

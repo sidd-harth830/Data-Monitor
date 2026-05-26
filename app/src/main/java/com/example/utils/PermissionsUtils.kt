@@ -1,4 +1,4 @@
-package com.example.utils
+package com.siddharth.datamonitor.utils
 
 import android.app.AppOpsManager
 import android.content.Context

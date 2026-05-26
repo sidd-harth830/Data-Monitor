@@ -1,4 +1,4 @@
-package com.example.ui
+package com.siddharth.datamonitor.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

@@ -1,4 +1,4 @@
-package com.example
+package com.siddharth.datamonitor
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
