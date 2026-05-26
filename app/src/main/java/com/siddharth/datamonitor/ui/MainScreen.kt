@@ -31,6 +31,12 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
@@ -42,6 +48,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.NetworkCheck
 
 @Composable
 fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
@@ -129,12 +136,13 @@ fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (S
             shape = RoundedCornerShape(32.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            NavigationBar(
-                containerColor = Color.Transparent,
-                tonalElevation = 0.dp,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 val haptic = LocalHapticFeedback.current
                 val items = listOf(
@@ -146,35 +154,57 @@ fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (S
 
                 items.forEach { (route, label, icon) ->
                     val isSelected = currentRoute == route
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onNavigate(route)
-                        },
-                        alwaysShowLabel = false,
-                        icon = {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = label,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSecondary,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSecondary
+                    val interactionSource = remember { MutableInteractionSource() }
+                    
+                    val contentColor = if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSecondary
+                    }
+
+                    val containerColor = if (isSelected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                    } else {
+                        Color.Transparent
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(containerColor)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onNavigate(route)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            tint = contentColor,
+                            modifier = Modifier.size(24.dp)
                         )
-                    )
+                        AnimatedVisibility(
+                            visible = isSelected,
+                            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+                        ) {
+                            Row {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = contentColor
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -258,15 +288,26 @@ fun GlassTopAppBar() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "📶 DATA MONITOR SYSTEM",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    ),
-                    color = textColor
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.NetworkCheck,
+                        contentDescription = "Data Monitor",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "DATA MONITOR SYSTEM",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp
+                        ),
+                        color = textColor
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .size(8.dp)

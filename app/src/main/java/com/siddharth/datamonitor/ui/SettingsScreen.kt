@@ -32,26 +32,44 @@ fun changeAppIcon(context: Context, iconChoice: String) {
     val basePackage = "com.siddharth.datamonitor" // match the main namespace package path
     
     val targets = mapOf(
-        "DEFAULT" to "$basePackage.MainActivityDefault",
-        "COMPLEX" to "$basePackage.MainActivityComplex",
-        "MINIMAL" to "$basePackage.MainActivityMinimal"
+        AppTheme.SPRING.name to "$basePackage.MainActivitySpring",
+        AppTheme.DESERT.name to "$basePackage.MainActivityDesert",
+        AppTheme.FOREST.name to "$basePackage.MainActivityForest",
+        AppTheme.MIDNIGHT_AMOLED.name to "$basePackage.MainActivityMidnightAmoled",
+        AppTheme.SOLARIZED_LIGHT.name to "$basePackage.MainActivitySolarizedLight",
+        AppTheme.OCEAN_DEEP.name to "$basePackage.MainActivityOceanDeep",
+        AppTheme.SUNSET_BLAZE.name to "$basePackage.MainActivitySunsetBlaze",
+        AppTheme.CYBERPUNK.name to "$basePackage.MainActivityCyberpunk",
+        AppTheme.LAVENDER_HAZE.name to "$basePackage.MainActivityLavenderHaze",
+        AppTheme.MATRIX.name to "$basePackage.MainActivityMatrix"
     )
     
-    targets.forEach { (key, aliasClass) ->
-        val enableState = if (key == iconChoice) {
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-        } else {
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        }
-        
+    // 1. Enable the requested target first
+    val targetClass = targets[iconChoice]
+    if (targetClass != null) {
         try {
             pm.setComponentEnabledSetting(
-                ComponentName(context, aliasClass),
-                enableState,
+                ComponentName(context, targetClass),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP
             )
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+    
+    // 2. Disable all other targets
+    targets.forEach { (key, aliasClass) ->
+        if (key != iconChoice) {
+            try {
+                pm.setComponentEnabledSetting(
+                    ComponentName(context, aliasClass),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }
@@ -64,10 +82,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
     val billingCycleDay by themeManager.billingCycleDayFlow.collectAsStateWithLifecycle(initialValue = 1)
 
-    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
+    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.FOREST)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
-    val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
-    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -110,17 +126,22 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     
                     // Explicit theme previews colors (Primary, Background, Surface companion)
                     val colors = when (theme) {
-                        AppTheme.OLED_DARK -> Triple(PrimaryNeon, DarkBackground, Color(0xFF1E1E24))
-                        AppTheme.CYBER_NEON -> Triple(CyberpunkPrimary, CyberpunkBackground, Color(0xFF1F1230))
-                        AppTheme.MINIMAL_LIGHT -> Triple(LightPrimary, LightBackground, Color(0xFFE2E8F0))
-                        AppTheme.PREMIUM_GLASS -> Triple(Color(0xFFA855F7), Color(0xFF0D0B18), Color(0xFF161426))
-                        AppTheme.MIDNIGHT_AMOLED -> Triple(Color(0xFFE2E8F0), Color(0xFF000000), Color(0xFF121212))
+                        AppTheme.SPRING -> Triple(Color(0xFFFFAAB8), Color(0xFFF0FFDF), Color(0xFFFFD8DF))
+                        AppTheme.DESERT -> Triple(Color(0xFFC7522A), Color(0xFFFBF2C4), Color(0xFFE5C185))
+                        AppTheme.FOREST -> Triple(Color(0xFF8BAE66), Color(0xFF1B211A), Color(0xFF628141))
+                        AppTheme.MIDNIGHT_AMOLED -> Triple(Color(0xFF00FFFF), Color(0xFF000000), Color(0xFF000000))
                         AppTheme.SOLARIZED_LIGHT -> Triple(Color(0xFF268BD2), Color(0xFFFDF6E3), Color(0xFFEEE8D5))
+                        AppTheme.OCEAN_DEEP -> Triple(Color(0xFF00FFFF), Color(0xFF0D1B2A), Color(0xFF1B263B))
+                        AppTheme.SUNSET_BLAZE -> Triple(Color(0xFFFFD700), Color(0xFF3A0A0A), Color(0xFF5A1818))
+                        AppTheme.CYBERPUNK -> Triple(Color(0xFFFFFF00), Color(0xFF000000), Color(0xFF1A001A))
+                        AppTheme.LAVENDER_HAZE -> Triple(Color(0xFF8B5CF6), Color(0xFFF3E8FF), Color(0xFFE9D5FF))
+                        AppTheme.MATRIX -> Triple(Color(0xFF00FF00), Color(0xFF000000), Color(0xFF0A140A))
                     }
                     
                     Card(
                         onClick = {
                             scope.launch { themeManager.setTheme(theme) }
+                            changeAppIcon(context, theme.name)
                         },
                         modifier = Modifier
                             .width(135.dp)
@@ -143,7 +164,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 text = theme.name.replace("_", " "),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (theme == AppTheme.MINIMAL_LIGHT || theme == AppTheme.SOLARIZED_LIGHT) LightTextPrimary else TextPrimary
+                                color = if (theme == AppTheme.SPRING || theme == AppTheme.DESERT || theme == AppTheme.SOLARIZED_LIGHT || theme == AppTheme.LAVENDER_HAZE) Color(0xFF1B211A) else Color(0xFFEBD5AB)
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -169,50 +190,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-        // In-App Color Customizer (App Accent Color)
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "APP ACCENT COLOR",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val accentOptions = listOf("#19B1DC", "#A855F7", "#FF007F", "#00FFD1", "#FACC15", "#22C55E")
-                    accentOptions.forEach { hex ->
-                        val colorVal = androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(hex))
-                        val isSelected = appAccentHex == hex
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(colorVal, RoundedCornerShape(20.dp))
-                                .border(
-                                    width = if (isSelected) 3.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-                                    shape = RoundedCornerShape(20.dp)
-                                )
-                                .fillMaxWidth()
-                                .padding(0.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Button(
-                                onClick = { scope.launch { themeManager.setAppAccent(hex) } },
-                                modifier = Modifier.fillMaxSize(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-                            ) {}
-                            if (isSelected) {
-                                Text("✓", color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
+
         
         // Live Network Ping & Latency Tester
         var latencyValue by remember { mutableStateOf(-1L) }
@@ -355,89 +333,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Launcher App Icon switch grid
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "COSMETIC APP LAUNCHER ICON",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val iconOptions = listOf(
-                        "DEFAULT" to "Default",
-                        "COMPLEX" to "Complex",
-                        "MINIMAL" to "Minimal"
-                    )
-                    
-                    iconOptions.forEach { (iconKey, label) ->
-                        val isSelected = currentIcon == iconKey
-                        Card(
-                            onClick = {
-                                scope.launch {
-                                    themeManager.setAppIcon(iconKey)
-                                    changeAppIcon(context, iconKey)
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(85.dp)
-                                .border(
-                                    width = if (isSelected) 1.8.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.15f),
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxSize().padding(6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                val iconRes = when (iconKey) {
-                                    "DEFAULT" -> com.siddharth.datamonitor.R.drawable.ic_launcher_default
-                                    "COMPLEX" -> com.siddharth.datamonitor.R.drawable.ic_launcher_complex
-                                    "MINIMAL" -> com.siddharth.datamonitor.R.drawable.ic_launcher_minimal
-                                    else -> com.siddharth.datamonitor.R.drawable.ic_launcher_default
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .size(30.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = androidx.compose.ui.res.painterResource(id = iconRes),
-                                        contentDescription = label,
-                                        modifier = Modifier.fillMaxSize(),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = label,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
 
         // Data Limit
         GlassCard(modifier = Modifier.fillMaxWidth()) {

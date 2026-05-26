@@ -18,6 +18,7 @@ import com.siddharth.datamonitor.ui.theme.DashboardLayoutPreference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import java.text.SimpleDateFormat
 import java.util.*
 import com.siddharth.datamonitor.utils.AppUsageInfo
@@ -100,7 +101,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         startRealtimeUpdates()
         
         // Listen to changes on today's statistics to recalculate parameters in a non-leaking way
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             combine(todayMobile, todayWifi, selectedDateStr) { mobile, wifi, date ->
                 Pair(mobile + wifi, date)
             }.collect { (totalToday, date) ->
@@ -112,7 +113,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun seedDataIfEmpty() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val records = repository.allRecords.first()
             if (records.isEmpty()) {
                 val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -169,7 +170,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     fun checkPermission() {
         _hasPermission.value = PermissionsUtils.hasUsageStatsPermission(getApplication())
         if (_hasPermission.value) {
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 updateUsageStats()
                 saveCurrentDataAsTodayRecordInternal()
             }
@@ -201,7 +202,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun updateSelectedDateData(dateStr: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val record = repository.getRecordByDate(dateStr)
             _selectedDayRecord.value = record ?: DataUsageRecord(dateStr, 0L, 0L)
 
@@ -230,7 +231,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun updateProfileMetrics() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val peak = repository.getPeakUsageBytes() ?: 0L
             _peakUsage.value = peak
 
@@ -250,7 +251,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun calculateForecast(totalTodayUsage: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val limitMB = themeManager.dataLimitFlow.first().toLongOrNull() ?: 2000L
             val billingDay = themeManager.billingCycleDayFlow.first()
             
@@ -317,7 +318,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun startRealtimeUpdates() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             while (true) {
                 if (_hasPermission.value) {
                     updateUsageStats()
@@ -361,7 +362,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     }
     
     fun saveCurrentDataAsTodayRecord() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             saveCurrentDataAsTodayRecordInternal()
         }
     }

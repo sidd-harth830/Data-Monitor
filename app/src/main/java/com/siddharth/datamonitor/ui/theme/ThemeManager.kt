@@ -28,12 +28,17 @@ class ThemeManager(private val context: Context) {
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data.map { preferences ->
         when (preferences[THEME_KEY]) {
-            AppTheme.CYBER_NEON.name -> AppTheme.CYBER_NEON
-            AppTheme.MINIMAL_LIGHT.name -> AppTheme.MINIMAL_LIGHT
-            AppTheme.PREMIUM_GLASS.name -> AppTheme.PREMIUM_GLASS
+            AppTheme.SPRING.name -> AppTheme.SPRING
+            AppTheme.DESERT.name -> AppTheme.DESERT
+            AppTheme.FOREST.name -> AppTheme.FOREST
             AppTheme.MIDNIGHT_AMOLED.name -> AppTheme.MIDNIGHT_AMOLED
             AppTheme.SOLARIZED_LIGHT.name -> AppTheme.SOLARIZED_LIGHT
-            else -> AppTheme.OLED_DARK
+            AppTheme.OCEAN_DEEP.name -> AppTheme.OCEAN_DEEP
+            AppTheme.SUNSET_BLAZE.name -> AppTheme.SUNSET_BLAZE
+            AppTheme.CYBERPUNK.name -> AppTheme.CYBERPUNK
+            AppTheme.LAVENDER_HAZE.name -> AppTheme.LAVENDER_HAZE
+            AppTheme.MATRIX.name -> AppTheme.MATRIX
+            else -> AppTheme.FOREST
         }
     }
 
@@ -119,12 +124,16 @@ class ThemeManager(private val context: Context) {
 }
 
 enum class AppTheme {
-    OLED_DARK,
-    CYBER_NEON,
-    MINIMAL_LIGHT,
-    PREMIUM_GLASS,
+    SPRING,
+    DESERT,
+    FOREST,
     MIDNIGHT_AMOLED,
-    SOLARIZED_LIGHT
+    SOLARIZED_LIGHT,
+    OCEAN_DEEP,
+    SUNSET_BLAZE,
+    CYBERPUNK,
+    LAVENDER_HAZE,
+    MATRIX
 }
 
 enum class DashboardLayoutPreference {

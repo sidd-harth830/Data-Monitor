@@ -16,82 +16,134 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-private val OledColorScheme = darkColorScheme(
-    primary = PrimaryNeon,
-    secondary = SecondaryNeon,
-    tertiary = WifiActive,
-    background = DarkBackground,
-    surface = DarkBackground,
-    onPrimary = DarkBackground,
-    onSecondary = TextPrimary,
-    onTertiary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+private val SpringColorScheme = lightColorScheme(
+    primary = Color(0xFFFFAAB8),
+    secondary = Color(0xFFA8DF8E),
+    tertiary = Color(0xFFFFAAB8),
+    background = Color(0xFFF0FFDF),
+    surface = Color(0xFFFFD8DF),
+    onPrimary = Color(0xFF1B211A),
+    onSecondary = Color(0xFF1B211A),
+    onTertiary = Color(0xFF1B211A),
+    onBackground = Color(0xFF1B211A),
+    onSurface = Color(0xFF1B211A),
 )
 
-private val CyberpunkColorScheme = darkColorScheme(
-    primary = CyberpunkPrimary,
-    secondary = CyberpunkSecondary,
-    tertiary = CyberpunkPrimary,
-    background = CyberpunkBackground,
-    surface = CyberpunkBackground,
-    onPrimary = CyberpunkBackground,
-    onSecondary = TextPrimary,
-    onTertiary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+private val DesertColorScheme = lightColorScheme(
+    primary = Color(0xFFC7522A),
+    secondary = Color(0xFF008585),
+    tertiary = Color(0xFF74A892),
+    background = Color(0xFFFBF2C4),
+    surface = Color(0xFFE5C185),
+    onPrimary = Color(0xFF0D0D0D),
+    onSecondary = Color(0xFF0D0D0D),
+    onTertiary = Color(0xFF0D0D0D),
+    onBackground = Color(0xFF0D0D0D),
+    onSurface = Color(0xFF0D0D0D),
 )
 
-private val MinimalLightColorScheme = lightColorScheme(
-    primary = LightPrimary,
-    secondary = LightSecondary,
-    tertiary = LightPrimary,
-    background = LightBackground,
-    surface = LightBackground,
-    onPrimary = LightBackground,
-    onSecondary = LightTextPrimary,
-    onTertiary = LightTextPrimary,
-    onBackground = LightTextPrimary,
-    onSurface = LightTextPrimary,
-)
-
-private val PremiumGlassColorScheme = darkColorScheme(
-    primary = Color(0xFFA855F7), // Purple Neon
-    secondary = Color(0xFF3B82F6), // Vibrant Blue
-    tertiary = Color(0xFFA855F7),
-    background = Color(0xFF0D0B18), // High contrast deep space
-    surface = Color(0xFF161426),
-    onPrimary = Color(0xFF0D0B18),
-    onSecondary = TextPrimary,
-    onTertiary = TextPrimary,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
+private val ForestColorScheme = darkColorScheme(
+    primary = Color(0xFF8BAE66),
+    secondary = Color(0xFFEBD5AB),
+    tertiary = Color(0xFF628141),
+    background = Color(0xFF1B211A),
+    surface = Color(0xFF628141),
+    onPrimary = Color(0xFFEBD5AB),
+    onSecondary = Color(0xFF1B211A),
+    onTertiary = Color(0xFFEBD5AB),
+    onBackground = Color(0xFFEBD5AB),
+    onSurface = Color(0xFFEBD5AB),
 )
 
 private val MidnightAmoledColorScheme = darkColorScheme(
-    primary = Color(0xFFE2E8F0), // clean white/slate
-    secondary = Color(0xFFFF007F), // pink neon
-    tertiary = Color(0xFF00FFD1), // cyan
+    primary = Color(0xFF00FFFF),
+    secondary = Color(0xFF00CCCC),
+    tertiary = Color(0xFF00FFFF),
     background = Color(0xFF000000),
     surface = Color(0xFF000000),
     onPrimary = Color(0xFF000000),
-    onSecondary = Color(0xFFFFFFFF),
-    onTertiary = Color(0xFFFFFFFF),
+    onSecondary = Color(0xFF000000),
+    onTertiary = Color(0xFF000000),
     onBackground = Color(0xFFFFFFFF),
     onSurface = Color(0xFFFFFFFF),
 )
 
 private val SolarizedLightColorScheme = lightColorScheme(
-    primary = Color(0xFF268BD2), // Solarized Blue
-    secondary = Color(0xFF2AA198), // Solarized Cyan
-    tertiary = Color(0xFFD33682), // Solarized Magenta
-    background = Color(0xFFFDF6E3), // Solarized Base3 (Beige)
-    surface = Color(0xFFEEE8D5), // Solarized Base2 (Lighter beige)
+    primary = Color(0xFF268BD2),
+    secondary = Color(0xFF2AA198),
+    tertiary = Color(0xFF268BD2),
+    background = Color(0xFFFDF6E3),
+    surface = Color(0xFFEEE8D5),
     onPrimary = Color(0xFFFFFFFF),
     onSecondary = Color(0xFFFFFFFF),
     onTertiary = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF073642), // Solarized Base02 (Deep blue-green)
+    onBackground = Color(0xFF073642),
     onSurface = Color(0xFF073642),
+)
+
+private val OceanDeepColorScheme = darkColorScheme(
+    primary = Color(0xFF00FFFF),
+    secondary = Color(0xFF008080),
+    tertiary = Color(0xFF00FFFF),
+    background = Color(0xFF0D1B2A),
+    surface = Color(0xFF1B263B),
+    onPrimary = Color(0xFF000000),
+    onSecondary = Color(0xFFFFFFFF),
+    onTertiary = Color(0xFF000000),
+    onBackground = Color(0xFFE0E1DD),
+    onSurface = Color(0xFFE0E1DD),
+)
+
+private val SunsetBlazeColorScheme = darkColorScheme(
+    primary = Color(0xFFFFD700),
+    secondary = Color(0xFFFFA500),
+    tertiary = Color(0xFFFFD700),
+    background = Color(0xFF3A0A0A),
+    surface = Color(0xFF5A1818),
+    onPrimary = Color(0xFF5A1818),
+    onSecondary = Color(0xFF5A1818),
+    onTertiary = Color(0xFF5A1818),
+    onBackground = Color(0xFFFFFFFF),
+    onSurface = Color(0xFFFFFFFF),
+)
+
+private val CyberpunkColorScheme = darkColorScheme(
+    primary = Color(0xFFFFFF00),
+    secondary = Color(0xFFFF00FF),
+    tertiary = Color(0xFFFFFF00),
+    background = Color(0xFF000000),
+    surface = Color(0xFF1A001A),
+    onPrimary = Color(0xFF000000),
+    onSecondary = Color(0xFF000000),
+    onTertiary = Color(0xFF000000),
+    onBackground = Color(0xFFFFFFFF),
+    onSurface = Color(0xFFFFFFFF),
+)
+
+private val LavenderHazeColorScheme = lightColorScheme(
+    primary = Color(0xFF8B5CF6),
+    secondary = Color(0xFFA855F7),
+    tertiary = Color(0xFF8B5CF6),
+    background = Color(0xFFF3E8FF),
+    surface = Color(0xFFE9D5FF),
+    onPrimary = Color(0xFFFFFFFF),
+    onSecondary = Color(0xFFFFFFFF),
+    onTertiary = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF3B0764),
+    onSurface = Color(0xFF3B0764),
+)
+
+private val MatrixColorScheme = darkColorScheme(
+    primary = Color(0xFF00FF00),
+    secondary = Color(0xFF00CC00),
+    tertiary = Color(0xFF00FF00),
+    background = Color(0xFF000000),
+    surface = Color(0xFF0A140A),
+    onPrimary = Color(0xFF000000),
+    onSecondary = Color(0xFF000000),
+    onTertiary = Color(0xFF000000),
+    onBackground = Color(0xFF00FF00),
+    onSurface = Color(0xFF00FF00),
 )
 
 private fun Context.findActivity(): Activity? {
@@ -105,17 +157,21 @@ private fun Context.findActivity(): Activity? {
 
 @Composable
 fun DataMonitorTheme(
-    theme: AppTheme = AppTheme.OLED_DARK,
+    theme: AppTheme = AppTheme.FOREST,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
     val baseScheme = when (theme) {
-        AppTheme.OLED_DARK -> OledColorScheme
-        AppTheme.CYBER_NEON -> CyberpunkColorScheme
-        AppTheme.MINIMAL_LIGHT -> MinimalLightColorScheme
-        AppTheme.PREMIUM_GLASS -> PremiumGlassColorScheme
+        AppTheme.SPRING -> SpringColorScheme
+        AppTheme.DESERT -> DesertColorScheme
+        AppTheme.FOREST -> ForestColorScheme
         AppTheme.MIDNIGHT_AMOLED -> MidnightAmoledColorScheme
         AppTheme.SOLARIZED_LIGHT -> SolarizedLightColorScheme
+        AppTheme.OCEAN_DEEP -> OceanDeepColorScheme
+        AppTheme.SUNSET_BLAZE -> SunsetBlazeColorScheme
+        AppTheme.CYBERPUNK -> CyberpunkColorScheme
+        AppTheme.LAVENDER_HAZE -> LavenderHazeColorScheme
+        AppTheme.MATRIX -> MatrixColorScheme
     }
     
     val colorScheme = if (appAccentColor != null) {
@@ -133,7 +189,7 @@ fun DataMonitorTheme(
             if (activity != null) {
                 val window = activity.window
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = 
-                    (theme == AppTheme.MINIMAL_LIGHT || theme == AppTheme.SOLARIZED_LIGHT)
+                    (theme == AppTheme.SPRING || theme == AppTheme.DESERT || theme == AppTheme.SOLARIZED_LIGHT || theme == AppTheme.LAVENDER_HAZE)
             }
         }
     }
@@ -150,20 +206,11 @@ fun DynamicThemeProvider(
     themeManager: ThemeManager,
     content: @Composable () -> Unit
 ) {
-    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
-    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
-
-    val parsedAccentColor = remember(appAccentHex) {
-        try {
-            Color(android.graphics.Color.parseColor(appAccentHex))
-        } catch (e: Exception) {
-            null
-        }
-    }
+    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.FOREST)
 
     DataMonitorTheme(
         theme = currentTheme,
-        appAccentColor = parsedAccentColor,
+        appAccentColor = null,
         content = content
     )
 }
