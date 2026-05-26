@@ -97,7 +97,6 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
                 initialValue = emptyList()
             )
         
-        seedDataIfEmpty()
         startRealtimeUpdates()
         
         // Listen to changes on today's statistics to recalculate parameters in a non-leaking way
@@ -112,60 +111,8 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun seedDataIfEmpty() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val records = repository.allRecords.first()
-            if (records.isEmpty()) {
-                val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val cal = Calendar.getInstance()
-                
-                val seedRecords = mutableListOf<DataUsageRecord>()
-                val seedHourly = mutableListOf<HourlyUsageLog>()
-                
-                // Seed past 14 days
-                for (i in 0..14) {
-                    val dStr = df.format(cal.time)
-                    
-                    // Seed Daily Data (Mobile: 150MB-1.5GB, Wifi: 300MB-4.2GB)
-                    val mobileBytes = (150 * 1024 * 1024L + (Math.random() * 1200 * 1024 * 1024L).toLong())
-                    val wifiBytes = (300 * 1024 * 1024L + (Math.random() * 3200 * 1024 * 1024L).toLong())
-                    
-                    seedRecords.add(DataUsageRecord(dStr, mobileBytes, wifiBytes))
-                    
-                    // Seed hourly usage for perfect heatmap detailing
-                    for (h in 0..23) {
-                        val multiplier = when (h) {
-                            in 12..15 -> 2.5
-                            in 18..22 -> 3.2
-                            in 0..6 -> 0.15
-                            else -> 1.0
-                        }
-                        val hourMobile = (100 * 1024L + (Math.random() * 8 * 1024 * 1024L).toLong() * multiplier).toLong()
-                        val hourWifi = (250 * 1024L + (Math.random() * 25 * 1024 * 1024L).toLong() * multiplier).toLong()
-                        
-                        seedHourly.add(
-                            HourlyUsageLog(
-                                dateStr = dStr,
-                                hour = h,
-                                mobileBytes = hourMobile,
-                                wifiBytes = hourWifi
-                            )
-                        )
-                    }
-                    cal.add(Calendar.DAY_OF_YEAR, -1)
-                }
-                
-                for (r in seedRecords) {
-                    repository.insertRecord(r)
-                }
-                repository.insertHourlyLogs(seedHourly)
-                
-                val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                updateSelectedDateData(todayStr)
-                updateProfileMetrics()
-            }
-        }
-    }
+    // Removed dummy data seeding to ensure clean real-time waiting
+
 
     fun checkPermission() {
         _hasPermission.value = PermissionsUtils.hasUsageStatsPermission(getApplication())
@@ -182,6 +129,9 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _uploadSpeed = MutableStateFlow(0L)
     val uploadSpeed: StateFlow<Long> = _uploadSpeed.asStateFlow()
+
+    private val _liveSpeeds = MutableStateFlow<List<Pair<Long, Long>>?>(null)
+    val liveSpeeds: StateFlow<List<Pair<Long, Long>>?> = _liveSpeeds.asStateFlow()
 
     fun selectDate(dateStr: String) {
         _selectedDateStr.value = dateStr
@@ -317,15 +267,36 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    private var lastTotalRx = 0L
+    private var lastTotalTx = 0L
+    private val speedHistory = mutableListOf<Pair<Long, Long>>()
+
     private fun startRealtimeUpdates() {
         viewModelScope.launch(Dispatchers.IO) {
+            lastTotalRx = android.net.TrafficStats.getTotalRxBytes()
+            lastTotalTx = android.net.TrafficStats.getTotalTxBytes()
+            
             while (true) {
                 if (_hasPermission.value) {
                     updateUsageStats()
                     
-                    // Live speeds
-                    _downloadSpeed.value = (Math.random() * 5 * 1024 * 1024).toLong()
-                    _uploadSpeed.value = (Math.random() * 2 * 1024 * 1024).toLong()
+                    val currentRx = android.net.TrafficStats.getTotalRxBytes()
+                    val currentTx = android.net.TrafficStats.getTotalTxBytes()
+                    
+                    val rxDiff = (currentRx - lastTotalRx).coerceAtLeast(0L)
+                    val txDiff = (currentTx - lastTotalTx).coerceAtLeast(0L)
+                    
+                    lastTotalRx = currentRx
+                    lastTotalTx = currentTx
+                    
+                    _downloadSpeed.value = rxDiff
+                    _uploadSpeed.value = txDiff
+                    
+                    speedHistory.add(Pair(rxDiff, txDiff))
+                    if (speedHistory.size > 30) {
+                        speedHistory.removeAt(0)
+                    }
+                    _liveSpeeds.value = speedHistory.toList()
                     
                     // Smart 5G / Unmetered Network check
                     _isUnlimited5GActive.value = checkUnlimited5GStatus()

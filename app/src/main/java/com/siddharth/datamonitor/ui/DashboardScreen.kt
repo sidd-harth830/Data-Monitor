@@ -128,7 +128,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 )
             }
             DashboardLayoutPreference.PRO -> {
-                val todayHourlyLogs by viewModel.todayHourlyLogs.collectAsStateWithLifecycle(initialValue = emptyList())
+                val liveSpeeds by viewModel.liveSpeeds.collectAsStateWithLifecycle()
                 DashboardLayoutPro(
                     mobileUsage = mobileUsage,
                     wifiUsage = wifiUsage,
@@ -138,7 +138,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     topApps = topApps,
                     isUnlimited5GActive = isUnlimited5GActive,
                     bytesLeft = bytesLeft,
-                    todayHourlyLogs = todayHourlyLogs
+                    liveSpeeds = liveSpeeds
                 )
             }
             DashboardLayoutPreference.GRID -> {
@@ -316,7 +316,7 @@ fun DashboardLayoutPro(
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
     bytesLeft: Long,
-    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>
+    liveSpeeds: List<Pair<Long, Long>>?
 ) {
     Column {
         // High density analytics header
@@ -344,7 +344,7 @@ fun DashboardLayoutPro(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 // Real-time Wave Graphic
-                AnalyticalWaveChart(todayHourlyLogs = todayHourlyLogs)
+                AnalyticalWaveChart(liveSpeeds = liveSpeeds)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -499,21 +499,25 @@ fun DashboardLayoutPro(
 
 @Composable
 fun AnalyticalWaveChart(
-    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>,
+    liveSpeeds: List<Pair<Long, Long>>?,
     modifier: Modifier = Modifier
 ) {
+    if (liveSpeeds == null) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(140.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            androidx.compose.material3.CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+        return
+    }
+
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
-    
-    // Wave animation state for idle/empty state
-    var wavePhase by remember { mutableStateOf(0f) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            wavePhase += 0.05f
-            if (wavePhase > 2f * Math.PI.toFloat()) wavePhase -= 2f * Math.PI.toFloat()
-            kotlinx.coroutines.delay(16)
-        }
-    }
 
     Box(
         modifier = modifier
@@ -538,93 +542,63 @@ fun AnalyticalWaveChart(
                 drawLine(gridColor, start = androidx.compose.ui.geometry.Offset(x, 0f), end = androidx.compose.ui.geometry.Offset(x, height), strokeWidth = 1.dp.toPx())
             }
 
-            // Map hours from 0 to 23
-            val mobileHourly = FloatArray(24) { 0f }
-            val wifiHourly = FloatArray(24) { 0f }
-            for (log in todayHourlyLogs) {
-                if (log.hour in 0..23) {
-                    mobileHourly[log.hour] = log.mobileBytes.toFloat()
-                    wifiHourly[log.hour] = log.wifiBytes.toFloat()
-                }
-            }
-            val maxMobile = mobileHourly.maxOrNull()?.coerceAtLeast(1f) ?: 1f
-            val maxWifi = wifiHourly.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+            if (liveSpeeds.isEmpty()) return@Canvas
 
-            if (todayHourlyLogs.isNotEmpty()) {
-                // Draw Mobile curve (Primary path)
-                val path1 = androidx.compose.ui.graphics.Path()
-                val firstY1 = height - (mobileHourly[0] / maxMobile) * (height * 0.7f) - 10.dp.toPx()
-                path1.moveTo(0f, firstY1)
-                for (i in 1..23) {
-                    val x = i * (width / 23f)
-                    val y = height - (mobileHourly[i] / maxMobile) * (height * 0.7f) - 10.dp.toPx()
-                    
-                    val prevX = (i - 1) * (width / 23f)
-                    val prevY = height - (mobileHourly[i - 1] / maxMobile) * (height * 0.7f) - 10.dp.toPx()
-                    val controlX1 = prevX + (x - prevX) / 2f
-                    val controlY1 = prevY
-                    val controlX2 = prevX + (x - prevX) / 2f
-                    val controlY2 = y
-                    path1.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
-                }
-                drawPath(
-                    path = path1,
-                    color = primaryColor,
-                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-                )
-
-                // Draw Wi-Fi curve (Secondary path)
-                val path2 = androidx.compose.ui.graphics.Path()
-                val firstY2 = height - (wifiHourly[0] / maxWifi) * (height * 0.7f) - 15.dp.toPx()
-                path2.moveTo(0f, firstY2)
-                for (i in 1..23) {
-                    val x = i * (width / 23f)
-                    val y = height - (wifiHourly[i] / maxWifi) * (height * 0.7f) - 15.dp.toPx()
-                    
-                    val prevX = (i - 1) * (width / 23f)
-                    val prevY = height - (wifiHourly[i - 1] / maxWifi) * (height * 0.7f) - 15.dp.toPx()
-                    val controlX1 = prevX + (x - prevX) / 2f
-                    val controlY1 = prevY
-                    val controlX2 = prevX + (x - prevX) / 2f
-                    val controlY2 = y
-                    path2.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
-                }
-                drawPath(
-                    path = path2,
-                    color = secondaryColor,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
+            val mapSize = 30
+            val paddedSpeeds = if (liveSpeeds.size < mapSize) {
+                List(mapSize - liveSpeeds.size) { Pair(0L, 0L) } + liveSpeeds
             } else {
-                // Fallback wave 1
-                val path1 = androidx.compose.ui.graphics.Path()
-                path1.moveTo(0f, midY)
-                for (x in 0..width.toInt() step 5) {
-                    val relativeX = x.toFloat() / width
-                    val sine = kotlin.math.sin(relativeX * 3.5 * Math.PI + wavePhase).toFloat()
-                    val y = midY + sine * 30.dp.toPx()
-                    path1.lineTo(x.toFloat(), y)
-                }
-                drawPath(
-                    path = path1,
-                    color = primaryColor,
-                    style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
-                )
-
-                // Fallback wave 2
-                val path2 = androidx.compose.ui.graphics.Path()
-                path2.moveTo(0f, midY + 15.dp.toPx())
-                for (x in 0..width.toInt() step 5) {
-                    val relativeX = x.toFloat() / width
-                    val sine = kotlin.math.cos(relativeX * 2.5 * Math.PI + wavePhase * 1.5f).toFloat()
-                    val y = midY + 15.dp.toPx() + sine * 20.dp.toPx()
-                    path2.lineTo(x.toFloat(), y)
-                }
-                drawPath(
-                    path = path2,
-                    color = secondaryColor,
-                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
-                )
+                liveSpeeds.takeLast(mapSize)
             }
+
+            val maxDown = paddedSpeeds.maxOfOrNull { it.first }?.coerceAtLeast(1024L) ?: 1024L
+            val maxUp = paddedSpeeds.maxOfOrNull { it.second }?.coerceAtLeast(1024L) ?: 1024L
+
+            // Draw Download curve (Primary path)
+            val path1 = androidx.compose.ui.graphics.Path()
+            val startY1 = height - (paddedSpeeds[0].first.toFloat() / maxDown.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+            path1.moveTo(0f, startY1)
+
+            for (i in 1 until mapSize) {
+                val x = i * (width / (mapSize - 1).toFloat())
+                val y = height - (paddedSpeeds[i].first.toFloat() / maxDown.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+                
+                val prevX = (i - 1) * (width / (mapSize - 1).toFloat())
+                val prevY = height - (paddedSpeeds[i - 1].first.toFloat() / maxDown.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+                
+                val controlX1 = prevX + (x - prevX) / 2f
+                val controlX2 = prevX + (x - prevX) / 2f
+                
+                path1.cubicTo(controlX1, prevY, controlX2, y, x, y)
+            }
+            drawPath(
+                path = path1,
+                color = primaryColor,
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+            )
+
+            // Draw Upload curve (Secondary path)
+            val path2 = androidx.compose.ui.graphics.Path()
+            val startY2 = height - (paddedSpeeds[0].second.toFloat() / maxUp.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+            path2.moveTo(0f, startY2)
+
+            for (i in 1 until mapSize) {
+                val x = i * (width / (mapSize - 1).toFloat())
+                val y = height - (paddedSpeeds[i].second.toFloat() / maxUp.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+                
+                val prevX = (i - 1) * (width / (mapSize - 1).toFloat())
+                val prevY = height - (paddedSpeeds[i - 1].second.toFloat() / maxUp.toFloat()) * (height * 0.8f) - 5.dp.toPx()
+                
+                val controlX1 = prevX + (x - prevX) / 2f
+                val controlX2 = prevX + (x - prevX) / 2f
+                
+                path2.cubicTo(controlX1, prevY, controlX2, y, x, y)
+            }
+            drawPath(
+                path = path2,
+                color = secondaryColor,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+            )
         }
     }
 }

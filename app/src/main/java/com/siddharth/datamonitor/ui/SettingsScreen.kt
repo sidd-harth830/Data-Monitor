@@ -1,8 +1,10 @@
 package com.siddharth.datamonitor.ui
 
+import android.widget.Toast
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -18,44 +20,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
+import com.siddharth.datamonitor.R
 import com.siddharth.datamonitor.ui.theme.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.testTag
 
-fun changeAppIcon(context: Context, iconChoice: String) {
+suspend fun changeAppIcon(context: Context, iconChoice: String) {
+    Toast.makeText(context, "App will restart to apply icon", Toast.LENGTH_SHORT).show()
+    delay(1000)
+
     val pm = context.packageManager
     val basePackage = "com.siddharth.datamonitor" // match the main namespace package path
     
     val targets = mapOf(
-        AppTheme.SPRING.name to "$basePackage.MainActivitySpring",
-        AppTheme.DESERT.name to "$basePackage.MainActivityDesert",
-        AppTheme.FOREST.name to "$basePackage.MainActivityForest",
-        AppTheme.MIDNIGHT_AMOLED.name to "$basePackage.MainActivityMidnightAmoled",
-        AppTheme.SOLARIZED_LIGHT.name to "$basePackage.MainActivitySolarizedLight",
-        AppTheme.OCEAN_DEEP.name to "$basePackage.MainActivityOceanDeep",
-        AppTheme.SUNSET_BLAZE.name to "$basePackage.MainActivitySunsetBlaze",
-        AppTheme.CYBERPUNK.name to "$basePackage.MainActivityCyberpunk",
-        AppTheme.LAVENDER_HAZE.name to "$basePackage.MainActivityLavenderHaze",
-        AppTheme.MATRIX.name to "$basePackage.MainActivityMatrix"
+        "DEFAULT" to "$basePackage.MainActivityIconDefault",
+        "ICON_1" to "$basePackage.MainActivityIcon1",
+        "ICON_2" to "$basePackage.MainActivityIcon2",
+        "ICON_3" to "$basePackage.MainActivityIcon3"
     )
     
     // 1. Enable the requested target first
-    val targetClass = targets[iconChoice]
-    if (targetClass != null) {
-        try {
-            pm.setComponentEnabledSetting(
-                ComponentName(context, targetClass),
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+    val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
+    try {
+        pm.setComponentEnabledSetting(
+            ComponentName(context, targetClass),
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
     
     // 2. Disable all other targets
@@ -141,7 +141,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Card(
                         onClick = {
                             scope.launch { themeManager.setTheme(theme) }
-                            changeAppIcon(context, theme.name)
                         },
                         modifier = Modifier
                             .width(135.dp)
@@ -164,7 +163,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 text = theme.name.replace("_", " "),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (theme == AppTheme.SPRING || theme == AppTheme.DESERT || theme == AppTheme.SOLARIZED_LIGHT || theme == AppTheme.LAVENDER_HAZE) Color(0xFF1B211A) else Color(0xFFEBD5AB)
+                                color = if (theme == AppTheme.SPRING || theme == AppTheme.DESERT || theme == AppTheme.SOLARIZED_LIGHT || theme == AppTheme.LAVENDER_HAZE) Color.Black else Color.White
                             )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -188,6 +187,68 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             }
         }
         
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // App Icon Selection
+        val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "APP ICON",
+                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                fontSize = 12.sp,
+                letterSpacing = 1.5.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val icons = listOf(
+                    Triple("DEFAULT", "Studio Default", R.drawable.ic_launcher_spring),
+                    Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_desert),
+                    Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_forest),
+                    Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_cyberpunk)
+                )
+
+                icons.forEach { (key, label, drawRes) ->
+                    val isSelected = currentIcon == key
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            onClick = {
+                                scope.launch {
+                                    themeManager.setAppIcon(key)
+                                    changeAppIcon(context, key)
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
+                            border = androidx.compose.foundation.BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.15f)),
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    painter = painterResource(id = drawRes),
+                                    contentDescription = label,
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = label,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(24.dp))
 
 

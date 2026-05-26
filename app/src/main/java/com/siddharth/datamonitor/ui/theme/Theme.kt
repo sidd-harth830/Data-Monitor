@@ -22,11 +22,11 @@ private val SpringColorScheme = lightColorScheme(
     tertiary = Color(0xFFFFAAB8),
     background = Color(0xFFF0FFDF),
     surface = Color(0xFFFFD8DF),
-    onPrimary = Color(0xFF1B211A),
-    onSecondary = Color(0xFF1B211A),
-    onTertiary = Color(0xFF1B211A),
-    onBackground = Color(0xFF1B211A),
-    onSurface = Color(0xFF1B211A),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.Black,
+    onSurface = Color.Black,
 )
 
 private val DesertColorScheme = lightColorScheme(
@@ -35,11 +35,11 @@ private val DesertColorScheme = lightColorScheme(
     tertiary = Color(0xFF74A892),
     background = Color(0xFFFBF2C4),
     surface = Color(0xFFE5C185),
-    onPrimary = Color(0xFF0D0D0D),
-    onSecondary = Color(0xFF0D0D0D),
-    onTertiary = Color(0xFF0D0D0D),
-    onBackground = Color(0xFF0D0D0D),
-    onSurface = Color(0xFF0D0D0D),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.Black,
+    onBackground = Color.Black,
+    onSurface = Color.Black,
 )
 
 private val ForestColorScheme = darkColorScheme(
@@ -48,11 +48,11 @@ private val ForestColorScheme = darkColorScheme(
     tertiary = Color(0xFF628141),
     background = Color(0xFF1B211A),
     surface = Color(0xFF628141),
-    onPrimary = Color(0xFFEBD5AB),
-    onSecondary = Color(0xFF1B211A),
-    onTertiary = Color(0xFFEBD5AB),
-    onBackground = Color(0xFFEBD5AB),
-    onSurface = Color(0xFFEBD5AB),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private val MidnightAmoledColorScheme = darkColorScheme(
@@ -61,11 +61,11 @@ private val MidnightAmoledColorScheme = darkColorScheme(
     tertiary = Color(0xFF00FFFF),
     background = Color(0xFF000000),
     surface = Color(0xFF000000),
-    onPrimary = Color(0xFF000000),
-    onSecondary = Color(0xFF000000),
-    onTertiary = Color(0xFF000000),
-    onBackground = Color(0xFFFFFFFF),
-    onSurface = Color(0xFFFFFFFF),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private val SolarizedLightColorScheme = lightColorScheme(
@@ -74,11 +74,11 @@ private val SolarizedLightColorScheme = lightColorScheme(
     tertiary = Color(0xFF268BD2),
     background = Color(0xFFFDF6E3),
     surface = Color(0xFFEEE8D5),
-    onPrimary = Color(0xFFFFFFFF),
-    onSecondary = Color(0xFFFFFFFF),
-    onTertiary = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF073642),
-    onSurface = Color(0xFF073642),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color.Black,
 )
 
 private val OceanDeepColorScheme = darkColorScheme(
@@ -87,11 +87,11 @@ private val OceanDeepColorScheme = darkColorScheme(
     tertiary = Color(0xFF00FFFF),
     background = Color(0xFF0D1B2A),
     surface = Color(0xFF1B263B),
-    onPrimary = Color(0xFF000000),
-    onSecondary = Color(0xFFFFFFFF),
-    onTertiary = Color(0xFF000000),
-    onBackground = Color(0xFFE0E1DD),
-    onSurface = Color(0xFFE0E1DD),
+    onPrimary = Color.Black,
+    onSecondary = Color.White,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private val SunsetBlazeColorScheme = darkColorScheme(
@@ -100,11 +100,11 @@ private val SunsetBlazeColorScheme = darkColorScheme(
     tertiary = Color(0xFFFFD700),
     background = Color(0xFF3A0A0A),
     surface = Color(0xFF5A1818),
-    onPrimary = Color(0xFF5A1818),
-    onSecondary = Color(0xFF5A1818),
-    onTertiary = Color(0xFF5A1818),
-    onBackground = Color(0xFFFFFFFF),
-    onSurface = Color(0xFFFFFFFF),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private val CyberpunkColorScheme = darkColorScheme(
@@ -113,11 +113,11 @@ private val CyberpunkColorScheme = darkColorScheme(
     tertiary = Color(0xFFFFFF00),
     background = Color(0xFF000000),
     surface = Color(0xFF1A001A),
-    onPrimary = Color(0xFF000000),
-    onSecondary = Color(0xFF000000),
-    onTertiary = Color(0xFF000000),
-    onBackground = Color(0xFFFFFFFF),
-    onSurface = Color(0xFFFFFFFF),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private val LavenderHazeColorScheme = lightColorScheme(
@@ -126,11 +126,11 @@ private val LavenderHazeColorScheme = lightColorScheme(
     tertiary = Color(0xFF8B5CF6),
     background = Color(0xFFF3E8FF),
     surface = Color(0xFFE9D5FF),
-    onPrimary = Color(0xFFFFFFFF),
-    onSecondary = Color(0xFFFFFFFF),
-    onTertiary = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF3B0764),
-    onSurface = Color(0xFF3B0764),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onTertiary = Color.White,
+    onBackground = Color.Black,
+    onSurface = Color.Black,
 )
 
 private val MatrixColorScheme = darkColorScheme(
@@ -139,11 +139,11 @@ private val MatrixColorScheme = darkColorScheme(
     tertiary = Color(0xFF00FF00),
     background = Color(0xFF000000),
     surface = Color(0xFF0A140A),
-    onPrimary = Color(0xFF000000),
-    onSecondary = Color(0xFF000000),
-    onTertiary = Color(0xFF000000),
-    onBackground = Color(0xFF00FF00),
-    onSurface = Color(0xFF00FF00),
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 private fun Context.findActivity(): Activity? {

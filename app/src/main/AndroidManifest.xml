@@ -18,9 +18,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher_spring"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/ic_launcher_spring"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity
@@ -29,7 +29,7 @@
             android:theme="@style/Theme.MyApplication" />
 
         <activity-alias
-            android:name=".MainActivitySpring"
+            android:name=".MainActivityIconDefault"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
             android:icon="@drawable/ic_launcher_spring"
             android:roundIcon="@drawable/ic_launcher_spring"
@@ -43,7 +43,7 @@
         </activity-alias>
 
         <activity-alias
-            android:name=".MainActivityDesert"
+            android:name=".MainActivityIcon1"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
             android:icon="@drawable/ic_launcher_desert"
             android:roundIcon="@drawable/ic_launcher_desert"
@@ -57,7 +57,7 @@
         </activity-alias>
 
         <activity-alias
-            android:name=".MainActivityForest"
+            android:name=".MainActivityIcon2"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
             android:icon="@drawable/ic_launcher_forest"
             android:roundIcon="@drawable/ic_launcher_forest"
@@ -71,63 +71,7 @@
         </activity-alias>
         
         <activity-alias
-            android:name=".MainActivityMidnightAmoled"
-            android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_midnight_amoled"
-            android:roundIcon="@drawable/ic_launcher_midnight_amoled"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".MainActivitySolarizedLight"
-            android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_solarized_light"
-            android:roundIcon="@drawable/ic_launcher_solarized_light"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".MainActivityOceanDeep"
-            android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_ocean_deep"
-            android:roundIcon="@drawable/ic_launcher_ocean_deep"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".MainActivitySunsetBlaze"
-            android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_sunset_blaze"
-            android:roundIcon="@drawable/ic_launcher_sunset_blaze"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <activity-alias
-            android:name=".MainActivityCyberpunk"
+            android:name=".MainActivityIcon3"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
             android:icon="@drawable/ic_launcher_cyberpunk"
             android:roundIcon="@drawable/ic_launcher_cyberpunk"
@@ -140,35 +84,67 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Tombstones for old removed aliases to prevent crash during upgrade -->
+        <activity-alias
+            android:name=".MainActivitySpring"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+            
+        <activity-alias
+            android:name=".MainActivityDesert"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityForest"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityMidnightAmoled"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivitySolarizedLight"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityOceanDeep"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivitySunsetBlaze"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".MainActivityCyberpunk"
+            android:targetActivity="com.siddharth.datamonitor.MainActivity"
+            android:enabled="false"
+            android:exported="true" />
+
         <activity-alias
             android:name=".MainActivityLavenderHaze"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_lavender_haze"
-            android:roundIcon="@drawable/ic_launcher_lavender_haze"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
+            android:enabled="false"
+            android:exported="true" />
 
         <activity-alias
             android:name=".MainActivityMatrix"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
-            android:icon="@drawable/ic_launcher_matrix"
-            android:roundIcon="@drawable/ic_launcher_matrix"
-            android:label="@string/app_name"
-            android:exported="true"
-            android:enabled="false">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
-        <!-- Tombstones for old removed aliases to prevent crash during upgrade -->
+            android:enabled="false"
+            android:exported="true" />
+            
         <activity-alias
             android:name=".MainActivityDefault"
             android:targetActivity="com.siddharth.datamonitor.MainActivity"
