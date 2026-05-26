@@ -33,8 +33,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.testTag
 
 suspend fun changeAppIcon(context: Context, iconChoice: String) {
-    Toast.makeText(context, "App will restart to apply icon", Toast.LENGTH_SHORT).show()
-    delay(1000)
+    Toast.makeText(context, "Applying icon...", Toast.LENGTH_SHORT).show()
+    delay(500)
 
     val pm = context.packageManager
     val basePackage = "com.siddharth.datamonitor" // match the main namespace package path
@@ -50,7 +50,18 @@ suspend fun changeAppIcon(context: Context, iconChoice: String) {
     
     val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
     
-    // 1. Disable all OTHER targets
+    // 1. Enable the requested target FIRST
+    try {
+        pm.setComponentEnabledSetting(
+            ComponentName(context, targetClass),
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+
+    // 2. Disable all OTHER targets
     targets.forEach { (key, aliasClass) ->
         if (aliasClass != targetClass) {
             try {
@@ -64,17 +75,9 @@ suspend fun changeAppIcon(context: Context, iconChoice: String) {
             }
         }
     }
-
-    // 2. Enable the requested target
-    try {
-        pm.setComponentEnabledSetting(
-            ComponentName(context, targetClass),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
+    
+    // 3. Gracefully close to apply changes and avoid Unrecoverable Channel broken exception
+    (context as? android.app.Activity)?.finishAffinity()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
