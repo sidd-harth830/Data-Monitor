@@ -24,6 +24,7 @@ class ThemeManager(private val context: Context) {
         val BILLING_CYCLE_DAY_KEY = intPreferencesKey("billing_cycle_day")
         val DASHBOARD_LAYOUT_KEY = stringPreferencesKey("dashboard_layout")
         val APP_ICON_KEY = stringPreferencesKey("app_icon")
+        val DATA_SAVER_ACTIVE_KEY = booleanPreferencesKey("data_saver_active")
     }
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data.map { preferences ->
@@ -74,6 +75,10 @@ class ThemeManager(private val context: Context) {
         preferences[BILLING_CYCLE_DAY_KEY] ?: 1
     }
 
+    val dataSaverActiveFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[DATA_SAVER_ACTIVE_KEY] ?: false
+    }
+
     suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
@@ -119,6 +124,12 @@ class ThemeManager(private val context: Context) {
     suspend fun setBillingCycleDay(day: Int) {
         context.dataStore.edit { preferences ->
             preferences[BILLING_CYCLE_DAY_KEY] = day
+        }
+    }
+
+    suspend fun setDataSaverActive(active: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DATA_SAVER_ACTIVE_KEY] = active
         }
     }
 }

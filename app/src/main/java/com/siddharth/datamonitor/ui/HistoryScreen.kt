@@ -42,8 +42,8 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
     val weekHourlyLogs by viewModel.weekHourlyLogs.collectAsStateWithLifecycle()
     val selectedDayRecord by viewModel.selectedDayRecord.collectAsStateWithLifecycle()
     
-    val estimatedRunoutDate by viewModel.estimatedRunoutDate.collectAsStateWithLifecycle()
-    val forecastMessage by viewModel.forecastMessage.collectAsStateWithLifecycle()
+    val heatmapIntensities by viewModel.heatmapIntensities.collectAsStateWithLifecycle()
+    val topApps by viewModel.topApps.collectAsStateWithLifecycle()
 
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -245,7 +245,7 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
                     dates.reversed()
                 }
 
-                HourlyHeatmap(dates = rangeDates, logs = weekHourlyLogs)
+                HourlyHeatmap(dates = rangeDates, intensities = heatmapIntensities)
                 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(
@@ -261,53 +261,59 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Dynamic Exhaustion Forecasting regression
+            // Daily App Top Offenders
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Data Exhaustion Forecast",
+                    text = "Daily App Top Offenders",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val isExhaustionSafe = estimatedRunoutDate == "Safe"
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(
-                                if (isExhaustionSafe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer, 
-                                RoundedCornerShape(24.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(if (isExhaustionSafe) "✓" else "📉", fontSize = if (isExhaustionSafe) 18.sp else 24.sp, color = if (isExhaustionSafe) Color.Green else MaterialTheme.colorScheme.error)
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = if (isExhaustionSafe) "Status Trajectory" else "Estimated Runout Date",
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = estimatedRunoutDate,
-                            color = if (isExhaustionSafe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                
+                if (topApps.isEmpty()) {
+                    Text(
+                        text = "No app usage detected for today yet.",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 13.sp
+                    )
+                } else {
+                    topApps.forEachIndexed { index, app ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("${index + 1}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = app.appName,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 15.sp,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            val mb = app.bytes / (1024f * 1024f)
+                            Text(
+                                text = String.format(Locale.getDefault(), "%.1f MB", mb),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = forecastMessage,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 13.sp,
-                    lineHeight = 20.sp
-                )
             }
         }
     }
@@ -408,15 +414,8 @@ fun LegendItem(label: String, value: String, color: Color) {
 }
 
 @Composable
-fun HourlyHeatmap(dates: List<String>, logs: List<HourlyUsageLog>) {
+fun HourlyHeatmap(dates: List<String>, intensities: List<Float>) {
     val colorPrimary = MaterialTheme.colorScheme.primary
-    
-    val logMap = remember(logs) {
-        logs.associateBy { Pair(it.dateStr, it.hour) }
-    }
-    val maxBytes = remember(logs) {
-        logs.maxOfOrNull { it.mobileBytes + it.wifiBytes }?.toFloat()?.coerceAtLeast(1f) ?: 1f
-    }
 
     androidx.compose.foundation.Canvas(
         modifier = Modifier
@@ -432,16 +431,9 @@ fun HourlyHeatmap(dates: List<String>, logs: List<HourlyUsageLog>) {
         val cornerRadius = 2.dp.toPx()
         
         for (r in 0 until rows) {
-            val d = dates.getOrNull(r) ?: ""
             for (c in 0 until cols) {
-                val log = logMap[Pair(d, c)]
-                val bytes = if (log != null) (log.mobileBytes + log.wifiBytes) else 0L
-                
-                val intensity = if (bytes == 0L) {
-                    0.08f
-                } else {
-                    (bytes.toFloat() / maxBytes).coerceIn(0.12f, 1f)
-                }
+                val index = r * cols + c
+                val intensity = if (index < intensities.size) intensities[index].coerceIn(0.08f, 1f) else 0.08f
                 
                 val x = c * (cellWidth + spacing)
                 val y = r * (cellHeight + spacing)

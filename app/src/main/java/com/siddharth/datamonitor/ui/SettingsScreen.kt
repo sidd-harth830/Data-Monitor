@@ -91,7 +91,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
     val alertsEnabled by themeManager.alertsEnabledFlow.collectAsStateWithLifecycle(initialValue = true)
     val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
-    val billingCycleDay by themeManager.billingCycleDayFlow.collectAsStateWithLifecycle(initialValue = 1)
+    val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
 
     val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.FOREST)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
@@ -467,58 +467,18 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Billing Cycle Reset
-        var billingCycleExpanded by remember { mutableStateOf(false) }
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "BILLING CYCLE START DATE",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                ExposedDropdownMenuBox(
-                    expanded = billingCycleExpanded,
-                    onExpandedChange = { billingCycleExpanded = !billingCycleExpanded }
-                ) {
-                    TextField(
-                        readOnly = true,
-                        value = "Day $billingCycleDay of month",
-                        onValueChange = { },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = billingCycleExpanded) },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedTextColor = MaterialTheme.colorScheme.primary,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-                        ),
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = billingCycleExpanded,
-                        onDismissRequest = { billingCycleExpanded = false }
-                    ) {
-                        (1..31).forEach { day ->
-                            DropdownMenuItem(
-                                text = { Text("Day $day of month") },
-                                onClick = {
-                                    scope.launch { themeManager.setBillingCycleDay(day) }
-                                    billingCycleExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         // Toggles
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
+                SettingToggle(
+                    title = "Data Saver Mode",
+                    subtitle = "Reduce background syncs to conserve battery/data",
+                    checked = dataSaverActive,
+                    onCheckedChange = { scope.launch { themeManager.setDataSaverActive(it) } }
+                )
+                
+                HorizontalDivider(color = Color.White.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 12.dp))
+
                 SettingToggle(
                     title = "Trigger Push Warning Alerts",
                     subtitle = "Get notified near limit",
