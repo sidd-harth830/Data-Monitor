@@ -64,9 +64,9 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val billingCycleDay by themeManager.billingCycleDayFlow.collectAsStateWithLifecycle(initialValue = 1)
 
     val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
-    val currentFont by themeManager.fontFlow.collectAsStateWithLifecycle(initialValue = AppFont.PREMIUM_SERIF)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
     val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
+    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -76,8 +76,9 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 48.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
-         .testTag("configs_parent_column")
+            .padding(top = 120.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .navigationBarsPadding()
+            .testTag("configs_parent_column")
     ) {
         Text(
             text = "CONFIG",
@@ -166,48 +167,146 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         }
         
         Spacer(modifier = Modifier.height(24.dp))
-        
-        // Font Selection
+
+        // In-App Color Customizer (App Accent Color)
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "TYPOGRAPHY",
+                    text = "APP ACCENT COLOR",
                     color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
                     fontSize = 12.sp,
                     letterSpacing = 1.5.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                ExposedDropdownMenuBox(
-                    expanded = fontDropdownExpanded,
-                    onExpandedChange = { fontDropdownExpanded = !fontDropdownExpanded }
-                ) {
-                    TextField(
-                        readOnly = true,
-                        value = currentFont.name.replace("_", " "),
-                        onValueChange = { },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fontDropdownExpanded) },
-                        colors = ExposedDropdownMenuDefaults.textFieldColors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedTextColor = MaterialTheme.colorScheme.primary,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-                        ),
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(
-                        expanded = fontDropdownExpanded,
-                        onDismissRequest = { fontDropdownExpanded = false }
-                    ) {
-                        AppFont.entries.forEach { font ->
-                            DropdownMenuItem(
-                                text = { Text(font.name.replace("_", " ")) },
-                                onClick = {
-                                    scope.launch { themeManager.setFont(font) }
-                                    fontDropdownExpanded = false
-                                }
-                            )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    val accentOptions = listOf("#19B1DC", "#A855F7", "#FF007F", "#00FFD1", "#FACC15", "#22C55E")
+                    accentOptions.forEach { hex ->
+                        val colorVal = androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(hex))
+                        val isSelected = appAccentHex == hex
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(colorVal, RoundedCornerShape(20.dp))
+                                .border(
+                                    width = if (isSelected) 3.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .fillMaxWidth()
+                                .padding(0.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Button(
+                                onClick = { scope.launch { themeManager.setAppAccent(hex) } },
+                                modifier = Modifier.fillMaxSize(),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                            ) {}
+                            if (isSelected) {
+                                Text("✓", color = MaterialTheme.colorScheme.background, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            }
                         }
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Live Network Ping & Latency Tester
+        var latencyValue by remember { mutableStateOf(-1L) }
+        var isPinging by remember { mutableStateOf(false) }
+        
+        LaunchedEffect(isPinging) {
+            if (isPinging) {
+                while (isPinging) {
+                    latencyValue = measureLatency()
+                    kotlinx.coroutines.delay(1500)
+                }
+            }
+        }
+
+        GlassCard(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "LIVE NETWORK HEALTH TESTER",
+                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Gauge Canvas
+                    Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+                        val indicatorColor = if (latencyValue in 0..100) Color.Green else if (latencyValue in 101..300) Color.Yellow else if (latencyValue > 300) Color.Red else Color.Gray.copy(alpha = 0.5f)
+                        val sweepAngle = if (latencyValue >= 0) ((latencyValue.toFloat() / 500f).coerceAtMost(1f) * 360f) else 0f
+                        
+                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                            // Track
+                            drawArc(
+                                color = Color.Gray.copy(alpha = 0.2f),
+                                startAngle = 0f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                            )
+                            if (sweepAngle > 0f) {
+                                drawArc(
+                                    color = indicatorColor,
+                                    startAngle = -90f,
+                                    sweepAngle = sweepAngle,
+                                    useCenter = false,
+                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                                )
+                            }
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = if (latencyValue >= 0) "$latencyValue" else if (isPinging) "..." else "Ping",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
+                                color = indicatorColor
+                            )
+                            if (latencyValue >= 0) {
+                                Text("ms", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSecondary)
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "GOOGLE DNS PING",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (latencyValue in 0..100) "Stable Network Signal" else if (latencyValue in 101..300) "Transient Buffer Bloat" else if (latencyValue > 300) "Highly unstable" else "Ready to track lag metrics",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Button(
+                        onClick = { isPinging = !isPinging },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isPinging) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            contentColor = if (isPinging) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(if (isPinging) "STOP" else "TEST PING", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -243,9 +342,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
                                 contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground
                             ),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                         ) {
-                            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -327,8 +427,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                     text = label,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    maxLines = 1
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                             }
                         }
@@ -475,5 +574,19 @@ fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedCh
                 uncheckedTrackColor = MaterialTheme.colorScheme.surface
             )
         )
+    }
+}
+
+suspend fun measureLatency(host: String = "8.8.8.8", port: Int = 53, timeoutMs: Int = 1500): Long {
+    return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
+        try {
+            val socket = java.net.Socket()
+            socket.connect(java.net.InetSocketAddress(host, port), timeoutMs)
+            socket.close()
+            System.currentTimeMillis() - startTime
+        } catch (e: Exception) {
+            -1L
+        }
     }
 }

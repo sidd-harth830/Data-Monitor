@@ -105,7 +105,6 @@ private fun Context.findActivity(): Activity? {
 @Composable
 fun DataMonitorTheme(
     theme: AppTheme = AppTheme.OLED_DARK,
-    font: AppFont = AppFont.PREMIUM_SERIF,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when (theme) {
@@ -117,7 +116,7 @@ fun DataMonitorTheme(
         AppTheme.SOLARIZED_LIGHT -> SolarizedLightColorScheme
     }
     
-    val typography = createTypography(font)
+    val typography = createTypography()
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -144,8 +143,7 @@ fun DynamicThemeProvider(
     content: @Composable () -> Unit
 ) {
     val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
-    val currentFont by themeManager.fontFlow.collectAsStateWithLifecycle(initialValue = AppFont.PREMIUM_SERIF)
 
-    DataMonitorTheme(theme = currentTheme, font = currentFont, content = content)
+    DataMonitorTheme(theme = currentTheme, content = content)
 }
 

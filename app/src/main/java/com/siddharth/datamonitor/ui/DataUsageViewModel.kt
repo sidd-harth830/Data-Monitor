@@ -14,7 +14,6 @@ import com.siddharth.datamonitor.utils.NetworkUsageTracker
 import com.siddharth.datamonitor.utils.PermissionsUtils
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 import com.siddharth.datamonitor.ui.theme.AppTheme
-import com.siddharth.datamonitor.ui.theme.AppFont
 import com.siddharth.datamonitor.ui.theme.DashboardLayoutPreference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -214,9 +213,19 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
             }
             _weekRecords.value = records
 
-            // Uses .first() snapshot flow to prevent overlapping background collectors
-            val logs = repository.getHourlyLogsForDates(dates).first()
-            _weekHourlyLogs.value = logs
+            if (PermissionsUtils.hasUsageStatsPermission(getApplication())) {
+                val realLogs = tracker.getHourlyUsageForLast7Days()
+                if (realLogs.isNotEmpty()) {
+                    _weekHourlyLogs.value = realLogs
+                    repository.insertHourlyLogs(realLogs)
+                } else {
+                    val logs = repository.getHourlyLogsForDates(dates).first()
+                    _weekHourlyLogs.value = logs
+                }
+            } else {
+                val logs = repository.getHourlyLogsForDates(dates).first()
+                _weekHourlyLogs.value = logs
+            }
         }
     }
 
@@ -245,41 +254,64 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
             val limitMB = themeManager.dataLimitFlow.first().toLongOrNull() ?: 2000L
             val billingDay = themeManager.billingCycleDayFlow.first()
             
-            val allRecs = repository.allRecords.first()
-            val last7Days = allRecs.take(7)
-            if (last7Days.isEmpty()) {
-                _estimatedRunoutDate.value = "Safe"
-                _forecastMessage.value = "Stable. Gathering historical usage metrics..."
-                return@launch
-            }
-
-            // Predict usage using a 7-day moving average
-            val avgBytesPerDay = last7Days.map { it.mobileBytes + it.wifiBytes }.average().coerceIn(1.0, Double.MAX_VALUE)
-            val limitBytes = limitMB * 1024L * 1024L
-            val bytesLeft = (limitBytes - totalTodayUsage).coerceAtLeast(0L)
-
-            val daysUntilExhaustion = bytesLeft.toDouble() / avgBytesPerDay
-
             val calendar = Calendar.getInstance()
             val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
+            
+            val cycleStartCal = Calendar.getInstance()
+            if (currentDay < billingDay) {
+                cycleStartCal.add(Calendar.MONTH, -1)
+            }
+            cycleStartCal.set(Calendar.DAY_OF_MONTH, billingDay)
+            cycleStartCal.set(Calendar.HOUR_OF_DAY, 0)
+            cycleStartCal.set(Calendar.MINUTE, 0)
+            cycleStartCal.set(Calendar.SECOND, 0)
+            cycleStartCal.set(Calendar.MILLISECOND, 0)
+            
+            val msElapsed = calendar.timeInMillis - cycleStartCal.timeInMillis
+            val daysElapsed = (msElapsed.toDouble() / (1000 * 60 * 60 * 24)).coerceAtLeast(1.0)
+            
+            val allRecs = repository.allRecords.first()
+            val dfStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            
+            val cycleRecords = allRecs.filter { rec ->
+                try {
+                    val recDate = dfStr.parse(rec.dateStr)
+                    recDate != null && !recDate.before(cycleStartCal.time)
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            
+            val consumedInCycle = cycleRecords.sumOf { it.mobileBytes + it.wifiBytes } + totalTodayUsage
+            val avgRealDailyUsage = (consumedInCycle.toDouble() / daysElapsed).coerceAtLeast(1.0)
+            
+            val limitBytes = limitMB * 1024L * 1024L
+            val bytesLeft = (limitBytes - totalTodayUsage).coerceAtLeast(0L)
+            
+            val daysUntilExhaustion = bytesLeft.toDouble() / avgRealDailyUsage
+            
             val resetCal = Calendar.getInstance()
             if (currentDay >= billingDay) {
                 resetCal.add(Calendar.MONTH, 1)
             }
             resetCal.set(Calendar.DAY_OF_MONTH, billingDay)
+            resetCal.set(Calendar.HOUR_OF_DAY, 0)
+            resetCal.set(Calendar.MINUTE, 0)
+            resetCal.set(Calendar.SECOND, 0)
             
             val msDiff = resetCal.timeInMillis - calendar.timeInMillis
             val cycleDaysLeft = (msDiff.toDouble() / (1000 * 60 * 60 * 24)).coerceAtLeast(1.0)
-
-            val mbUsageStr = String.format(Locale.getDefault(), "%.1f", avgBytesPerDay / (1024 * 1024))
-            if (daysUntilExhaustion >= cycleDaysLeft) {
+            
+            val mbUsageStr = String.format(Locale.getDefault(), "%.1f", avgRealDailyUsage / (1024.0 * 1024.0))
+            if (daysUntilExhaustion >= cycleDaysLeft || daysUntilExhaustion > 365) {
                 _estimatedRunoutDate.value = "Safe"
-                _forecastMessage.value = "Based on your current trajectory of $mbUsageStr MB/day, your data limit is safe and will last until the next cycle resets in ${cycleDaysLeft.toInt()} days."
+                _forecastMessage.value = "Based on your Average Real Daily Usage of $mbUsageStr MB/day, your daily data limit of $limitMB MB is safe and will last beyond the cycle start reset in ${cycleDaysLeft.toInt()} days."
             } else {
-                calendar.add(Calendar.DAY_OF_YEAR, daysUntilExhaustion.toInt().coerceAtLeast(1))
-                val runoutDateStr = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(calendar.time)
+                val forecastCal = Calendar.getInstance()
+                forecastCal.add(Calendar.DAY_OF_YEAR, daysUntilExhaustion.toInt().coerceAtLeast(1))
+                val runoutDateStr = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(forecastCal.time)
                 _estimatedRunoutDate.value = runoutDateStr
-                _forecastMessage.value = "Based on your current trajectory of $mbUsageStr MB/day, you will exceed your plan on $runoutDateStr (${(cycleDaysLeft - daysUntilExhaustion).toInt().coerceAtLeast(1)} days before the cycle resets)."
+                _forecastMessage.value = "Based on your Average Real Daily Usage of $mbUsageStr MB/day, you will exceed your daily limit on $runoutDateStr (${(cycleDaysLeft - daysUntilExhaustion).toInt().coerceAtLeast(1)} days before the cycle resets)."
             }
         }
     }

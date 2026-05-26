@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.siddharth.datamonitor.ui.theme.*
 import com.siddharth.datamonitor.utils.PermissionsUtils
@@ -33,6 +34,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
+import com.siddharth.datamonitor.R
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 
 @Composable
@@ -42,6 +44,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
     
     val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
+    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     val context = LocalContext.current
 
     
@@ -57,10 +60,16 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            if (hasPermission) {
+                GlassTopAppBar()
+            }
+        },
         bottomBar = {
             if (hasPermission) {
                 FloatingBottomNav(
                     currentRoute = currentRoute,
+                    appAccentHex = appAccentHex,
                     onNavigate = { route ->
                         navController.navigate(route) {
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
@@ -100,7 +109,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 }
 
 @Composable
-fun FloatingBottomNav(currentRoute: String, onNavigate: (String) -> Unit) {
+fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (String) -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,23 +124,32 @@ fun FloatingBottomNav(currentRoute: String, onNavigate: (String) -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val accentColor = Color(android.graphics.Color.parseColor(appAccentHex))
                 NavItem(
                     label = "Home",
+                    iconRes = R.drawable.ic_launcher_default,
+                    accentColor = accentColor,
                     isSelected = currentRoute == "home",
                     onClick = { onNavigate("home") }
                 )
                 NavItem(
-                    label = "History",
+                    label = "Analytics",
+                    iconRes = R.drawable.ic_launcher_complex,
+                    accentColor = accentColor,
                     isSelected = currentRoute == "history",
                     onClick = { onNavigate("history") }
                 )
                 NavItem(
                     label = "Profile",
+                    iconRes = R.drawable.ic_launcher_minimal,
+                    accentColor = accentColor,
                     isSelected = currentRoute == "profile",
                     onClick = { onNavigate("profile") }
                 )
                 NavItem(
                     label = "Config",
+                    iconRes = R.drawable.ic_launcher_default,
+                    accentColor = accentColor,
                     isSelected = currentRoute == "settings",
                     onClick = { onNavigate("settings") }
                 )
@@ -141,7 +159,7 @@ fun FloatingBottomNav(currentRoute: String, onNavigate: (String) -> Unit) {
 }
 
 @Composable
-fun NavItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
+fun NavItem(label: String, iconRes: Int, accentColor: Color, isSelected: Boolean, onClick: () -> Unit) {
     val haptic = LocalHapticFeedback.current
     
     Button(
@@ -150,19 +168,30 @@ fun NavItem(label: String, isSelected: Boolean, onClick: () -> Unit) {
             onClick() 
         },
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) GlassWhite else Color.Transparent,
-            contentColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary
+            containerColor = if (isSelected) accentColor.copy(alpha = 0.15f) else Color.Transparent,
+            contentColor = if (isSelected) accentColor else MaterialTheme.colorScheme.onSecondary
         ),
         shape = RoundedCornerShape(24.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         modifier = Modifier.defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
     ) {
-        Text(
-            text = label,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            fontSize = 12.sp,
-            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondary
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = label,
+                modifier = Modifier.size(16.dp),
+                tint = if (isSelected) accentColor else MaterialTheme.colorScheme.onSecondary
+            )
+            if (isSelected) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = label,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = accentColor
+                )
+            }
+        }
     }
 }
 
@@ -216,4 +245,49 @@ fun formatBytes(bytes: Long): String {
 
 fun bytesToMB(bytes: Long): Double {
     return bytes / 1_048_576.0
+}
+
+@Composable
+fun GlassTopAppBar() {
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
+    val tintColor = if (isLight) Color.White.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.45f)
+    val borderColor = if (isLight) Color.Black.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.18f)
+    val textColor = if (isLight) Color.Black else Color.White
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .padding(top = 12.dp, start = 24.dp, end = 24.dp, bottom = 4.dp)
+            .height(56.dp)
+            .graphicsLayer { alpha = 0.9f }
+    ) {
+        GlassCard(
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "📶 DATA MONITOR SYSTEM",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    ),
+                    color = textColor
+                )
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(Color.Green, RoundedCornerShape(4.dp))
+                )
+            }
+        }
+    }
 }

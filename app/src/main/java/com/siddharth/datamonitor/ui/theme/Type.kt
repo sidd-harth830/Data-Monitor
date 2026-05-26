@@ -6,12 +6,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-fun createTypography(fontSelection: AppFont): Typography {
-    val fontFamily = when (fontSelection) {
-        AppFont.PREMIUM_SERIF -> FontFamily.Serif
-        AppFont.CLEAN_SANS -> FontFamily.SansSerif
-        AppFont.TECH_MODE -> FontFamily.Monospace
-    }
+fun createTypography(): Typography {
+    val fontFamily = FontFamily.SansSerif
     
     val base = Typography()
 

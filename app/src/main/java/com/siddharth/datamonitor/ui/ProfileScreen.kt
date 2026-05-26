@@ -36,7 +36,8 @@ fun ProfileScreen(viewModel: DataUsageViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 48.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .padding(top = 120.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .navigationBarsPadding()
     ) {
         Text(
             text = "PROFILE",

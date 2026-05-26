@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.blur
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
 
 @Composable
 fun GlassCard(
@@ -57,10 +59,12 @@ fun GlassCard(
         )
         
         // Children content slot
-        Box(
-            modifier = Modifier,
-            content = content
-        )
+        CompositionLocalProvider(LocalContentColor provides if (isLight) Color.Black else Color.White) {
+            Box(
+                modifier = Modifier,
+                content = content
+            )
+        }
     }
 }
 

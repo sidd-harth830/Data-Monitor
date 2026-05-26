@@ -81,7 +81,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 48.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .padding(top = 120.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .navigationBarsPadding()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -372,8 +373,8 @@ fun DashboardLayoutPro(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // First Stats Card
-            GlassCard(modifier = Modifier.weight(1f).height(110.dp)) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+            GlassCard(modifier = Modifier.weight(1f).wrapContentHeight()) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
                     Text("TOTAL BANDWIDTH", color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -388,8 +389,8 @@ fun DashboardLayoutPro(
             }
             
             // Second Stats Card
-            GlassCard(modifier = Modifier.weight(1f).height(110.dp)) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+            GlassCard(modifier = Modifier.weight(1f).wrapContentHeight()) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
                     Text("REMAINING", color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(

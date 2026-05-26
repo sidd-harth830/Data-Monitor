@@ -17,7 +17,7 @@ class ThemeManager(private val context: Context) {
 
     companion object {
         val THEME_KEY = stringPreferencesKey("theme")
-        val FONT_KEY = stringPreferencesKey("font")
+        val APP_ACCENT_COLOR_KEY = stringPreferencesKey("app_accent")
         val DATA_LIMIT_KEY = stringPreferencesKey("data_limit_mb")
         val ALERTS_ENABLED_KEY = booleanPreferencesKey("alerts_enabled")
         val TRACK_SEPARATED_KEY = booleanPreferencesKey("track_separated")
@@ -37,12 +37,8 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    val fontFlow: Flow<AppFont> = context.dataStore.data.map { preferences ->
-        when (preferences[FONT_KEY]) {
-            AppFont.CLEAN_SANS.name -> AppFont.CLEAN_SANS
-            AppFont.TECH_MODE.name -> AppFont.TECH_MODE
-            else -> AppFont.PREMIUM_SERIF
-        }
+    val appAccentFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[APP_ACCENT_COLOR_KEY] ?: "#19B1DC"
     }
 
     val dashboardLayoutFlow: Flow<DashboardLayoutPreference> = context.dataStore.data.map { preferences ->
@@ -79,9 +75,9 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    suspend fun setFont(font: AppFont) {
+    suspend fun setAppAccent(accentHex: String) {
         context.dataStore.edit { preferences ->
-            preferences[FONT_KEY] = font.name
+            preferences[APP_ACCENT_COLOR_KEY] = accentHex
         }
     }
 
@@ -129,12 +125,6 @@ enum class AppTheme {
     PREMIUM_GLASS,
     MIDNIGHT_AMOLED,
     SOLARIZED_LIGHT
-}
-
-enum class AppFont {
-    PREMIUM_SERIF,
-    CLEAN_SANS,
-    TECH_MODE
 }
 
 enum class DashboardLayoutPreference {
