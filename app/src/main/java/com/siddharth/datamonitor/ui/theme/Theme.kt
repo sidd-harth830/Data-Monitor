@@ -9,6 +9,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
@@ -105,15 +106,22 @@ private fun Context.findActivity(): Activity? {
 @Composable
 fun DataMonitorTheme(
     theme: AppTheme = AppTheme.OLED_DARK,
+    appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (theme) {
+    val baseScheme = when (theme) {
         AppTheme.OLED_DARK -> OledColorScheme
         AppTheme.CYBER_NEON -> CyberpunkColorScheme
         AppTheme.MINIMAL_LIGHT -> MinimalLightColorScheme
         AppTheme.PREMIUM_GLASS -> PremiumGlassColorScheme
         AppTheme.MIDNIGHT_AMOLED -> MidnightAmoledColorScheme
         AppTheme.SOLARIZED_LIGHT -> SolarizedLightColorScheme
+    }
+    
+    val colorScheme = if (appAccentColor != null) {
+        baseScheme.copy(primary = appAccentColor)
+    } else {
+        baseScheme
     }
     
     val typography = createTypography()
@@ -143,7 +151,20 @@ fun DynamicThemeProvider(
     content: @Composable () -> Unit
 ) {
     val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.OLED_DARK)
+    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
 
-    DataMonitorTheme(theme = currentTheme, content = content)
+    val parsedAccentColor = remember(appAccentHex) {
+        try {
+            Color(android.graphics.Color.parseColor(appAccentHex))
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    DataMonitorTheme(
+        theme = currentTheme,
+        appAccentColor = parsedAccentColor,
+        content = content
+    )
 }
 

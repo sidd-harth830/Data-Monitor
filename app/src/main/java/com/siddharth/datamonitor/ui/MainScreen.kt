@@ -37,6 +37,12 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import com.siddharth.datamonitor.R
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+
 @Composable
 fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val navController = rememberNavController()
@@ -121,79 +127,55 @@ fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (S
     ) {
         GlassCard(
             shape = RoundedCornerShape(32.dp),
-            modifier = Modifier.fillMaxWidth().height(72.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
             ) {
-                val accentColor = Color(android.graphics.Color.parseColor(appAccentHex))
-                NavItem(
-                    label = "Home",
-                    iconRes = R.drawable.ic_launcher_default,
-                    accentColor = accentColor,
-                    isSelected = currentRoute == "home",
-                    onClick = { onNavigate("home") }
+                val haptic = LocalHapticFeedback.current
+                val items = listOf(
+                    Triple("home", "Home", Icons.Filled.Home),
+                    Triple("history", "Analytics", Icons.Filled.List),
+                    Triple("profile", "Profile", Icons.Filled.Person),
+                    Triple("settings", "Config", Icons.Filled.Settings)
                 )
-                NavItem(
-                    label = "Analytics",
-                    iconRes = R.drawable.ic_launcher_complex,
-                    accentColor = accentColor,
-                    isSelected = currentRoute == "history",
-                    onClick = { onNavigate("history") }
-                )
-                NavItem(
-                    label = "Profile",
-                    iconRes = R.drawable.ic_launcher_minimal,
-                    accentColor = accentColor,
-                    isSelected = currentRoute == "profile",
-                    onClick = { onNavigate("profile") }
-                )
-                NavItem(
-                    label = "Config",
-                    iconRes = R.drawable.ic_launcher_default,
-                    accentColor = accentColor,
-                    isSelected = currentRoute == "settings",
-                    onClick = { onNavigate("settings") }
-                )
-            }
-        }
-    }
-}
 
-@Composable
-fun NavItem(label: String, iconRes: Int, accentColor: Color, isSelected: Boolean, onClick: () -> Unit) {
-    val haptic = LocalHapticFeedback.current
-    
-    Button(
-        onClick = { 
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) 
-            onClick() 
-        },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) accentColor.copy(alpha = 0.15f) else Color.Transparent,
-            contentColor = if (isSelected) accentColor else MaterialTheme.colorScheme.onSecondary
-        ),
-        shape = RoundedCornerShape(24.dp),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-        modifier = Modifier.defaultMinSize(minWidth = 1.dp, minHeight = 1.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = label,
-                modifier = Modifier.size(16.dp),
-                tint = if (isSelected) accentColor else MaterialTheme.colorScheme.onSecondary
-            )
-            if (isSelected) {
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = label,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = accentColor
-                )
+                items.forEach { (route, label, icon) ->
+                    val isSelected = currentRoute == route
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onNavigate(route)
+                        },
+                        alwaysShowLabel = false,
+                        icon = {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = label,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = label,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            unselectedIconColor = MaterialTheme.colorScheme.onSecondary,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSecondary
+                        )
+                    )
+                }
             }
         }
     }

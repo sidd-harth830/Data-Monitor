@@ -416,10 +416,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                         .clip(RoundedCornerShape(8.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    androidx.compose.foundation.Image(
+                                    Icon(
                                         painter = androidx.compose.ui.res.painterResource(id = iconRes),
                                         contentDescription = label,
-                                        modifier = Modifier.fillMaxSize()
+                                        modifier = Modifier.fillMaxSize(),
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
