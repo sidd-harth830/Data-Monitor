@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.data
+package com.example.data
 
 import androidx.room.Dao
 import androidx.room.Insert

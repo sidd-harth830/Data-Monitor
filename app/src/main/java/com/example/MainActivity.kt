@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor
+package com.example
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,12 +10,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.siddharth.datamonitor.ui.DataUsageViewModel
-import com.siddharth.datamonitor.ui.MainScreen
-import com.siddharth.datamonitor.ui.theme.DataMonitorTheme
-import com.siddharth.datamonitor.ui.theme.ThemeManager
-import com.siddharth.datamonitor.ui.theme.DynamicThemeProvider
-import com.siddharth.datamonitor.worker.DataUsageSyncWorker
+import com.example.ui.DataUsageViewModel
+import com.example.ui.MainScreen
+import com.example.ui.theme.DataMonitorTheme
+import com.example.ui.theme.ThemeManager
+import com.example.ui.theme.DynamicThemeProvider
+import com.example.worker.DataUsageSyncWorker
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {

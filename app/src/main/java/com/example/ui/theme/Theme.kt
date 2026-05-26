@@ -1,6 +1,8 @@
-package com.siddharth.datamonitor.ui.theme
+package com.example.ui.theme
 
 import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -64,6 +66,15 @@ private val PremiumGlassColorScheme = darkColorScheme(
     onSurface = TextPrimary,
 )
 
+private fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
 @Composable
 fun DataMonitorTheme(
     theme: AppTheme = AppTheme.OLED_DARK,
@@ -82,8 +93,11 @@ fun DataMonitorTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = (theme == AppTheme.MINIMAL_LIGHT)
+            val activity = view.context.findActivity()
+            if (activity != null) {
+                val window = activity.window
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = (theme == AppTheme.MINIMAL_LIGHT)
+            }
         }
     }
 

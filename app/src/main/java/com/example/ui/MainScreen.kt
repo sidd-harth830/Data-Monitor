@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.ui
+package com.example.ui
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,8 +20,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.siddharth.datamonitor.ui.theme.*
-import com.siddharth.datamonitor.utils.PermissionsUtils
+import com.example.ui.theme.*
+import com.example.utils.PermissionsUtils
 import java.text.DecimalFormat
 
 import androidx.navigation.compose.NavHost
@@ -33,7 +33,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
-import com.siddharth.datamonitor.ui.theme.ThemeManager
+import com.example.ui.theme.ThemeManager
 
 @Composable
 fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {

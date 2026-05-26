@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.ui
+package com.example.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,11 +14,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.siddharth.datamonitor.ui.theme.PrimaryNeon
-import com.siddharth.datamonitor.ui.theme.SecondaryNeon
-import com.siddharth.datamonitor.ui.theme.TextPrimary
-import com.siddharth.datamonitor.ui.theme.TextSecondary
-import com.siddharth.datamonitor.ui.theme.WifiActive
+import com.example.ui.theme.PrimaryNeon
+import com.example.ui.theme.SecondaryNeon
+import com.example.ui.theme.TextPrimary
+import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.WifiActive
 
 @Composable
 fun ProfileScreen(viewModel: DataUsageViewModel) {

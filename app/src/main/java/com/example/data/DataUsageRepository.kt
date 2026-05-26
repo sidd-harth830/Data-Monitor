@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.data
+package com.example.data
 
 import kotlinx.coroutines.flow.Flow
 

@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.utils
+package com.example.utils
 
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager

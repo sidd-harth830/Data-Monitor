@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.ui
+package com.example.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -18,13 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.siddharth.datamonitor.data.DataUsageRecord
-import com.siddharth.datamonitor.data.HourlyUsageLog
-import com.siddharth.datamonitor.ui.theme.MobileActive
-import com.siddharth.datamonitor.ui.theme.PrimaryNeon
-import com.siddharth.datamonitor.ui.theme.TextPrimary
-import com.siddharth.datamonitor.ui.theme.TextSecondary
-import com.siddharth.datamonitor.ui.theme.WifiActive
+import com.example.data.DataUsageRecord
+import com.example.data.HourlyUsageLog
+import com.example.ui.theme.MobileActive
+import com.example.ui.theme.PrimaryNeon
+import com.example.ui.theme.TextPrimary
+import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.WifiActive
 import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
 import com.patrykandpatrick.vico.compose.chart.Chart

@@ -1,4 +1,4 @@
-package com.siddharth.datamonitor.worker
+package com.example.worker
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
