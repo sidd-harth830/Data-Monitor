@@ -32,52 +32,57 @@ import com.siddharth.datamonitor.ui.theme.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.testTag
 
-suspend fun changeAppIcon(context: Context, iconChoice: String) {
+fun changeAppIcon(context: Context, iconChoice: String) {
     Toast.makeText(context, "Applying icon...", Toast.LENGTH_SHORT).show()
-    delay(500)
+    
+    val activity = context as? android.app.Activity
+    activity?.finishAffinity()
+    
+    kotlinx.coroutines.GlobalScope.launch {
+        delay(1000)
 
-    val pm = context.packageManager
-    val basePackage = "com.siddharth.datamonitor" // match the main namespace package path
-    
-    val targets = mapOf(
-        "DEFAULT" to "$basePackage.MainActivityIconDefault",
-        "ICON_1" to "$basePackage.MainActivityIcon1",
-        "ICON_2" to "$basePackage.MainActivityIcon2",
-        "ICON_3" to "$basePackage.MainActivityIcon3",
-        "ICON_4" to "$basePackage.MainActivityIcon4",
-        "ICON_5" to "$basePackage.MainActivityIcon5"
-    )
-    
-    val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
-    
-    // 1. Enable the requested target FIRST
-    try {
-        pm.setComponentEnabledSetting(
-            ComponentName(context, targetClass),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
+        val pm = context.packageManager
+        val basePackage = "com.siddharth.datamonitor"
+        
+        val targets = mapOf(
+            "DEFAULT" to "$basePackage.MainActivityIconDefault",
+            "ICON_1" to "$basePackage.MainActivityIcon1",
+            "ICON_2" to "$basePackage.MainActivityIcon2",
+            "ICON_3" to "$basePackage.MainActivityIcon3",
+            "ICON_4" to "$basePackage.MainActivityIcon4",
+            "ICON_5" to "$basePackage.MainActivityIcon5"
         )
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
+        
+        val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
+        
+        // 1. Enable the requested target FIRST
+        try {
+            pm.setComponentEnabledSetting(
+                ComponentName(context, targetClass),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
 
-    // 2. Disable all OTHER targets
-    targets.forEach { (key, aliasClass) ->
-        if (aliasClass != targetClass) {
-            try {
-                pm.setComponentEnabledSetting(
-                    ComponentName(context, aliasClass),
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
+        // 2. Disable all OTHER targets
+        targets.forEach { (key, aliasClass) ->
+            if (aliasClass != targetClass) {
+                try {
+                    pm.setComponentEnabledSetting(
+                        ComponentName(context, aliasClass),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
+        
+        System.exit(0)
     }
-    
-    // 3. Gracefully close to apply changes and avoid Unrecoverable Channel broken exception
-    (context as? android.app.Activity)?.finishAffinity()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
