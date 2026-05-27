@@ -24,12 +24,25 @@ import java.util.*
 import com.siddharth.datamonitor.utils.AppUsageInfo
 import com.google.firebase.auth.FirebaseAuth
 
+data class UpdateInfo(
+    val versionCode: Int = 0,
+    val versionName: String = "",
+    val releaseNotes: String = "",
+    val downloadUrl: String = "",
+    val isMandatory: Boolean = false
+)
+
 class DataUsageViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DataUsageRepository
     private val tracker: NetworkUsageTracker
     private val themeManager: ThemeManager = ThemeManager(application)
     
     private val auth = FirebaseAuth.getInstance()
+    private val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+    
+    private val _updateState = MutableStateFlow<UpdateInfo?>(null)
+    val updateState: StateFlow<UpdateInfo?> = _updateState.asStateFlow()
+    
     private val _isAdmin = MutableStateFlow(false)
     val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
 
@@ -132,6 +145,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         
         startRealtimeUpdates()
         auth.addAuthStateListener(authStateListener)
+        startUpdateCheckListener()
         
         // Listen to changes on today's statistics to recalculate parameters in a non-leaking way
         viewModelScope.launch(Dispatchers.IO) {
@@ -402,6 +416,41 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun startUpdateCheckListener() {
+        firestore.collection("app_config").document("latest_update")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    error.printStackTrace()
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val vCodeLong = snapshot.getLong("versionCode") ?: 0L
+                    val vCode = vCodeLong.toInt()
+                    val vName = snapshot.getString("versionName") ?: ""
+                    val notes = snapshot.getString("releaseNotes") ?: ""
+                    val url = snapshot.getString("downloadUrl") ?: ""
+                    val mandatory = snapshot.getBoolean("isMandatory") ?: false
+                    
+                    val updateInfo = UpdateInfo(
+                        versionCode = vCode,
+                        versionName = vName,
+                        releaseNotes = notes,
+                        downloadUrl = url,
+                        isMandatory = mandatory
+                    )
+                    
+                    val localVersionCode = com.siddharth.datamonitor.BuildConfig.VERSION_CODE
+                    if (updateInfo.versionCode > localVersionCode) {
+                        _updateState.value = updateInfo
+                    } else {
+                        _updateState.value = null
+                    }
+                } else {
+                    _updateState.value = null
+                }
+            }
     }
 
     override fun onCleared() {

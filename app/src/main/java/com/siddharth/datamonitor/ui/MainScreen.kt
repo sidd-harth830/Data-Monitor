@@ -53,6 +53,12 @@ import androidx.compose.material.icons.rounded.NetworkCheck
 
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material.icons.rounded.CloudDownload
 
 @Composable
 fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
@@ -179,6 +185,155 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         }
                         composable("admin_dashboard") {
                             AdminDashboardScreen(onBack = { navController.popBackStack() })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val updateState by viewModel.updateState.collectAsStateWithLifecycle()
+    var isDismissedByUser by remember { mutableStateOf(false) }
+
+    updateState?.let { updateInfo ->
+        if (!isDismissedByUser || updateInfo.isMandatory) {
+            Dialog(
+                onDismissRequest = {
+                    if (!updateInfo.isMandatory) {
+                        isDismissedByUser = true
+                    }
+                },
+                properties = DialogProperties(
+                    dismissOnBackPress = !updateInfo.isMandatory,
+                    dismissOnClickOutside = !updateInfo.isMandatory
+                )
+            ) {
+                GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.85f)) // Extra dark overlay to ensure premium contrast
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CloudDownload,
+                            contentDescription = "System Update Available",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(56.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "SYSTEM UPDATE AVAILABLE",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp,
+                                fontSize = 11.sp
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(modifier = Modifier.height(6.dp))
+                        
+                        Text(
+                            text = "v${updateInfo.versionName}",
+                            style = MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "RELEASE NOTES",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                fontSize = 11.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(6.dp))
+                        
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 140.dp)
+                                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            val scrollState = rememberScrollState()
+                            Text(
+                                text = updateInfo.releaseNotes.ifEmpty { "Performance optimizations and system stability enhancements." },
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    lineHeight = 18.sp,
+                                    fontSize = 13.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
+                                modifier = Modifier.verticalScroll(scrollState)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
+                                context.startActivity(intent)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Text(
+                                "UPDATE NOW",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                        
+                        if (!updateInfo.isMandatory) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextButton(
+                                onClick = { isDismissedByUser = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp)
+                            ) {
+                                Text(
+                                    "REMIND ME LATER",
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "This update is required to maintain core gateway synchronization features.",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 10.sp,
+                                    textAlign = TextAlign.Center
+                                ),
+                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                            )
                         }
                     }
                 }

@@ -62,6 +62,14 @@ fun AdminDashboardScreen(
     // 2. Real Hardware Status States
     var workerStatus by remember { mutableStateOf("NOT ENQUEUED") }
     
+    val snackbarHostState = remember { SnackbarHostState() }
+    var newVersionCode by remember { mutableStateOf("44") }
+    var newVersionName by remember { mutableStateOf("2.9.1") }
+    var releaseNotes by remember { mutableStateOf("Premium update featuring global updater sync system with security hardening.") }
+    var apkUrl by remember { mutableStateOf("https://github.com/leocarnivas/datamonitor/releases/download/v2.9.1/app-debug.apk") }
+    var isMandatoryUpdate by remember { mutableStateOf(false) }
+    var isBroadcasting by remember { mutableStateOf(false) }
+    
     val dbFile = remember { context.getDatabasePath("data_usage_db") }
     val dbSizeFormatted = remember(forceSyncing) {
         val dbSizeInBytes = if (dbFile.exists()) dbFile.length() else 0L
@@ -124,7 +132,8 @@ fun AdminDashboardScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -226,6 +235,185 @@ fun AdminDashboardScreen(
                     }
                 }
                 
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Centralized firmware update parameters controller
+            item {
+                Text(
+                    text = "RELEASE MANAGEMENT GATEWAY",
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Text(
+                            text = "Broadcast Live Server Configuration",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+
+                        Text(
+                            text = "Configure and push central firmware metadata parameters to Firestore. Outdated student and developer client environments will be instantly prompted with a modal system update overlay.",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+
+                        OutlinedTextField(
+                            value = newVersionCode,
+                            onValueChange = { newVersionCode = it },
+                            label = { Text("Target Version Code (e.g. 44)", fontSize = 12.sp) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = newVersionName,
+                            onValueChange = { newVersionName = it },
+                            label = { Text("Target Version Name (e.g. 2.9.1)", fontSize = 12.sp) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = releaseNotes,
+                            onValueChange = { releaseNotes = it },
+                            label = { Text("Release & Rollout Notes", fontSize = 12.sp) },
+                            minLines = 2,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = apkUrl,
+                            onValueChange = { apkUrl = it },
+                            label = { Text("Remote ZIP/APK Download URL", fontSize = 12.sp) },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Enforce Mandatory Upgrade",
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    "When active, lock-out the user-interface until build matches broadcast criteria.",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp
+                                )
+                            }
+                            Switch(
+                                checked = isMandatoryUpdate,
+                                onCheckedChange = { isMandatoryUpdate = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                )
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val vCodeParsed = newVersionCode.toIntOrNull()
+                                if (vCodeParsed == null) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Error: Version Code must be a valid Integer.")
+                                    }
+                                    return@Button
+                                }
+                                if (newVersionName.isBlank() || releaseNotes.isBlank() || apkUrl.isBlank()) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Error: All release fields are strictly required.")
+                                    }
+                                    return@Button
+                                }
+
+                                isBroadcasting = true
+                                val data = mapOf(
+                                    "versionCode" to vCodeParsed,
+                                    "versionName" to newVersionName.trim(),
+                                    "releaseNotes" to releaseNotes.trim(),
+                                    "downloadUrl" to apkUrl.trim(),
+                                    "isMandatory" to isMandatoryUpdate
+                                )
+
+                                FirebaseFirestore.getInstance()
+                                    .collection("app_config")
+                                    .document("latest_update")
+                                    .set(data)
+                                    .addOnSuccessListener {
+                                        isBroadcasting = false
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Firmware update version v$newVersionName broadcasted successfully!")
+                                        }
+                                    }
+                                    .addOnFailureListener { error ->
+                                        isBroadcasting = false
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Transport Failure: ${error.localizedMessage}")
+                                        }
+                                    }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            enabled = !isBroadcasting
+                        ) {
+                            if (isBroadcasting) {
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text(
+                                    "BROADCAST UPDATE NOW",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
