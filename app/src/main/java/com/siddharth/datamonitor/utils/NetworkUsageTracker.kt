@@ -34,7 +34,8 @@ class NetworkUsageTracker(private val context: Context) {
             val bucket = NetworkStats.Bucket()
             while (stats.hasNextBucket()) {
                 stats.getNextBucket(bucket)
-                val uid = bucket.uid
+                val rawUid = bucket.uid
+                val uid = if (rawUid < 0) -5 else rawUid
                 val bytes = bucket.rxBytes + bucket.txBytes
                 appUsageMap[uid] = appUsageMap.getOrDefault(uid, 0L) + bytes
             }
@@ -43,7 +44,8 @@ class NetworkUsageTracker(private val context: Context) {
             val mobileStats = networkStatsManager.querySummary(ConnectivityManager.TYPE_MOBILE, null, startTime, endTime)
             while (mobileStats.hasNextBucket()) {
                 mobileStats.getNextBucket(bucket)
-                val uid = bucket.uid
+                val rawUid = bucket.uid
+                val uid = if (rawUid < 0) -5 else rawUid
                 val bytes = bucket.rxBytes + bucket.txBytes
                 appUsageMap[uid] = appUsageMap.getOrDefault(uid, 0L) + bytes
             }
@@ -66,24 +68,28 @@ class NetworkUsageTracker(private val context: Context) {
             .filter { it.value > 0 }
             .mapNotNull { entry ->
                 val uid = entry.key
-                val appInfo = uidToAppMap[uid]
-                if (appInfo != null) {
-                    val packageName = appInfo.packageName
-                    val appName = pm.getApplicationLabel(appInfo).toString()
-                    AppUsageInfo(packageName, appName, entry.value)
+                if (uid == -5) {
+                    AppUsageInfo("system.tethering", "Mobile Hotspot / System", entry.value)
                 } else {
-                    val packages = pm.getPackagesForUid(uid)
-                    if (!packages.isNullOrEmpty()) {
-                        val packageName = packages[0]
-                        try {
-                            val appInfoFallback = pm.getApplicationInfo(packageName, 0)
-                            val appName = pm.getApplicationLabel(appInfoFallback).toString()
-                            AppUsageInfo(packageName, appName, entry.value)
-                        } catch (e: PackageManager.NameNotFoundException) {
-                            AppUsageInfo(packageName, packageName, entry.value)
-                        }
+                    val appInfo = uidToAppMap[uid]
+                    if (appInfo != null) {
+                        val packageName = appInfo.packageName
+                        val appName = pm.getApplicationLabel(appInfo).toString()
+                        AppUsageInfo(packageName, appName, entry.value)
                     } else {
-                        null
+                        val packages = pm.getPackagesForUid(uid)
+                        if (!packages.isNullOrEmpty()) {
+                            val packageName = packages[0]
+                            try {
+                                val appInfoFallback = pm.getApplicationInfo(packageName, 0)
+                                val appName = pm.getApplicationLabel(appInfoFallback).toString()
+                                AppUsageInfo(packageName, appName, entry.value)
+                            } catch (e: PackageManager.NameNotFoundException) {
+                                AppUsageInfo(packageName, packageName, entry.value)
+                            }
+                        } else {
+                            null
+                        }
                     }
                 }
             }
@@ -101,21 +107,31 @@ class NetworkUsageTracker(private val context: Context) {
     
     fun getUsageForDay(transportType: Int, startTime: Long, endTime: Long): Long {
         val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
-        val subscriberId: String? = null // For API 28+, subscriberId is no longer needed/allowed for general queries if null is used properly, though it might throw SecurityException if not matched. Actually, for querying mobile data stats without subId, we can use null. Wait, API 28 requires it if we don't have READ_PHONE_STATE, but READ_PHONE_STATE is requested. However, since API 31 `null` corresponds to all.
-        // Let's use ConnectivityManager.TYPE_WIFI or TYPE_MOBILE instead of NetworkCapabilities transports. No, querySummaryForDevice uses ConnectivityManager types.
         val networkType = if (transportType == NetworkCapabilities.TRANSPORT_WIFI) {
             ConnectivityManager.TYPE_WIFI
         } else {
             ConnectivityManager.TYPE_MOBILE
         }
         
-        var bucket: NetworkStats.Bucket? = null
+        var totalBytes = 0L
         try {
-            bucket = networkStatsManager.querySummaryForDevice(networkType, null, startTime, endTime)
+            val stats = networkStatsManager.querySummary(networkType, null, startTime, endTime)
+            val bucket = NetworkStats.Bucket()
+            while (stats.hasNextBucket()) {
+                stats.getNextBucket(bucket)
+                totalBytes += bucket.rxBytes + bucket.txBytes
+            }
+            stats.close()
         } catch (e: Exception) {
             e.printStackTrace()
+            try {
+                val bucketDevice = networkStatsManager.querySummaryForDevice(networkType, null, startTime, endTime)
+                totalBytes = (bucketDevice?.rxBytes ?: 0L) + (bucketDevice?.txBytes ?: 0L)
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+            }
         }
-        return (bucket?.rxBytes ?: 0L) + (bucket?.txBytes ?: 0L)
+        return totalBytes
     }
 
     private fun getUsage(transportType: Int): Long {

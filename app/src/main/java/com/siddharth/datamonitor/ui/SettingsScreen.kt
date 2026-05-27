@@ -304,7 +304,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         LaunchedEffect(isPinging) {
             if (isPinging) {
                 while (isPinging) {
-                    latencyValue = measureLatency()
+                    val result = measureLatency()
+                    latencyValue = result
+                    if (result >= 0) {
+                        themeManager.recordPingResult(result)
+                    }
                     kotlinx.coroutines.delay(1500)
                 }
             }

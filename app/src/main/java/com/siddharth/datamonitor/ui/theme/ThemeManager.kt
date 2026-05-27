@@ -26,6 +26,7 @@ class ThemeManager(private val context: Context) {
         val APP_ICON_KEY = stringPreferencesKey("app_icon")
         val DATA_SAVER_ACTIVE_KEY = booleanPreferencesKey("data_saver_active")
         val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
+        val PING_QUALITY_LOG = stringPreferencesKey("ping_quality_log")
     }
 
     val themeFlow: Flow<AppTheme?> = context.dataStore.data.map { preferences ->
@@ -82,6 +83,34 @@ class ThemeManager(private val context: Context) {
 
     val skipLoginFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[SKIP_LOGIN_KEY] ?: false
+    }
+
+    val pingQualityLogFlow: Flow<List<Pair<Long, Long>>> = context.dataStore.data.map { preferences ->
+        val raw = preferences[PING_QUALITY_LOG] ?: ""
+        if (raw.isEmpty()) emptyList()
+        else {
+            raw.split(";").mapNotNull { item ->
+                val tokens = item.split(":")
+                if (tokens.size == 2) {
+                    val timestamp = tokens[0].toLongOrNull()
+                    val latency = tokens[1].toLongOrNull()
+                    if (timestamp != null && latency != null) {
+                        Pair(timestamp, latency)
+                    } else null
+                } else null
+            }
+        }
+    }
+
+    suspend fun recordPingResult(latency: Long) {
+        val currentTimestamp = System.currentTimeMillis()
+        context.dataStore.edit { preferences ->
+            val raw = preferences[PING_QUALITY_LOG] ?: ""
+            val items = if (raw.isEmpty()) mutableListOf() else raw.split(";").toMutableList()
+            items.add(0, "$currentTimestamp:$latency")
+            val truncated = items.take(5)
+            preferences[PING_QUALITY_LOG] = truncated.joinToString(";")
+        }
     }
 
     suspend fun setTheme(theme: AppTheme) {

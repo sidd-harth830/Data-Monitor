@@ -159,7 +159,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             )
                         }
                         composable("home") { DashboardScreen(viewModel, themeManager) }
-                        composable("history") { HistoryScreen(viewModel) }
+                        composable("history") { HistoryScreen(viewModel, themeManager) }
                         composable("profile") { 
                             ProfileScreen(
                                 viewModel = viewModel,

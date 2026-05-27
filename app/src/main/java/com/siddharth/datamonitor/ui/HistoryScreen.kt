@@ -1,7 +1,5 @@
 package com.siddharth.datamonitor.ui
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -11,81 +9,96 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.siddharth.datamonitor.data.DataUsageRecord
-import com.siddharth.datamonitor.data.HourlyUsageLog
 import com.siddharth.datamonitor.ui.theme.*
-import androidx.compose.ui.platform.testTag
-import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.rememberStartAxis
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.line.lineChart
-import com.patrykandpatrick.vico.compose.component.shape.shader.verticalGradient
-import com.patrykandpatrick.vico.core.chart.DefaultPointConnector
-import com.patrykandpatrick.vico.core.chart.line.LineChart.LineSpec
-import com.patrykandpatrick.vico.core.entry.FloatEntry
-import com.patrykandpatrick.vico.core.entry.entryModelOf
+import com.siddharth.datamonitor.ui.theme.ThemeManager
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.graphics.Brush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(viewModel: DataUsageViewModel) {
-    val selectedDate by viewModel.selectedDateStr.collectAsStateWithLifecycle()
-    val weekRecords by viewModel.weekRecords.collectAsStateWithLifecycle()
-    val weekHourlyLogs by viewModel.weekHourlyLogs.collectAsStateWithLifecycle()
-    val selectedDayRecord by viewModel.selectedDayRecord.collectAsStateWithLifecycle()
-    
+fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
+    val history by viewModel.history.collectAsStateWithLifecycle()
     val heatmapIntensities by viewModel.heatmapIntensities.collectAsStateWithLifecycle()
-    val topApps by viewModel.topApps.collectAsStateWithLifecycle()
+    val selectedDate by viewModel.selectedDateStr.collectAsStateWithLifecycle()
+    
+    val billingDay by themeManager.billingCycleDayFlow.collectAsStateWithLifecycle(initialValue = 1)
+    val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
+    val pingQualityLog by themeManager.pingQualityLogFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    val formattedDatePickerLabel = remember(selectedDate) {
+    val calendar = Calendar.getInstance()
+    val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
+    
+    // Day progress of the 30-day billing cycle
+    val cycleDay = if (currentDay >= billingDay) {
+        currentDay - billingDay + 1
+    } else {
+        val tempCal = Calendar.getInstance()
+        tempCal.add(Calendar.MONTH, -1)
+        val maxDaysInPrevMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        maxDaysInPrevMonth - billingDay + currentDay + 1
+    }
+    val cycleDayClamped = cycleDay.coerceIn(1, 30)
+    val billingProgressPercent = (cycleDayClamped.toFloat() / 30f) * 100f
+    
+    // Accumulate total cycle usage bytes
+    val cycleStartCal = Calendar.getInstance()
+    if (currentDay < billingDay) {
+        cycleStartCal.add(Calendar.MONTH, -1)
+    }
+    cycleStartCal.set(Calendar.DAY_OF_MONTH, billingDay)
+    cycleStartCal.set(Calendar.HOUR_OF_DAY, 0)
+    cycleStartCal.set(Calendar.MINUTE, 0)
+    cycleStartCal.set(Calendar.SECOND, 0)
+    cycleStartCal.set(Calendar.MILLISECOND, 0)
+    
+    val dfStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val cycleRecords = history.filter { rec ->
         try {
-            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
-            parser.parse(selectedDate)?.let { formatter.format(it) } ?: selectedDate
+            val recDate = dfStr.parse(rec.dateStr)
+            recDate != null && !recDate.before(cycleStartCal.time)
         } catch (e: Exception) {
-            selectedDate
+            false
         }
     }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = try {
-                SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(selectedDate)?.time
-            } catch (e: Exception) {
-                System.currentTimeMillis()
-            }
+    
+    val mobileToday by viewModel.todayMobile.collectAsStateWithLifecycle()
+    val wifiToday by viewModel.todayWifi.collectAsStateWithLifecycle()
+    val totalToday = mobileToday + wifiToday
+    
+    val cycleBytes = cycleRecords.sumOf { it.mobileBytes + it.wifiBytes } + totalToday
+    val cycleMB = cycleBytes / (1024f * 1024f)
+    
+    val limitMB = dataLimitMB.toFloatOrNull() ?: 2000f
+    val quotaUsagePercent = if (limitMB > 0) ((cycleMB / limitMB) * 100f).coerceIn(0f, 100f) else 0f
+    
+    val pacingRatio = if (billingProgressPercent > 0) (quotaUsagePercent / billingProgressPercent) else 0f
+    val (warningColor, warningLabel, pacingMessage) = when {
+        quotaUsagePercent >= 100f -> Triple(
+            MaterialTheme.colorScheme.error,
+            "LIMIT EXCEEDED",
+            "Warning: You have reached 100% of your current data threshold limit! All additional traffic is unmetered or metered at secondary premium rates."
         )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
-                        viewModel.selectDate(dateStr)
-                    }
-                    showDatePicker = false
-                }) {
-                    Text("Confirm")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+        pacingRatio > 1.25f -> Triple(
+            MaterialTheme.colorScheme.error,
+            "CRITICAL EXHAUSTION RISK",
+            "High data burn rate! You have consumed ${String.format(Locale.getDefault(), "%.1f", quotaUsagePercent)}% of your limit, but only ${String.format(Locale.getDefault(), "%.1f", billingProgressPercent)}% of your billing cycle has passed. Reduce streaming to avoid early exhaustion."
+        )
+        pacingRatio > 1.0f -> Triple(
+            MaterialTheme.colorScheme.tertiary,
+            "PACING ALERT",
+            "You are slightly ahead of your proportional cycle budget. You have used ${String.format(Locale.getDefault(), "%.1f", quotaUsagePercent)}% of data compared to ${String.format(Locale.getDefault(), "%.1f", billingProgressPercent)}% of the cycle. Lean on Wi-Fi."
+        )
+        else -> Triple(
+            MaterialTheme.colorScheme.primary,
+            "OPTIMAL PACE",
+            "Excellent budget control! Your data consumption matches the progress of your billing cycle. You are paced to safely finish the month with data to spare."
+        )
     }
 
     Column(
@@ -101,120 +114,6 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Date Selector Row (Wired to material DatePickerDialog)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            GlassCard(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center, 
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        text = "End of Cycle: $formattedDatePickerLabel", 
-                        color = MaterialTheme.colorScheme.primary, 
-                        fontWeight = FontWeight.Bold, 
-                        fontSize = 14.sp
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Button(
-                onClick = { showDatePicker = true },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.size(48.dp),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text("📅", fontSize = 18.sp)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Chart Area: weekly activity bytes
-        GlassCard(modifier = Modifier.fillMaxWidth().height(260.dp)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
-            ) {
-                Text(
-                    text = "Weekly Activity (MB)",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (weekRecords.isNotEmpty()) {
-                    val wifiEntries = weekRecords.mapIndexed { index, record ->
-                        FloatEntry(x = index.toFloat(), y = bytesToMB(record.wifiBytes).toFloat())
-                    }
-                    val mobileEntries = weekRecords.mapIndexed { index, record ->
-                        FloatEntry(x = index.toFloat(), y = bytesToMB(record.mobileBytes).toFloat())
-                    }
-
-                    if (wifiEntries.isNotEmpty()) {
-                        val chartEntryModel = entryModelOf(wifiEntries, mobileEntries)
-                        Chart(
-                            chart = lineChart(
-                                spacing = 32.dp,
-                                lines = listOf(
-                                    LineSpec(
-                                        lineColor = WifiActive.toArgb(),
-                                        lineBackgroundShader = verticalGradient(arrayOf(WifiActive.copy(alpha = 0.4f), Color.Transparent)),
-                                        pointConnector = DefaultPointConnector(cubicStrength = 0.5f)
-                                    ),
-                                    LineSpec(
-                                        lineColor = MobileActive.toArgb(),
-                                        lineBackgroundShader = verticalGradient(arrayOf(MobileActive.copy(alpha = 0.4f), Color.Transparent)),
-                                        pointConnector = DefaultPointConnector(cubicStrength = 0.5f)
-                                    )
-                                )
-                            ),
-                            model = chartEntryModel,
-                            startAxis = rememberStartAxis(),
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No data logs detected", color = MaterialTheme.colorScheme.onSecondary)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Donut Chart: Usage Breakdown
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Text(
-                    text = "Daily Usage Breakdown",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                val wifiMB = selectedDayRecord?.wifiBytes?.let { bytesToMB(it).toFloat() } ?: 0f
-                val mobileMB = selectedDayRecord?.mobileBytes?.let { bytesToMB(it).toFloat() } ?: 0f
-                val roamingMB = mobileMB * 0.05f // Estimate roaming details
-
-                DonutChart(wifi = wifiMB, mobile = mobileMB, roaming = roamingMB)
-            }
-        }
-        
         Spacer(modifier = Modifier.height(24.dp))
         
         // Heatmap: Hourly Tracker Matrix
@@ -261,25 +160,167 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-            // Daily App Top Offenders
+        // Feature 1: Data Burn Rate / Pacing Forecast
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = "Daily App Top Offenders",
+                    text = "Data Burn Rate / Pacing Forecast",
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                if (topApps.isEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Billing Cycle Progress",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = "Day $cycleDayClamped of 30",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Quota Used",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = String.format(Locale.getDefault(), "%.1f%% / %.0f MB", quotaUsagePercent, limitMB),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Overlay linear progress bars representing billing vs quota pacing
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(5.dp))
+                ) {
+                    // Quota Used fill
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(quotaUsagePercent / 100f)
+                            .background(warningColor, RoundedCornerShape(5.dp))
+                    )
+                    
+                    // Billing Cycle Day mark / overlay pointer
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(3.dp)
+                            .fillMaxWidth(billingProgressPercent / 100f)
+                            .background(Color.White.copy(alpha = 0.85f))
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        text = "No app usage detected for today yet.",
+                        text = "Quota progress",
+                        color = warningColor,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Cycle day cursor",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Color coded message badge
+                Surface(
+                    color = warningColor.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, warningColor.copy(alpha = 0.35f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(warningColor, RoundedCornerShape(4.dp))
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = warningLabel,
+                                color = warningColor,
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 11.sp,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = pacingMessage,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp
+                        )
+                    }
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Feature 2: Network Quality Log
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Network Quality Log (Last 5 Pings)",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                if (pingQualityLog.isEmpty()) {
+                    Text(
+                        text = "Waiting for network parameters. Run live Ping latency tests from the Config settings tab to populate stability history logs.",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 13.sp
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 } else {
-                    topApps.forEachIndexed { index, app ->
+                    pingQualityLog.forEachIndexed { index, pair ->
+                        val timestamp = pair.first
+                        val latency = pair.second
+                        val timeLabel = formatRelativeTime(timestamp)
+                        
+                        val statusColor = if (latency in 0..100) Color.Green else if (latency in 101..300) Color.Yellow else Color.Red
+                        val statusText = if (latency in 0..100) "Stable connection" else if (latency in 101..300) "Transient bufferbloat" else "Unstable packet delivery"
+                        
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -288,29 +329,32 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
-                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("${index + 1}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                            }
+                                    .size(10.dp)
+                                    .background(statusColor, RoundedCornerShape(5.dp))
+                            )
                             Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "$latency ms",
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp
+                                )
+                                Text(
+                                    text = statusText,
+                                    color = MaterialTheme.colorScheme.onSecondary,
+                                    fontSize = 11.sp
+                                )
+                            }
                             Text(
-                                text = app.appName,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                text = timeLabel,
+                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                                fontSize = 12.sp
                             )
-                            val mb = app.bytes / (1024f * 1024f)
-                            Text(
-                                text = String.format(Locale.getDefault(), "%.1f MB", mb),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            )
+                        }
+                        
+                        if (index < pingQualityLog.size - 1) {
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
                         }
                     }
                 }
@@ -319,97 +363,17 @@ fun HistoryScreen(viewModel: DataUsageViewModel) {
     }
 }
 
-@Composable
-fun DonutChart(wifi: Float, mobile: Float, roaming: Float) {
-    val total = wifi + mobile + roaming
-    
-    var animationPlayed by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        animationPlayed = true
-    }
-
-    val fraction by animateFloatAsState(
-        targetValue = if (animationPlayed) 1f else 0f,
-        animationSpec = tween(durationMillis = 1500),
-        label = "donutFraction"
-    )
-
-    val colorPrimary = MaterialTheme.colorScheme.primary
-    val colorTertiary = MaterialTheme.colorScheme.tertiary
-    val colorSecondary = MaterialTheme.colorScheme.secondary
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (total <= 0f) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(50.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("0%", color = MaterialTheme.colorScheme.onSecondary, fontSize = 14.sp)
-            }
-        } else {
-            val wifiAngleTarget = (wifi / total) * 360f
-            val mobileAngleTarget = (mobile / total) * 360f
-            val roamingAngleTarget = (roaming / total) * 360f
-
-            val wifiAngle = wifiAngleTarget * fraction
-            val mobileAngle = mobileAngleTarget * fraction
-            val roamingAngle = roamingAngleTarget * fraction
-
-            androidx.compose.foundation.Canvas(modifier = Modifier.size(100.dp)) {
-                val strokeWidth = 30f
-                drawArc(
-                    color = colorTertiary,
-                    startAngle = 0f,
-                    sweepAngle = wifiAngle,
-                    useCenter = false,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
-                )
-                drawArc(
-                    color = colorPrimary,
-                    startAngle = wifiAngle,
-                    sweepAngle = mobileAngle,
-                    useCenter = false,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
-                )
-                drawArc(
-                    color = colorSecondary,
-                    startAngle = wifiAngle + mobileAngle,
-                    sweepAngle = roamingAngle,
-                    useCenter = false,
-                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeWidth)
-                )
-            }
+// Relative timestamp helper for ping list
+fun formatRelativeTime(timestamp: Long): String {
+    val diff = System.currentTimeMillis() - timestamp
+    return when {
+        diff < 60_000 -> "Just now"
+        diff < 3600_000 -> "${diff / 60_000}m ago"
+        diff < 86400_000 -> "${diff / 3600_000}h ago"
+        else -> {
+            val sdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+            sdf.format(Date(timestamp))
         }
-        
-        Spacer(modifier = Modifier.width(24.dp))
-        
-        Column(modifier = Modifier.weight(1f)) {
-            val wifiPct = if (total > 0) ((wifi / total) * 100).toInt() else 0
-            val mobilePct = if (total > 0) ((mobile / total) * 100).toInt() else 0
-            val roamingPct = if (total > 0) ((roaming / total) * 100).toInt() else 0
-
-            LegendItem("Wi-Fi Connection", "$wifiPct%", colorTertiary)
-            LegendItem("Cellular Data", "$mobilePct%", colorPrimary)
-            LegendItem("Roaming Metrics", "$roamingPct%", colorSecondary)
-        }
-    }
-}
-
-@Composable
-fun LegendItem(label: String, value: String, color: Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically, 
-        modifier = Modifier.padding(vertical = 4.dp)
-    ) {
-        Box(modifier = Modifier.size(10.dp).background(color, RoundedCornerShape(5.dp)))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = label, color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
-        Text(text = value, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 12.sp)
     }
 }
 
@@ -420,7 +384,7 @@ fun HourlyHeatmap(dates: List<String>, intensities: List<Float>) {
     androidx.compose.foundation.Canvas(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
+            .height(130.dp)
             .padding(vertical = 8.dp)
     ) {
         val cols = 24
