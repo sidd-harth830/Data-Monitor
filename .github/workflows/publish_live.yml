@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       versionName:
-        description: 'Version Name (e.g., 3.5.1)'
+        description: 'Version Name (e.g., 3.5.2)'
         required: true
-        default: '3.5.1'
+        default: '3.5.2'
       runId:
         description: 'Source Github Actions Run ID'
         required: true
@@ -21,6 +21,9 @@ jobs:
       contents: write # Required to create public releases and upload assets
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       # Determine payload arguments depending on whether repository_dispatch or manual workflow_dispatch was invoked
       - name: Parse Inputs and Environment Setup
         run: |
@@ -37,8 +40,11 @@ jobs:
         run: |
           echo "Fetching artifact from private repository run ID: $SOURCE_RUN_ID"
           
-          # Call Github REST API to get artifact download link
-          ARTIFACT_URL=$(curl -s -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+          # Call Github REST API with compliant API version headers to get artifact download link
+          ARTIFACT_URL=$(curl -s \
+            -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/sid-yadav7307/Data-Monitor-Private/actions/runs/$SOURCE_RUN_ID/artifacts" \
             | jq -r '.artifacts[] | select(.name=="staged-apk") | .archive_download_url')
           
@@ -48,14 +54,17 @@ jobs:
           fi
           
           # Download zip archive and extract the contained app-debug.apk
-          curl -L -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+          curl -L \
+            -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
             -o staged-apk.zip "$ARTIFACT_URL"
             
           unzip staged-apk.zip -d extracted_app/
           mv extracted_app/app-debug.apk ./app-release-live.apk
 
       - name: Create Production Release on Public Repository
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: App Release v${{ env.VERSION_NAME }}
           tag_name: v${{ env.VERSION_NAME }}
