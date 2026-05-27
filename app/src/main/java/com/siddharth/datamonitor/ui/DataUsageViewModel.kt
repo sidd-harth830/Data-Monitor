@@ -22,11 +22,31 @@ import kotlinx.coroutines.Dispatchers
 import java.text.SimpleDateFormat
 import java.util.*
 import com.siddharth.datamonitor.utils.AppUsageInfo
+import com.google.firebase.auth.FirebaseAuth
 
 class DataUsageViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: DataUsageRepository
     private val tracker: NetworkUsageTracker
     private val themeManager: ThemeManager = ThemeManager(application)
+    
+    private val auth = FirebaseAuth.getInstance()
+    private val _isAdmin = MutableStateFlow(false)
+    val isAdmin: StateFlow<Boolean> = _isAdmin.asStateFlow()
+
+    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser
+        var hasGoogleOrGithub = false
+        if (user != null) {
+            for (profile in user.providerData) {
+                val pId = profile.providerId
+                if (pId == "google.com" || pId == "github.com") {
+                    hasGoogleOrGithub = true
+                    break
+                }
+            }
+        }
+        _isAdmin.value = user != null && user.email == "leocarnivas@gmail.com" && hasGoogleOrGithub
+    }
     
     val history: StateFlow<List<DataUsageRecord>>
     val todayHourlyLogs: StateFlow<List<HourlyUsageLog>>
@@ -109,6 +129,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
             )
         
         startRealtimeUpdates()
+        auth.addAuthStateListener(authStateListener)
         
         // Listen to changes on today's statistics to recalculate parameters in a non-leaking way
         viewModelScope.launch(Dispatchers.IO) {
@@ -379,5 +400,10 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        auth.removeAuthStateListener(authStateListener)
     }
 }

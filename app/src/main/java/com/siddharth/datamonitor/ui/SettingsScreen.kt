@@ -89,7 +89,7 @@ fun changeAppIcon(context: Context, iconChoice: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, onAdminPortalClick: () -> Unit) {
+fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
     val alertsEnabled by themeManager.alertsEnabledFlow.collectAsStateWithLifecycle(initialValue = true)
     val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
@@ -495,32 +495,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, on
                     subtitle = "Separate network analytics",
                     checked = trackSeparated,
                     onCheckedChange = { scope.launch { themeManager.setTrackSeparated(it) } }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = onAdminPortalClick,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.VerifiedUser,
-                    contentDescription = "Admin Portal",
-                    tint = MaterialTheme.colorScheme.onSecondary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "ENTER ADMIN PORTAL",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
                 )
             }
         }

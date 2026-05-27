@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.rounded.NetworkCheck
 
 import com.google.firebase.auth.FirebaseAuth
@@ -63,13 +64,13 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     val context = LocalContext.current
 
-    val skipLogin by themeManager.skipLoginFlow.collectAsStateWithLifecycle(initialValue = false)
+    val skipAuth by themeManager.skipLoginFlow.collectAsStateWithLifecycle(initialValue = false)
     val scope = rememberCoroutineScope()
     val auth = remember { FirebaseAuth.getInstance() }
     var currentAuthUser by remember { mutableStateOf(auth.currentUser) }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    val showBars = hasPermission && currentRoute != "admin_dashboard" && !(!skipLogin && currentAuthUser == null)
+    val showBars = hasPermission && currentRoute != "admin_dashboard" && currentRoute != "login"
     
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -81,89 +82,91 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         viewModel.checkPermission()
     }
 
-    if (!skipLogin && currentAuthUser == null) {
-        LoginScreen(
-            themeManager = themeManager,
-            onLoginSuccess = { currentAuthUser = auth.currentUser },
-            onSkip = {
-                scope.launch {
-                    themeManager.setSkipLogin(true)
-                }
+    LaunchedEffect(auth) {
+        auth.addAuthStateListener { firebaseAuth ->
+            currentAuthUser = firebaseAuth.currentUser
+        }
+    }
+
+    val startDestination = remember(skipAuth, currentAuthUser) {
+        if (currentAuthUser == null && !skipAuth) "login" else "home"
+    }
+
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            if (showBars) {
+                GlassTopAppBar()
             }
-        )
-    } else {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .statusBarsPadding(),
-            containerColor = MaterialTheme.colorScheme.background,
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-            topBar = {
-                if (showBars) {
-                    GlassTopAppBar()
-                }
-            },
-            bottomBar = {
-                if (showBars) {
-                    FloatingBottomNav(
-                        currentRoute = currentRoute,
-                        appAccentHex = appAccentHex,
-                        onNavigate = { route ->
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
+        },
+        bottomBar = {
+            if (showBars) {
+                val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
+                FloatingBottomNav(
+                    currentRoute = currentRoute,
+                    appAccentHex = appAccentHex,
+                    isAdmin = isAdmin,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                    )
-                }
+                    }
+                )
             }
-        ) { paddingValues ->
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)) {
-                
-                if (!hasPermission) {
-                    PermissionRequestScreen(
-                        onRequest = {
-                            permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
-                        }
-                    )
-                } else {
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
+            
+            if (!hasPermission) {
+                PermissionRequestScreen(
+                    onRequest = {
+                        permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
+                    }
+                )
+            } else {
+                key(startDestination) {
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = startDestination,
                         enterTransition = { fadeIn(tween(400)) },
                         exitTransition = { fadeOut(tween(400)) }
                     ) {
+                        composable("login") {
+                            LoginScreen(
+                                themeManager = themeManager,
+                                onLoginSuccess = {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onSkip = {
+                                    scope.launch {
+                                        themeManager.setSkipLogin(true)
+                                        navController.navigate("home") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    }
+                                }
+                            )
+                        }
                         composable("home") { DashboardScreen(viewModel, themeManager) }
                         composable("history") { HistoryScreen(viewModel) }
                         composable("profile") { 
                             ProfileScreen(
                                 viewModel = viewModel,
-                                onAdminPortalClick = {
-                                    val currentUser = auth.currentUser
-                                    var hasValidProvider = false
-                                    if (currentUser != null) {
-                                        for (profile in currentUser.providerData) {
-                                            val pId = profile.providerId
-                                            if (pId == "google.com" || pId == "github.com") {
-                                                hasValidProvider = true
-                                                break
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (currentUser != null && currentUser.email == "leocarnivas@gmail.com" && hasValidProvider) {
-                                        navController.navigate("admin_dashboard")
-                                    } else {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Insufficient Permissions or Invalid Provider",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        }
+                                themeManager = themeManager,
+                                onNavigateToAuth = {
+                                    navController.navigate("login") {
+                                        popUpTo(0) { inclusive = true }
                                     }
                                 }
                             )
@@ -171,31 +174,7 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         composable("settings") { 
                             SettingsScreen(
                                 viewModel = viewModel,
-                                themeManager = themeManager,
-                                onAdminPortalClick = {
-                                    val currentUser = auth.currentUser
-                                    var hasValidProvider = false
-                                    if (currentUser != null) {
-                                        for (profile in currentUser.providerData) {
-                                            val pId = profile.providerId
-                                            if (pId == "google.com" || pId == "github.com") {
-                                                hasValidProvider = true
-                                                break
-                                            }
-                                        }
-                                    }
-                                    
-                                    if (currentUser != null && currentUser.email == "leocarnivas@gmail.com" && hasValidProvider) {
-                                        navController.navigate("admin_dashboard")
-                                    } else {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Insufficient Permissions or Invalid Provider",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        }
-                                    }
-                                }
+                                themeManager = themeManager
                             )
                         }
                         composable("admin_dashboard") {
@@ -209,7 +188,12 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 }
 
 @Composable
-fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (String) -> Unit) {
+fun FloatingBottomNav(
+    currentRoute: String,
+    appAccentHex: String,
+    isAdmin: Boolean,
+    onNavigate: (String) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,12 +212,18 @@ fun FloatingBottomNav(currentRoute: String, appAccentHex: String, onNavigate: (S
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val haptic = LocalHapticFeedback.current
-                val items = listOf(
-                    Triple("home", "Home", Icons.Filled.Home),
-                    Triple("history", "Analytics", Icons.Filled.List),
-                    Triple("profile", "Profile", Icons.Filled.Person),
-                    Triple("settings", "Config", Icons.Filled.Settings)
-                )
+                val items = remember(isAdmin) {
+                    val base = mutableListOf(
+                        Triple("home", "Home", Icons.Filled.Home),
+                        Triple("history", "Analytics", Icons.Filled.List),
+                        Triple("profile", "Profile", Icons.Filled.Person),
+                        Triple("settings", "Config", Icons.Filled.Settings)
+                    )
+                    if (isAdmin) {
+                        base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
+                    }
+                    base
+                }
 
                 items.forEach { (route, label, icon) ->
                     val isSelected = currentRoute == route

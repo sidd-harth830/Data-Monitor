@@ -7,6 +7,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -15,8 +19,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,9 +32,16 @@ import com.siddharth.datamonitor.ui.theme.SecondaryNeon
 import com.siddharth.datamonitor.ui.theme.TextPrimary
 import com.siddharth.datamonitor.ui.theme.TextSecondary
 import com.siddharth.datamonitor.ui.theme.WifiActive
+import com.siddharth.datamonitor.ui.theme.ThemeManager
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit) {
+fun ProfileScreen(
+    viewModel: DataUsageViewModel,
+    themeManager: ThemeManager,
+    onNavigateToAuth: () -> Unit
+) {
     val history by viewModel.history.collectAsStateWithLifecycle()
     val totalSavings by viewModel.totalSavings.collectAsStateWithLifecycle()
     val peakUsage by viewModel.peakUsage.collectAsStateWithLifecycle()
@@ -49,13 +62,185 @@ fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit)
             .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
             .navigationBarsPadding()
     ) {
+        val auth = remember { FirebaseAuth.getInstance() }
+        val currentUser = auth.currentUser
+        val scope = rememberCoroutineScope()
+
         Text(
             text = "ALL-TIME ANALYTICS HUB",
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Account management card
+        Text(
+            text = "ACCOUNT MANAGEMENT",
+            color = MaterialTheme.colorScheme.onSecondary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                if (currentUser == null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(24.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Guest Lock",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Guest Account Status",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Unlock Cloud Sync & Analytics",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Real-time remote cloud synchronization and administrative developer logs are disabled in local Guest mode.",
+                        color = Color.White.copy(alpha = 0.5f),
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onNavigateToAuth,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Login,
+                                contentDescription = "Sign In",
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "SIGN IN / REGISTER",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(24.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "User",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = currentUser.displayName ?: currentUser.email ?: "Authorized User",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            val provider = remember(currentUser) {
+                                var pName = "Local Email"
+                                for (p in currentUser.providerData) {
+                                    when (p.providerId) {
+                                        "google.com" -> pName = "Google Sign-In"
+                                        "github.com" -> pName = "GitHub Sign-In"
+                                    }
+                                }
+                                pName
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Provider: $provider",
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    if (currentUser.email != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Email: ${currentUser.email}",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            auth.signOut()
+                            scope.launch {
+                                themeManager.setSkipLogin(false)
+                                onNavigateToAuth()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4949).copy(alpha = 0.85f)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ExitToApp,
+                                contentDescription = "Sign Out",
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "SIGN OUT / LOGOUT",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Total Accumulated Savings Card
         GlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -101,8 +286,16 @@ fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit)
                 Spacer(modifier = Modifier.height(24.dp))
 
                 val totalData = totalWifi + totalMobile
-                val wifiWeight = if (totalData > 0) totalWifi.toFloat() / totalData.toFloat() else 0.5f
-                val mobileWeight = if (totalData > 0) totalMobile.toFloat() / totalData.toFloat() else 0.5f
+                val safeWifiWeight = if (totalWifi == 0L && totalMobile == 0L) {
+                    0.5f
+                } else {
+                    (totalWifi.toFloat() / totalData.toFloat()).coerceIn(0.001f, 0.999f)
+                }
+                val safeCellWeight = if (totalWifi == 0L && totalMobile == 0L) {
+                    0.5f
+                } else {
+                    (totalMobile.toFloat() / totalData.toFloat()).coerceIn(0.001f, 0.999f)
+                }
 
                 Box(
                     modifier = Modifier
@@ -110,21 +303,29 @@ fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit)
                         .height(24.dp)
                         .background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                 ) {
-                    if (totalData > 0) {
-                        Row(modifier = Modifier.fillMaxSize()) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(wifiWeight)
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colorScheme.tertiary, androidx.compose.foundation.shape.RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp, topEnd = if (mobileWeight == 0f) 12.dp else 0.dp, bottomEnd = if (mobileWeight == 0f) 12.dp else 0.dp))
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(mobileWeight)
-                                    .fillMaxHeight()
-                                    .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(topStart = if (wifiWeight == 0f) 12.dp else 0.dp, bottomStart = if (wifiWeight == 0f) 12.dp else 0.dp, topEnd = 12.dp, bottomEnd = 12.dp))
-                            )
-                        }
+                    Row(modifier = Modifier.fillMaxSize()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(safeWifiWeight)
+                                .fillMaxHeight()
+                                .background(MaterialTheme.colorScheme.tertiary, androidx.compose.foundation.shape.RoundedCornerShape(
+                                    topStart = 12.dp, 
+                                    bottomStart = 12.dp, 
+                                    topEnd = if (totalMobile == 0L) 12.dp else 0.dp, 
+                                    bottomEnd = if (totalMobile == 0L) 12.dp else 0.dp
+                                ))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .weight(safeCellWeight)
+                                .fillMaxHeight()
+                                .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(
+                                    topStart = if (totalWifi == 0L) 12.dp else 0.dp, 
+                                    bottomStart = if (totalWifi == 0L) 12.dp else 0.dp, 
+                                    topEnd = 12.dp, 
+                                    bottomEnd = 12.dp
+                                ))
+                        )
                     }
                 }
 
@@ -221,31 +422,5 @@ fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit)
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onAdminPortalClick,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp)
-                .height(48.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Filled.VerifiedUser,
-                    contentDescription = "Admin Portal",
-                    tint = MaterialTheme.colorScheme.onSecondary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "ENTER ADMIN PORTAL",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-            }
-        }
     }
 }

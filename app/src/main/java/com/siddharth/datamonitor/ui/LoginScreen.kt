@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,9 +21,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,6 +42,51 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
 import com.siddharth.datamonitor.ui.theme.ThemeManager
+
+@Composable
+fun AuthGlassCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(24.dp),
+    content: @Composable BoxScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .graphicsLayer {
+                clip = true
+                this.shape = shape
+            }
+            .border(
+                width = 1.2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.22f),
+                        Color.White.copy(alpha = 0.03f)
+                    )
+                ),
+                shape = shape
+            )
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0.08f),
+                        Color.White.copy(alpha = 0.02f)
+                    )
+                )
+            )
+    ) {
+        // Frosty blur background
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .blur(20.dp)
+        )
+        
+        Box(
+            modifier = Modifier,
+            content = content
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,12 +105,13 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
-    val accentColor = Color(0xFF19B1DC) // Modern neon blue cyan accent matching existing design
+    val accentColor = Color(0xFF19B1DC) // Modern neon blue cyan
+    val neonPinkColor = Color(0xFFFF2A85) // Neon magenta accent
 
-    // Dynamic resource lookup for default_web_client_id to prevent any potential compile order issues.
+    // Dynamic resource lookup for default_web_client_id 
     val defaultWebClientId = remember {
         val resourceId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        if (resourceId != 0) context.getString(resourceId) else "123456789012-oauthcompilationdummy.apps.googleusercontent.com"
+        if (resourceId != 0) context.getString(resourceId) else "236997686171-pe3q3sktef5o2cug9vo0dtc22celp14u.apps.googleusercontent.com"
     }
 
     val googleSignInClient = remember {
@@ -105,25 +155,23 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF030A16)) // Ultra deep dark slate background matching system general background
+            .background(Color(0xFF070E18)) // Pure premium dark background (#070E18)
     ) {
-        // Aesthetic ambient aura background circles
+        // High contrast glowing layered auras in the background
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(240.dp)
-                .offset(x = 50.dp, y = (-50).dp)
-                .clip(RoundedCornerShape(120.dp))
-                .background(Brush.radialGradient(listOf(accentColor.copy(alpha = 0.25f), Color.Transparent)))
+                .size(280.dp)
+                .offset(x = 60.dp, y = (-60).dp)
+                .background(Brush.radialGradient(listOf(accentColor.copy(alpha = 0.22f), Color.Transparent)))
         )
         
         Box(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .size(320.dp)
-                .offset(x = (-80).dp, y = 120.dp)
-                .clip(RoundedCornerShape(160.dp))
-                .background(Brush.radialGradient(listOf(Color(0xFFFF2A85).copy(alpha = 0.18f), Color.Transparent))) // Pink aura
+                .size(340.dp)
+                .offset(x = (-90).dp, y = 100.dp)
+                .background(Brush.radialGradient(listOf(neonPinkColor.copy(alpha = 0.16f), Color.Transparent)))
         )
 
         Column(
@@ -135,30 +183,30 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             Text(
                 text = "DATA MONITOR",
                 color = Color.White,
-                fontSize = 28.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp,
+                letterSpacing = 2.5.sp,
                 textAlign = TextAlign.Center
             )
             
             Text(
-                text = "V2.2.0 SECURE CORE OVERLORD",
+                text = "V2.3.0 CORE ENGINE ATTAINED",
                 color = accentColor,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.6.sp,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
+                letterSpacing = 2.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 28.dp)
             )
 
-            GlassCard(
+            AuthGlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -167,7 +215,7 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Authentication Gate",
+                        text = "Authentication Portal",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
@@ -177,8 +225,9 @@ fun LoginScreen(
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage ?: "",
-                            color = Color(0xFFFF4949),
+                            color = Color(0xFFFF5252),
                             fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(bottom = 12.dp),
                             textAlign = TextAlign.Center
                         )
@@ -246,7 +295,7 @@ fun LoginScreen(
                                 if (email.isBlank() || password.isBlank()) {
                                     errorMessage = "Please enter email and password"
                                     return@Button
-                                }
+                                  }
                                 isLoading = true
                                 auth.signInWithEmailAndPassword(email.trim(), password.trim())
                                     .addOnSuccessListener {
@@ -302,7 +351,6 @@ fun LoginScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Modern divider block 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -387,7 +435,7 @@ fun LoginScreen(
                                     horizontalArrangement = Arrangement.Center
                                 ) {
                                     Canvas(modifier = Modifier.size(8.dp)) {
-                                        drawCircle(color = Color(0xFF24292E))
+                                        drawCircle(color = Color(0xFFE2E4E6))
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("GitHub", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -398,7 +446,7 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             TextButton(
                 onClick = onSkip,
