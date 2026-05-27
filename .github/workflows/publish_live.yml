@@ -1,8 +1,6 @@
 name: Public Production Rollout (Live Release)
 
 on:
-  repository_dispatch:
-    types: [approve_staging]
   workflow_dispatch:
     inputs:
       versionName:
@@ -10,11 +8,8 @@ on:
         required: true
         default: '3.5.2'
       runId:
-        description: 'Source Github Actions Run ID'
+        description: 'Source Github Actions Run ID (From Private Repo)'
         required: true
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   publish_live:
@@ -27,37 +22,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Parse Inputs and Environment Setup
-        run: |
-          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
-            echo "VERSION_NAME=${{ github.event.client_payload.versionName }}" >> $GITHUB_ENV
-            echo "SOURCE_RUN_ID=${{ github.event.client_payload.runId }}" >> $GITHUB_ENV
-          else
-            echo "VERSION_NAME=${{ github.event.inputs.versionName }}" >> $GITHUB_ENV
-            echo "SOURCE_RUN_ID=${{ github.event.inputs.runId }}" >> $GITHUB_ENV
-          fi
-
-      # Completely rewritten to use the official v4 action for cross-repo downloads
       - name: Download Staged APK from Private Repository
         uses: actions/download-artifact@v4
         with:
           name: staged-apk
           repository: sid-yadav7307/Data-Monitor-Private
-          run-id: ${{ env.SOURCE_RUN_ID }}
+          run-id: ${{ github.event.inputs.runId }}
           github-token: ${{ secrets.PRIVATE_REPO_READ_TOKEN }}
           path: extracted_app/
 
       - name: Create Production Release on Public Repository
         uses: softprops/action-gh-release@v2
         with:
-          name: App Release v${{ env.VERSION_NAME }}
-          tag_name: v${{ env.VERSION_NAME }}
-          # The downloaded artifact will be exactly here:
+          name: App Release v${{ github.event.inputs.versionName }}
+          tag_name: v${{ github.event.inputs.versionName }}
           files: extracted_app/app-debug.apk
           draft: false
           prerelease: false
           body: |
-            ## Modern Data Usage Monitor (v${{ env.VERSION_NAME }}) - Production Build
-            - Dual-Repository automated compiler pipeline promotion.
-            - This release has been officially reviewed, sanctioned, and broadcasted via the Admin Approval Gate.
+            ## Modern Data Usage Monitor (v${{ github.event.inputs.versionName }})
+            - Automated compiler pipeline promotion.
             - Safe, compiled, and unmetered client update delivery target.
