@@ -5,6 +5,11 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+# This permanently silences the Node 20 deprecation warnings
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   build_staging:
     name: Compile and Stage Artifact
@@ -21,19 +26,33 @@ jobs:
           distribution: 'zulu'
           cache: gradle
 
-      # CRITICAL FIX: Strips hidden Windows formatting that causes Exit Code 1
-      - name: Fix Windows Line Endings in Gradle
-        run: sed -i 's/\r$//' gradlew
-
-      - name: Grant Execute Permission
-        run: chmod +x gradlew
-
-      - name: Build Secure Application Binary
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Auto-Find and Build APK
+        run: |
+          echo "🔍 Searching your repository for the Android build file..."
+          GRADLE_PATH=$(find . -name "gradlew" -type f | head -n 1)
+          
+          if [ -z "$GRADLE_PATH" ]; then
+            echo "::error::CRITICAL FAILURE: The 'gradlew' file is missing from your GitHub repository. You must make sure your Android project files were fully uploaded."
+            exit 1
+          fi
+          
+          GRADLE_DIR=$(dirname "$GRADLE_PATH")
+          echo "✅ Found Android project inside: $GRADLE_DIR"
+          
+          echo "📂 Navigating to folder..."
+          cd "$GRADLE_DIR"
+          
+          echo "🛠️ Fixing Windows formatting bugs..."
+          sed -i 's/\r$//' gradlew
+          chmod +x gradlew
+          
+          echo "🚀 Compiling the App..."
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload Compiled Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: staged-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          # We use wildcard '**' so it finds the APK no matter what folder it is in
+          path: '**/app/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
