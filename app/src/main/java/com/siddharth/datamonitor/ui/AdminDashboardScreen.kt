@@ -1,5 +1,11 @@
 package com.siddharth.datamonitor.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.DataObject
+import androidx.compose.material.icons.filled.FilePresent
+import androidx.compose.material.icons.filled.Key
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.*
@@ -63,12 +69,39 @@ fun AdminDashboardScreen(
     var workerStatus by remember { mutableStateOf("NOT ENQUEUED") }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    var newVersionCode by remember { mutableStateOf("44") }
-    var newVersionName by remember { mutableStateOf("2.9.1") }
-    var releaseNotes by remember { mutableStateOf("Premium update featuring global updater sync system with security hardening.") }
-    var apkUrl by remember { mutableStateOf("https://github.com/leocarnivas/datamonitor/releases/download/v2.9.1/app-debug.apk") }
+    var newVersionCode by remember { mutableStateOf("45") }
+    var newVersionName by remember { mutableStateOf("3.1.0") }
+    var releaseNotes by remember { mutableStateOf("Major system stability upgrade with remote GitHub OTA sync portal integration.") }
+    var apkUrl by remember { mutableStateOf("https://github.com/sidd-harth830/datamonitor/releases/download/v3.1.0/DataMonitor_v3.1.0.apk") }
     var isMandatoryUpdate by remember { mutableStateOf(false) }
-    var isBroadcasting by remember { mutableStateOf(false) }
+    
+    // AdminViewModel configuration binding
+    val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val selectedApkUri by adminViewModel.selectedApkUri.collectAsState()
+    val selectedApkFileName by adminViewModel.selectedApkFileName.collectAsState()
+    val isUploading by adminViewModel.isUploading.collectAsState()
+    val uploadStatus by adminViewModel.uploadStatus.collectAsState()
+
+    val githubToken by adminViewModel.githubToken.collectAsState()
+    val githubOwner by adminViewModel.githubOwner.collectAsState()
+    val githubRepo by adminViewModel.githubRepo.collectAsState()
+
+    var showGithubTokensSection by remember { mutableStateOf(false) }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            var fileName = "Selected APK"
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (nameIndex != -1 && cursor.moveToFirst()) {
+                    fileName = cursor.getString(nameIndex)
+                }
+            }
+            adminViewModel.selectApk(uri, fileName)
+        }
+    }
     
     val dbFile = remember { context.getDatabasePath("data_usage_db") }
     val dbSizeFormatted = remember(forceSyncing) {
@@ -255,24 +288,118 @@ fun AdminDashboardScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
-                            text = "Broadcast Live Server Configuration",
+                            text = "Secure GitHub Cloud Release Panel",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
 
                         Text(
-                            text = "Configure and push central firmware metadata parameters to Firestore. Outdated student and developer client environments will be instantly prompted with a modal system update overlay.",
+                            text = "Auto-compiles updates, delivers free OTA downloads via GitHub releases, and syncs remote metadata records directly to Firestore nodes.",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
 
+                        // Collapsible GitHub API credentials configuration card
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Key,
+                                        contentDescription = "GitHub Keys",
+                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Endpoint Handshake Config",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                TextButton(
+                                    onClick = { showGithubTokensSection = !showGithubTokensSection },
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text(
+                                        text = if (showGithubTokensSection) "HIDE" else "SHOW",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
+                            if (showGithubTokensSection) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                OutlinedTextField(
+                                    value = githubToken,
+                                    onValueChange = { adminViewModel.githubToken.value = it },
+                                    label = { Text("GitHub PAT (Access Token)", fontSize = 11.sp) },
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = githubOwner,
+                                        onValueChange = { adminViewModel.githubOwner.value = it },
+                                        label = { Text("Owner (Username)", fontSize = 11.sp) },
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                        ),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = githubRepo,
+                                        onValueChange = { adminViewModel.githubRepo.value = it },
+                                        label = { Text("Repo Name", fontSize = 11.sp) },
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                        ),
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Version parameters fields
                         OutlinedTextField(
                             value = newVersionCode,
                             onValueChange = { newVersionCode = it },
-                            label = { Text("Target Version Code (e.g. 44)", fontSize = 12.sp) },
+                            label = { Text("Target Version Code (e.g. 45)", fontSize = 12.sp) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -285,7 +412,7 @@ fun AdminDashboardScreen(
                         OutlinedTextField(
                             value = newVersionName,
                             onValueChange = { newVersionName = it },
-                            label = { Text("Target Version Name (e.g. 2.9.1)", fontSize = 12.sp) },
+                            label = { Text("Target Version Name (e.g. 3.1.0)", fontSize = 12.sp) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -308,18 +435,56 @@ fun AdminDashboardScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        OutlinedTextField(
-                            value = apkUrl,
-                            onValueChange = { apkUrl = it },
-                            label = { Text("Remote ZIP/APK Download URL", fontSize = 12.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        // Select APK asset card selector 
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.FilePresent,
+                                        contentDescription = "APK Icon",
+                                        tint = if (selectedApkUri != null) Color(0xFF00FF87) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = selectedApkFileName ?: "No APK Selected",
+                                            color = if (selectedApkUri != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp
+                                        )
+                                        Text(
+                                            text = if (selectedApkUri != null) "Ready for release sync upload" else "Please pick the target .apk installation binary",
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                            fontSize = 10.sp
+                                        )
+                                    }
+                                }
+
+                                Button(
+                                    onClick = { filePickerLauncher.launch("application/vnd.android.package-archive") },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                    enabled = !isUploading
+                                ) {
+                                    Text("PICK APK", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -346,8 +511,33 @@ fun AdminDashboardScreen(
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.primary,
                                     checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                )
+                                ),
+                                enabled = !isUploading
                             )
+                        }
+
+                        // Status Information Message
+                        if (isUploading) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = uploadStatus,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
 
                         Button(
@@ -359,57 +549,52 @@ fun AdminDashboardScreen(
                                     }
                                     return@Button
                                 }
-                                if (newVersionName.isBlank() || releaseNotes.isBlank() || apkUrl.isBlank()) {
+                                if (newVersionName.isBlank() || releaseNotes.isBlank()) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Error: All release fields are strictly required.")
+                                        snackbarHostState.showSnackbar("Error: Version Name and Release Notes are required.")
+                                    }
+                                    return@Button
+                                }
+                                if (selectedApkUri == null) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Error: Please select an APK file to upload.")
                                     }
                                     return@Button
                                 }
 
-                                isBroadcasting = true
-                                val data = mapOf(
-                                    "versionCode" to vCodeParsed,
-                                    "versionName" to newVersionName.trim(),
-                                    "releaseNotes" to releaseNotes.trim(),
-                                    "downloadUrl" to apkUrl.trim(),
-                                    "isMandatory" to isMandatoryUpdate
+                                adminViewModel.uploadApkToGithub(
+                                    versionCode = vCodeParsed,
+                                    versionName = newVersionName.trim(),
+                                    releaseNotes = releaseNotes.trim(),
+                                    isMandatory = isMandatoryUpdate,
+                                    onSuccess = {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Successfully pushed to GitHub & Broadcasted update!")
+                                        }
+                                    },
+                                    onError = { error ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(error)
+                                        }
+                                    }
                                 )
-
-                                FirebaseFirestore.getInstance()
-                                    .collection("app_config")
-                                    .document("latest_update")
-                                    .set(data)
-                                    .addOnSuccessListener {
-                                        isBroadcasting = false
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar("Firmware update version v$newVersionName broadcasted successfully!")
-                                        }
-                                    }
-                                    .addOnFailureListener { error ->
-                                        isBroadcasting = false
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar("Transport Failure: ${error.localizedMessage}")
-                                        }
-                                    }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            enabled = !isBroadcasting
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            enabled = !isUploading
                         ) {
-                            if (isBroadcasting) {
-                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            } else {
-                                Text(
-                                    "BROADCAST UPDATE NOW",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    letterSpacing = 1.sp
-                                )
-                            }
+                            Text(
+                                "UPLOAD & BROADCAST UPDATE",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                letterSpacing = 1.sp
+                            )
                         }
                     }
                 }
