@@ -95,7 +95,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
     val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
 
-    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.FOREST)
+    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val defaultThemeSet = if (isSystemDark) AppTheme.MIDNIGHT_AMOLED else AppTheme.LAVENDER_HAZE
+    val currentThemeRaw by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = null)
+    val currentTheme = currentThemeRaw ?: defaultThemeSet
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
     
     val scope = rememberCoroutineScope()

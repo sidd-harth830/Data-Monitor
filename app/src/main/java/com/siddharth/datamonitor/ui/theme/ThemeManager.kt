@@ -28,7 +28,7 @@ class ThemeManager(private val context: Context) {
         val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
     }
 
-    val themeFlow: Flow<AppTheme> = context.dataStore.data.map { preferences ->
+    val themeFlow: Flow<AppTheme?> = context.dataStore.data.map { preferences ->
         when (preferences[THEME_KEY]) {
             AppTheme.SPRING.name -> AppTheme.SPRING
             AppTheme.DESERT.name -> AppTheme.DESERT
@@ -40,7 +40,7 @@ class ThemeManager(private val context: Context) {
             AppTheme.CYBERPUNK.name -> AppTheme.CYBERPUNK
             AppTheme.LAVENDER_HAZE.name -> AppTheme.LAVENDER_HAZE
             AppTheme.MATRIX.name -> AppTheme.MATRIX
-            else -> AppTheme.FOREST
+            else -> null
         }
     }
 

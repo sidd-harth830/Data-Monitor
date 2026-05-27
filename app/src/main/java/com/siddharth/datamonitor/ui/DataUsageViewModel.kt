@@ -35,17 +35,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         val user = firebaseAuth.currentUser
-        var hasGoogleOrGithub = false
-        if (user != null) {
-            for (profile in user.providerData) {
-                val pId = profile.providerId
-                if (pId == "google.com" || pId == "github.com") {
-                    hasGoogleOrGithub = true
-                    break
-                }
-            }
-        }
-        _isAdmin.value = user != null && user.email == "leocarnivas@gmail.com" && hasGoogleOrGithub
+        _isAdmin.value = user != null && user.email == "leocarnivas@gmail.com"
     }
     
     val history: StateFlow<List<DataUsageRecord>>

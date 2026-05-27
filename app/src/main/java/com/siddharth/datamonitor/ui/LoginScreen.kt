@@ -4,7 +4,6 @@ import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -22,7 +21,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -41,6 +39,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
+import com.siddharth.datamonitor.BuildConfig
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 
 @Composable
@@ -55,23 +54,16 @@ fun AuthGlassCard(
                 clip = true
                 this.shape = shape
             }
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             .border(
                 width = 1.2.dp,
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0.22f),
-                        Color.White.copy(alpha = 0.03f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
                     )
                 ),
                 shape = shape
-            )
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.08f),
-                        Color.White.copy(alpha = 0.02f)
-                    )
-                )
             )
     ) {
         // Frosty blur background
@@ -105,8 +97,8 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
-    val accentColor = Color(0xFF19B1DC) // Modern neon blue cyan
-    val neonPinkColor = Color(0xFFFF2A85) // Neon magenta accent
+    val accentColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
 
     // Dynamic resource lookup for default_web_client_id 
     val defaultWebClientId = remember {
@@ -144,22 +136,32 @@ fun LoginScreen(
                     }
                     .addOnFailureListener { e ->
                         isLoading = false
-                        errorMessage = e.localizedMessage ?: "Google Authenticator Sync Failed"
+                        if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                            errorMessage = "Account exists. Please use the method you originally signed up with."
+                            Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
+                        } else {
+                            errorMessage = e.localizedMessage ?: "Google Authenticator Sync Failed"
+                        }
                     }
             } else {
                 isLoading = false
                 errorMessage = "Failed to extract Google Identification Token"
             }
-        } catch (e: ApiException) {
+        } catch (e: Exception) {
             isLoading = false
-            errorMessage = "Google Sign-In Error (Code: ${e.statusCode})"
+            if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                errorMessage = "Account exists. Please use the method you originally signed up with."
+                Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
+            } else {
+                errorMessage = "Google Sign-In Error: ${e.localizedMessage}"
+            }
         }
     }
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF070E18)) // Pure premium dark background (#070E18)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // High contrast glowing layered auras in the background
         Box(
@@ -175,7 +177,7 @@ fun LoginScreen(
                 .align(Alignment.BottomStart)
                 .size(340.dp)
                 .offset(x = (-90).dp, y = 100.dp)
-                .background(Brush.radialGradient(listOf(neonPinkColor.copy(alpha = 0.16f), Color.Transparent)))
+                .background(Brush.radialGradient(listOf(secondaryColor.copy(alpha = 0.16f), Color.Transparent)))
         )
 
         Column(
@@ -191,7 +193,7 @@ fun LoginScreen(
             
             Text(
                 text = "DATA MONITOR",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 2.5.sp,
@@ -199,7 +201,7 @@ fun LoginScreen(
             )
             
             Text(
-                text = "V2.3.0 CORE ENGINE ATTAINED",
+                text = "V${BuildConfig.VERSION_NAME} SECURE CORE OVERLORD",
                 color = accentColor,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -220,7 +222,7 @@ fun LoginScreen(
                 ) {
                     Text(
                         text = "Authentication Portal",
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -240,15 +242,15 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it; errorMessage = null },
-                        label = { Text("Email Address", color = Color.White.copy(alpha = 0.6f)) },
+                        label = { Text("Email Address", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = accentColor) },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = accentColor,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -260,21 +262,21 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; errorMessage = null },
-                        label = { Text("Password", color = Color.White.copy(alpha = 0.6f)) },
+                        label = { Text("Password", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = accentColor) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                                Icon(icon, contentDescription = "Password Visibility", tint = Color.White.copy(alpha = 0.6f))
+                                Icon(icon, contentDescription = "Password Visibility", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = accentColor,
-                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                         ),
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -299,7 +301,7 @@ fun LoginScreen(
                                 if (email.isBlank() || password.isBlank()) {
                                     errorMessage = "Please enter email and password"
                                     return@Button
-                                  }
+                                }
                                 isLoading = true
                                 auth.signInWithEmailAndPassword(email.trim(), password.trim())
                                     .addOnSuccessListener {
@@ -316,13 +318,13 @@ fun LoginScreen(
                                         errorMessage = e.localizedMessage ?: "Sign In Failed"
                                     }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                            colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
                         ) {
-                            Text("LOGIN", color = Color.Black, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text("LOGIN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -367,16 +369,16 @@ fun LoginScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = Color.White.copy(alpha = 0.12f))
+                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
                             Text(
                                 text = "OR CONTINUE WITH",
-                                color = Color.White.copy(alpha = 0.4f),
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
                                 modifier = Modifier.padding(horizontal = 12.dp)
                             )
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = Color.White.copy(alpha = 0.12f))
+                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -385,7 +387,7 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Google Sign-In Card
+                            // Google Sign-In Button
                             OutlinedButton(
                                 onClick = {
                                     isLoading = true
@@ -394,9 +396,12 @@ fun LoginScreen(
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 border = ButtonDefaults.outlinedButtonBorder.copy(
-                                    brush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.15f), Color.White.copy(alpha = 0.05f)))
+                                    brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)))
                                 ),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
@@ -405,15 +410,18 @@ fun LoginScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Canvas(modifier = Modifier.size(8.dp)) {
-                                        drawCircle(color = Color(0xFFEA4335))
-                                    }
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_google),
+                                        contentDescription = "Google Icon",
+                                        tint = Color.Unspecified,
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Google", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("Google", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
 
-                            // GitHub Sign-In Card
+                            // GitHub Sign-In Button
                             OutlinedButton(
                                 onClick = {
                                     if (activity != null) {
@@ -431,7 +439,12 @@ fun LoginScreen(
                                             }
                                             .addOnFailureListener { e ->
                                                 isLoading = false
-                                                errorMessage = e.localizedMessage ?: "GitHub Federated Sync Failed"
+                                                if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
+                                                    errorMessage = "Account exists. Please use the method you originally signed up with."
+                                                    Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
+                                                } else {
+                                                    errorMessage = e.localizedMessage ?: "GitHub Federated Sync Failed"
+                                                }
                                             }
                                     } else {
                                         errorMessage = "Internal Error: Active Activity missing."
@@ -439,9 +452,12 @@ fun LoginScreen(
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 border = ButtonDefaults.outlinedButtonBorder.copy(
-                                    brush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.15f), Color.White.copy(alpha = 0.05f)))
+                                    brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)))
                                 ),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(48.dp)
@@ -450,11 +466,14 @@ fun LoginScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Canvas(modifier = Modifier.size(8.dp)) {
-                                        drawCircle(color = Color(0xFFE2E4E6))
-                                    }
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_github),
+                                        contentDescription = "GitHub Icon",
+                                        tint = Color.Unspecified,
+                                        modifier = Modifier.size(18.dp)
+                                    )
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text("GitHub", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("GitHub", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                         }
@@ -470,7 +489,7 @@ fun LoginScreen(
                     com.siddharth.datamonitor.utils.UserTelemetrySync.sync("guest_$androidID", "Guest User", "Guest")
                     onSkip()
                 },
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.White.copy(alpha = 0.6f))
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
             ) {
                 Text(
                     text = "SKIP / CONTINUE AS GUEST →",

@@ -113,7 +113,10 @@ fun DynamicThemeProvider(
     themeManager: ThemeManager,
     content: @Composable () -> Unit
 ) {
-    val currentTheme by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = AppTheme.FOREST)
+    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val defaultTheme = if (isSystemDark) AppTheme.MIDNIGHT_AMOLED else AppTheme.LAVENDER_HAZE
+    val currentThemeRaw by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = null)
+    val currentTheme = currentThemeRaw ?: defaultTheme
 
     DataMonitorTheme(
         theme = currentTheme,

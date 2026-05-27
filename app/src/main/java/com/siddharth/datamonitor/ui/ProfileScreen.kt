@@ -27,6 +27,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
 import com.siddharth.datamonitor.ui.theme.PrimaryNeon
 import com.siddharth.datamonitor.ui.theme.SecondaryNeon
 import com.siddharth.datamonitor.ui.theme.TextPrimary
@@ -84,7 +88,29 @@ fun ProfileScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .border(
+                    width = 1.2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                )
+        ) {
+            // Background blur layer (does not blur child text content)
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                    .blur(20.dp)
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -112,7 +138,7 @@ fun ProfileScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "Guest Account Status",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -128,7 +154,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Real-time remote cloud synchronization and administrative developer logs are disabled in local Guest mode.",
-                        color = Color.White.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         fontSize = 12.sp,
                         lineHeight = 16.sp
                     )
@@ -176,7 +202,7 @@ fun ProfileScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = currentUser.displayName ?: currentUser.email ?: "Authorized User",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -193,7 +219,7 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Provider: $provider",
-                                color = MaterialTheme.colorScheme.onSecondary,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                 fontSize = 12.sp
                             )
                         }
@@ -203,7 +229,7 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Email: ${currentUser.email}",
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                             fontSize = 13.sp
                         )
                     }
@@ -217,7 +243,7 @@ fun ProfileScreen(
                                 onNavigateToAuth()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF4949).copy(alpha = 0.85f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().height(48.dp)
                     ) {
@@ -225,13 +251,13 @@ fun ProfileScreen(
                             Icon(
                                 imageVector = Icons.Default.ExitToApp,
                                 contentDescription = "Sign Out",
-                                tint = Color.White
+                                tint = MaterialTheme.colorScheme.onError
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "SIGN OUT / LOGOUT",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onError,
                                 letterSpacing = 1.sp
                             )
                         }
