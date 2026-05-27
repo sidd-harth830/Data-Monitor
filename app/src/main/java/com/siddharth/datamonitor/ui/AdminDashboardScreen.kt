@@ -69,18 +69,16 @@ fun AdminDashboardScreen(
     var workerStatus by remember { mutableStateOf("NOT ENQUEUED") }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    var newVersionCode by remember { mutableStateOf("46") }
-    var isMandatoryUpdate by remember { mutableStateOf(false) }
+    var newVersionCode by remember { mutableStateOf("48") }
+    var isMandatoryUpdate by remember { mutableStateOf(true) }
     
     // AdminViewModel configuration binding
     val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val isUploading by adminViewModel.isUploading.collectAsState()
     val uploadStatus by adminViewModel.uploadStatus.collectAsState()
-    val fetchedRelease by adminViewModel.fetchedRelease.collectAsState()
-
+    val publicRelease by adminViewModel.publicRelease.collectAsState()
     val githubOwner by adminViewModel.githubOwner.collectAsState()
     val githubRepo by adminViewModel.githubRepo.collectAsState()
-
     var showGithubSection by remember { mutableStateOf(false) }
     
     val dbFile = remember { context.getDatabasePath("data_usage_db") }
@@ -268,14 +266,14 @@ fun AdminDashboardScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
-                            text = "Automated GitHub Release Portal",
+                            text = "Dual-Repo Approval Gate",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
 
                         Text(
-                            text = "Fetches automated releases built securely via GitHub Actions CI/CD pipelines, and broadcasts live install configurations to client environments using Firestore nodes.",
+                            text = "Monitors a separate public repository for compiled production updates to bypass private source restrictions. Fetch the metadata, review release details, and approve live client distribution.",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
@@ -298,13 +296,13 @@ fun AdminDashboardScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.Key,
-                                        contentDescription = "GitHub Config",
+                                        contentDescription = "Handshake Config",
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Target GitHub Repository",
+                                        "Target Public Release Repository",
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold
@@ -359,11 +357,11 @@ fun AdminDashboardScreen(
                             }
                         }
 
-                        // Version code input configuration field
+                        // Version inputs
                         OutlinedTextField(
                             value = newVersionCode,
                             onValueChange = { newVersionCode = it },
-                            label = { Text("Broadcast Version Code Target (e.g. 46)", fontSize = 12.sp) },
+                            label = { Text("Required Version Code (e.g. 48)", fontSize = 12.sp) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -373,13 +371,13 @@ fun AdminDashboardScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        // Action Button 1: Fetch details from GitHub release 
+                        // Fetch Action button
                         Button(
                             onClick = {
-                                adminViewModel.fetchLatestGitHubRelease(
+                                adminViewModel.fetchLatestPublicRelease(
                                     onSuccess = { info ->
                                         scope.launch {
-                                            snackbarHostState.showSnackbar("Successfully fetched v${info.versionName} from GitHub!")
+                                            snackbarHostState.showSnackbar("Successfully resolved production release v${info.versionName} via unauthenticated channel.")
                                         }
                                     },
                                     onError = { error ->
@@ -399,80 +397,97 @@ fun AdminDashboardScreen(
                                 .height(44.dp),
                             enabled = !isUploading
                         ) {
-                            Text("FETCH LATEST GITHUB RELEASE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("FETCH LATEST PUBLIC RELEASE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
 
-                        // Glassmorphism preview card for fetched release content
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
-                                .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
-                                .padding(16.dp)
-                        ) {
-                            val activeRelease = fetchedRelease
-                            if (activeRelease != null) {
+                        // Show fetched Release Information
+                        val activeRelease = publicRelease
+                        if (activeRelease != null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF00FF87).copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                    .border(1.dp, Color(0xFF00FF87).copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.VerifiedUser,
-                                        contentDescription = "Release Available",
+                                        contentDescription = "Public Build Verified",
                                         tint = Color(0xFF00FF87),
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = "Release Preview: v${activeRelease.versionName}",
+                                        text = "Resolved Public Build: v${activeRelease.versionName}",
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "BINARY DOWNLOAD LINK:",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = activeRelease.downloadUrl,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 11.sp,
-                                    lineHeight = 15.sp,
-                                    modifier = Modifier.padding(bottom = 8.dp)
-                                )
-                                Text(
-                                    text = "COMPILED RELEASE NOTES:",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = activeRelease.releaseNotes,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                    fontSize = 11.sp,
-                                    lineHeight = 16.sp
-                                )
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DataObject,
-                                        contentDescription = "No Release Data",
-                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                
+                                Divider(color = Color.White.copy(alpha = 0.08f))
+
+                                Column {
                                     Text(
-                                        text = "Please fetch to display release information",
+                                        text = "PUBLIC DOWNLOAD MIRROR LINK:",
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = activeRelease.downloadUrl,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp
                                     )
                                 }
+
+                                Column {
+                                    Text(
+                                        text = "PUBLIC REPOSITORY RELEASE NOTES:",
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = activeRelease.releaseNotes,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        fontSize = 11.sp,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
+                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                    .padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DataObject,
+                                    contentDescription = "No release fetched yet",
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Text(
+                                    text = "Ready to Query Releases Channel",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Tap 'FETCH LATEST PUBLIC RELEASE' above. Dual-Repository sync automatically detects the latest builds created via secure private Actions compiler scripts.",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontSize = 10.sp,
+                                    lineHeight = 15.sp,
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
 
@@ -536,23 +551,16 @@ fun AdminDashboardScreen(
                                 val vCodeParsed = newVersionCode.toIntOrNull()
                                 if (vCodeParsed == null) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Error: Version Code must be a valid Integer.")
+                                        snackbarHostState.showSnackbar("Error: Target Version Code must be a valid integer.")
                                     }
                                     return@Button
                                 }
-                                if (fetchedRelease == null) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Error: Please fetch a release from GitHub first.")
-                                    }
-                                    return@Button
-                                }
-
-                                adminViewModel.broadcastUpdateToUsers(
+                                adminViewModel.approveAndBroadcastPublicRelease(
                                     versionCode = vCodeParsed,
                                     isMandatory = isMandatoryUpdate,
                                     onSuccess = {
                                         scope.launch {
-                                            snackbarHostState.showSnackbar("Successfully Broadcasted Update To All Clients!")
+                                            snackbarHostState.showSnackbar("Release Approved! Successfully Broadcasted Live Update to Student Clients.")
                                         }
                                     },
                                     onError = { error ->
@@ -570,10 +578,10 @@ fun AdminDashboardScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            enabled = !isUploading && fetchedRelease != null
+                            enabled = !isUploading && activeRelease != null
                         ) {
                             Text(
-                                "BROADCAST UPDATE TO USERS",
+                                "APPROVE & BROADCAST LIVE UPDATE",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 letterSpacing = 1.sp

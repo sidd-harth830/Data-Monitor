@@ -16,7 +16,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-data class FetchedReleaseInfo(
+data class PublicReleaseInfo(
     val versionName: String,
     val releaseNotes: String,
     val downloadUrl: String
@@ -30,37 +30,41 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
 
-    private val _fetchedRelease = MutableStateFlow<FetchedReleaseInfo?>(null)
-    val fetchedRelease: StateFlow<FetchedReleaseInfo?> = _fetchedRelease.asStateFlow()
+    private val _publicRelease = MutableStateFlow<PublicReleaseInfo?>(null)
+    val publicRelease: StateFlow<PublicReleaseInfo?> = _publicRelease.asStateFlow()
 
-    // Configurable repo details (authenticated is not needed for GET /releases/latest)
-    var githubOwner = MutableStateFlow("sidd-harth830")
-    var githubRepo = MutableStateFlow("Data-Monitor")
+    // Dual-Repo Public Target Configuration details
+    val githubOwner = MutableStateFlow("sidd-harth830")
+    val githubRepo = MutableStateFlow("Data-Monitor-Releases")
+
+    private val db = FirebaseFirestore.getInstance()
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    fun fetchLatestGitHubRelease(
-        onSuccess: (FetchedReleaseInfo) -> Unit,
+    fun fetchLatestPublicRelease(
+        onSuccess: (PublicReleaseInfo) -> Unit,
         onError: (String) -> Unit
     ) {
         val owner = githubOwner.value.trim()
         val repo = githubRepo.value.trim()
 
         if (owner.isEmpty() || repo.isEmpty()) {
-            onError("Error: GitHub Owner and Repository are required.")
+            onError("Error: Target owner and public repository name are required.")
             return
         }
 
         _isUploading.value = true
-        _uploadStatus.value = "Fetching latest release from GitHub..."
+        _uploadStatus.value = "Connecting to public repository gateway..."
 
         viewModelScope.launch {
             try {
                 val info = withContext(Dispatchers.IO) {
                     val url = "https://api.github.com/repos/$owner/$repo/releases/latest"
+                    
+                    // Unauthenticated request ensures 100% security for client/admin
                     val request = Request.Builder()
                         .url(url)
                         .get()
@@ -77,28 +81,28 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                     val json = JSONObject(bodyStr)
                     val tagName = json.optString("tag_name", "")
                     if (tagName.isEmpty()) {
-                        throw IOException("Latest release tag_name is empty or not found.")
+                        throw IOException("Null tag name returned from GitHub release info.")
                     }
 
-                    // Strip leading 'v' if present for clean display
+                    // Clean the leading version prefix if existing
                     val versionName = if (tagName.startsWith("v")) tagName.substring(1) else tagName
-                    val releaseNotes = json.optString("body", "No release notes specified.")
+                    val releaseNotes = json.optString("body", "Production release verification compiled via Dual-Repo runner.")
 
                     val assets = json.optJSONArray("assets")
                     if (assets == null || assets.length() == 0) {
-                        throw IOException("The latest release contains no binaries/assets.")
+                        throw IOException("The compiled public release does not specify any assets.")
                     }
-                    val firstAsset = assets.getJSONObject(0)
-                    val downloadUrl = firstAsset.getString("browser_download_url")
+                    val mainAsset = assets.getJSONObject(0)
+                    val downloadUrl = mainAsset.getString("browser_download_url")
 
-                    FetchedReleaseInfo(
+                    PublicReleaseInfo(
                         versionName = versionName,
                         releaseNotes = releaseNotes,
                         downloadUrl = downloadUrl
                     )
                 }
 
-                _fetchedRelease.value = info
+                _publicRelease.value = info
                 _uploadStatus.value = "Ready"
                 _isUploading.value = false
                 onSuccess(info)
@@ -106,42 +110,41 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
                 _uploadStatus.value = "Error"
                 _isUploading.value = false
-                onError(e.localizedMessage ?: "Failed to query the GitHub Releases gateway.")
+                onError(e.localizedMessage ?: "Failed to contact GitHub gateway.")
             }
         }
     }
 
-    fun broadcastUpdateToUsers(
+    fun approveAndBroadcastPublicRelease(
         versionCode: Int,
         isMandatory: Boolean,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val fetched = _fetchedRelease.value
-        if (fetched == null) {
-            onError("Error: Please fetch latest GitHub release details first.")
+        val release = _publicRelease.value
+        if (release == null) {
+            onError("Error: Please fetch public staging parameters first.")
             return
         }
 
         _isUploading.value = true
-        _uploadStatus.value = "Broadcasting update to users..."
+        _uploadStatus.value = "Broadcasting production update parameters to clients..."
 
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    val db = FirebaseFirestore.getInstance()
                     val metaUpdate = mapOf(
                         "versionCode" to versionCode,
-                        "versionName" to fetched.versionName,
-                        "releaseNotes" to fetched.releaseNotes,
-                        "downloadUrl" to fetched.downloadUrl,
+                        "versionName" to release.versionName,
+                        "releaseNotes" to release.releaseNotes,
+                        "downloadUrl" to release.downloadUrl,
                         "isMandatory" to isMandatory,
                         "timestamp" to com.google.firebase.Timestamp.now()
                     )
 
                     val task = db.collection("app_config").document("latest_update").set(metaUpdate)
                     
-                    // safely await task completion
+                    // Direct synchronous block inside thread worker
                     var count = 0
                     while (!task.isComplete && count < 80) {
                         Thread.sleep(100)
@@ -149,11 +152,11 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                     }
 
                     if (!task.isComplete) {
-                        throw IOException("Firestore sync timed out.")
+                        throw IOException("Broadcast write timed out after 8 seconds.")
                     }
                     if (!task.isSuccessful) {
-                        val errorMsg = task.exception?.localizedMessage ?: "Unknown cloud write exception"
-                        throw IOException("Firestore synchronized push failed: $errorMsg")
+                        val errorMsg = task.exception?.localizedMessage ?: "Unknown firestore write error"
+                        throw IOException("Broadcast transaction failed on Firestore: $errorMsg")
                     }
                 }
 
@@ -164,7 +167,7 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
                 _uploadStatus.value = "Error"
                 _isUploading.value = false
-                onError(e.localizedMessage ?: "Transmission protocol failure.")
+                onError(e.localizedMessage ?: "Connection dropped before live promotion commit.")
             }
         }
     }
