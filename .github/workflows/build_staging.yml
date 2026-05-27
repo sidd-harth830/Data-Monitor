@@ -2,13 +2,8 @@ name: Secure Staging Build (Private Compiler)
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main", "master" ]
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build_staging:
@@ -26,11 +21,15 @@ jobs:
           distribution: 'zulu'
           cache: gradle
 
-      - name: Grant Execute Permission to Gradlew
+      # CRITICAL FIX: Strips hidden Windows formatting that causes Exit Code 1
+      - name: Fix Windows Line Endings in Gradle
+        run: sed -i 's/\r$//' gradlew
+
+      - name: Grant Execute Permission
         run: chmod +x gradlew
 
-      - name: Build Secure Application Binary (STAGING)
-        run: ./gradlew assembleDebug
+      - name: Build Secure Application Binary
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload Compiled Binary Artifact
         uses: actions/upload-artifact@v4
@@ -38,16 +37,3 @@ jobs:
           name: staged-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
-      - name: Document Pending Staging Release on Firestore
-        run: |
-          npm install -g firebase-tools
-          
-          VERSION_NAME="3.5.2"
-          VERSION_CODE=51
-          RUN_ID="${{ github.run_id }}"
-          STATUS="PENDING_REVIEW"
-          TIMESTAMP=$(date +%s)
-          
-          # Writing directly to your specific Firebase Project
-          firebase firestore:documents:set "app_config/staging_update" "{\"versionCode\": $VERSION_CODE, \"versionName\": \"$VERSION_NAME\", \"runId\": \"$RUN_ID\", \"status\": \"$STATUS\", \"timestamp\": {\"seconds\": $TIMESTAMP}}" --project "siddharth-data-usage-monitor" --token "${{ secrets.FIREBASE_TOKEN }}"
