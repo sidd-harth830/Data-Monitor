@@ -8,8 +8,12 @@ on:
         required: true
         default: '3.5.2'
       runId:
-        description: 'Source Github Actions Run ID (From Private Repo)'
+        description: 'Source Github Actions Run ID'
         required: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
   publish_live:
@@ -36,10 +40,6 @@ jobs:
         with:
           name: App Release v${{ github.event.inputs.versionName }}
           tag_name: v${{ github.event.inputs.versionName }}
-          files: extracted_app/app-debug.apk
+          files: extracted_app/**/*.apk
           draft: false
           prerelease: false
-          body: |
-            ## Modern Data Usage Monitor (v${{ github.event.inputs.versionName }})
-            - Automated compiler pipeline promotion.
-            - Safe, compiled, and unmetered client update delivery target.
