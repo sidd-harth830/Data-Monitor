@@ -3,6 +3,7 @@ package com.siddharth.datamonitor.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,15 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
-data class PublicReleaseInfo(
+data class StagingUpdateInfo(
+    val versionCode: Int,
     val versionName: String,
-    val releaseNotes: String,
+    val runId: String,
+    val status: String,
     val downloadUrl: String
 )
 
@@ -30,144 +29,140 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
 
-    private val _publicRelease = MutableStateFlow<PublicReleaseInfo?>(null)
-    val publicRelease: StateFlow<PublicReleaseInfo?> = _publicRelease.asStateFlow()
+    private val _stagingUpdate = MutableStateFlow<StagingUpdateInfo?>(null)
+    val stagingUpdate: StateFlow<StagingUpdateInfo?> = _stagingUpdate.asStateFlow()
 
-    // Dual-Repo Public Target Configuration details
-    val githubOwner = MutableStateFlow("sidd-harth830")
+    // Dual-Repo Public Target Configuration details - used to build public release links
+    val githubOwner = MutableStateFlow("sid-yadav7307")
     val githubRepo = MutableStateFlow("Data-Monitor-Releases")
 
     private val db = FirebaseFirestore.getInstance()
 
-    private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
-        .build()
-
-    fun fetchLatestPublicRelease(
-        onSuccess: (PublicReleaseInfo) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val owner = githubOwner.value.trim()
-        val repo = githubRepo.value.trim()
-
-        if (owner.isEmpty() || repo.isEmpty()) {
-            onError("Error: Target owner and public repository name are required.")
-            return
-        }
-
-        _isUploading.value = true
-        _uploadStatus.value = "Connecting to public repository gateway..."
-
-        viewModelScope.launch {
-            try {
-                val info = withContext(Dispatchers.IO) {
-                    val url = "https://api.github.com/repos/$owner/$repo/releases/latest"
-                    
-                    // Unauthenticated request ensures 100% security for client/admin
-                    val request = Request.Builder()
-                        .url(url)
-                        .get()
-                        .addHeader("Accept", "application/vnd.github+json")
-                        .build()
-
-                    val response = httpClient.newCall(request).execute()
-                    val bodyStr = response.body?.string() ?: ""
-
-                    if (!response.isSuccessful) {
-                        throw IOException("HTTP ${response.code}: $bodyStr")
-                    }
-
-                    val json = JSONObject(bodyStr)
-                    val tagName = json.optString("tag_name", "")
-                    if (tagName.isEmpty()) {
-                        throw IOException("Null tag name returned from GitHub release info.")
-                    }
-
-                    // Clean the leading version prefix if existing
-                    val versionName = if (tagName.startsWith("v")) tagName.substring(1) else tagName
-                    val releaseNotes = json.optString("body", "Production release verification compiled via Dual-Repo runner.")
-
-                    val assets = json.optJSONArray("assets")
-                    if (assets == null || assets.length() == 0) {
-                        throw IOException("The compiled public release does not specify any assets.")
-                    }
-                    val mainAsset = assets.getJSONObject(0)
-                    val downloadUrl = mainAsset.getString("browser_download_url")
-
-                    PublicReleaseInfo(
-                        versionName = versionName,
-                        releaseNotes = releaseNotes,
-                        downloadUrl = downloadUrl
-                    )
+    init {
+        // Real-time Firestore synchronizer listener on the staging node
+        db.collection("app_config")
+            .document("staging_update")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    error.printStackTrace()
+                    return@addSnapshotListener
                 }
+                if (snapshot != null && snapshot.exists()) {
+                    val code = snapshot.getLong("versionCode")?.toInt() ?: 50
+                    val name = snapshot.getString("versionName") ?: "3.5.1"
+                    val runId = snapshot.getString("runId") ?: ""
+                    val status = snapshot.getString("status") ?: "PENDING_REVIEW"
+                    
+                    // Deduce the download url based on target public releases
+                    val owner = githubOwner.value.trim()
+                    val repo = githubRepo.value.trim()
+                    val derivedUrl = "https://github.com/$owner/$repo/releases/download/v$name/app-release-live.apk"
 
-                _publicRelease.value = info
-                _uploadStatus.value = "Ready"
-                _isUploading.value = false
-                onSuccess(info)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _uploadStatus.value = "Error"
-                _isUploading.value = false
-                onError(e.localizedMessage ?: "Failed to contact GitHub gateway.")
+                    _stagingUpdate.value = StagingUpdateInfo(
+                        versionCode = code,
+                        versionName = name,
+                        runId = runId,
+                        status = status,
+                        downloadUrl = derivedUrl
+                    )
+                } else {
+                    _stagingUpdate.value = null
+                }
             }
-        }
     }
 
-    fun approveAndBroadcastPublicRelease(
-        versionCode: Int,
+    fun approveAndRolloutLive(
         isMandatory: Boolean,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val release = _publicRelease.value
-        if (release == null) {
-            onError("Error: Please fetch public staging parameters first.")
+        val staging = _stagingUpdate.value
+        if (staging == null) {
+            onError("Error: No pending staging build found to approve.")
             return
         }
 
         _isUploading.value = true
-        _uploadStatus.value = "Broadcasting production update parameters to clients..."
+        _uploadStatus.value = "Promoting build live and releasing parameters..."
 
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    val metaUpdate = mapOf(
-                        "versionCode" to versionCode,
-                        "versionName" to release.versionName,
-                        "releaseNotes" to release.releaseNotes,
-                        "downloadUrl" to release.downloadUrl,
+                    // Update the live production document
+                    val prodUpdate = mapOf(
+                        "versionCode" to staging.versionCode,
+                        "versionName" to staging.versionName,
+                        "sourceRunId" to staging.runId,
+                        "downloadUrl" to staging.downloadUrl,
                         "isMandatory" to isMandatory,
-                        "timestamp" to com.google.firebase.Timestamp.now()
+                        "releaseNotes" to "Official production rollout compiled via Dual-Repo runner (Source Build ID: ${staging.runId}).",
+                        "timestamp" to Timestamp.now()
                     )
 
-                    val task = db.collection("app_config").document("latest_update").set(metaUpdate)
-                    
-                    // Direct synchronous block inside thread worker
+                    // Write to live node
+                    val writeTask = db.collection("app_config").document("latest_update").set(prodUpdate)
                     var count = 0
-                    while (!task.isComplete && count < 80) {
+                    while (!writeTask.isComplete && count < 80) {
                         Thread.sleep(100)
                         count++
                     }
-
-                    if (!task.isComplete) {
-                        throw IOException("Broadcast write timed out after 8 seconds.")
+                    if (!writeTask.isSuccessful) {
+                        throw IOException("Firestore production write failed.")
                     }
-                    if (!task.isSuccessful) {
-                        val errorMsg = task.exception?.localizedMessage ?: "Unknown firestore write error"
-                        throw IOException("Broadcast transaction failed on Firestore: $errorMsg")
+
+                    // Delete the staging review document
+                    val deleteTask = db.collection("app_config").document("staging_update").delete()
+                    count = 0
+                    while (!deleteTask.isComplete && count < 80) {
+                        Thread.sleep(100)
+                        count++
+                    }
+                    if (!deleteTask.isSuccessful) {
+                        throw IOException("Firestore staging deletion failed.")
                     }
                 }
 
-                _uploadStatus.value = "Completed!"
+                _uploadStatus.value = "Ready"
                 _isUploading.value = false
                 onSuccess()
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uploadStatus.value = "Error"
                 _isUploading.value = false
-                onError(e.localizedMessage ?: "Connection dropped before live promotion commit.")
+                onError(e.localizedMessage ?: "Failed to promote the staging build.")
+            }
+        }
+    }
+
+    fun rejectBuild(
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        _isUploading.value = true
+        _uploadStatus.value = "Rejecting & deleting staging build..."
+
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val deleteTask = db.collection("app_config").document("staging_update").delete()
+                    var count = 0
+                    while (!deleteTask.isComplete && count < 80) {
+                        Thread.sleep(100)
+                        count++
+                    }
+                    if (!deleteTask.isSuccessful) {
+                        throw IOException("Firestore staging deletion failed.")
+                    }
+                }
+
+                _uploadStatus.value = "Ready"
+                _isUploading.value = false
+                onSuccess()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uploadStatus.value = "Error"
+                _isUploading.value = false
+                onError(e.localizedMessage ?: "Failed to reject staging build.")
             }
         }
     }

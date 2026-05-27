@@ -1,0 +1,69 @@
+name: Public Production Rollout (Live Release)
+
+on:
+  repository_dispatch:
+    types: [approve_staging]
+  workflow_dispatch:
+    inputs:
+      versionName:
+        description: 'Version Name (e.g., 3.5.1)'
+        required: true
+        default: '3.5.1'
+      runId:
+        description: 'Source Github Actions Run ID'
+        required: true
+
+jobs:
+  publish_live:
+    name: Promoted Release Deployment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to create public releases and upload assets
+
+    steps:
+      # Determine payload arguments depending on whether repository_dispatch or manual workflow_dispatch was invoked
+      - name: Parse Inputs and Environment Setup
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "VERSION_NAME=${{ github.event.client_payload.versionName }}" >> $GITHUB_ENV
+            echo "SOURCE_RUN_ID=${{ github.event.client_payload.runId }}" >> $GITHUB_ENV
+          else
+            echo "VERSION_NAME=${{ github.event.inputs.versionName }}" >> $GITHUB_ENV
+            echo "SOURCE_RUN_ID=${{ github.event.inputs.runId }}" >> $GITHUB_ENV
+          fi
+
+      # Download artifact from the private repository using GitHub REST API and a Personal Access Token
+      - name: Download Staged APK from Private Repository
+        run: |
+          echo "Fetching artifact from private repository run ID: $SOURCE_RUN_ID"
+          
+          # Call Github REST API to get artifact download link
+          ARTIFACT_URL=$(curl -s -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+            "https://api.github.com/repos/sid-yadav7307/Data-Monitor-Private/actions/runs/$SOURCE_RUN_ID/artifacts" \
+            | jq -r '.artifacts[] | select(.name=="staged-apk") | .archive_download_url')
+          
+          if [ -z "$ARTIFACT_URL" ] || [ "$ARTIFACT_URL" = "null" ]; then
+            echo "::error::Staged APK artifact not found for run ID: $SOURCE_RUN_ID in private repository."
+            exit 1
+          fi
+          
+          # Download zip archive and extract the contained app-debug.apk
+          curl -L -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
+            -o staged-apk.zip "$ARTIFACT_URL"
+            
+          unzip staged-apk.zip -d extracted_app/
+          mv extracted_app/app-debug.apk ./app-release-live.apk
+
+      - name: Create Production Release on Public Repository
+        uses: softprops/action-gh-release@v1
+        with:
+          name: App Release v${{ env.VERSION_NAME }}
+          tag_name: v${{ env.VERSION_NAME }}
+          files: app-release-live.apk
+          draft: false
+          prerelease: false
+          body: |
+            ## Modern Data Usage Monitor (v${{ env.VERSION_NAME }}) - Production Build
+            - Dual-Repository automated compiler pipeline promotion.
+            - This release has been officially reviewed, sanctioned, and broadcasted via the Admin Approval Gate.
+            - Safe, compiled, and unmetered client update delivery target.

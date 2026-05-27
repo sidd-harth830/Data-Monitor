@@ -69,14 +69,13 @@ fun AdminDashboardScreen(
     var workerStatus by remember { mutableStateOf("NOT ENQUEUED") }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    var newVersionCode by remember { mutableStateOf("48") }
     var isMandatoryUpdate by remember { mutableStateOf(true) }
     
     // AdminViewModel configuration binding
     val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val isUploading by adminViewModel.isUploading.collectAsState()
     val uploadStatus by adminViewModel.uploadStatus.collectAsState()
-    val publicRelease by adminViewModel.publicRelease.collectAsState()
+    val stagingUpdate by adminViewModel.stagingUpdate.collectAsState()
     val githubOwner by adminViewModel.githubOwner.collectAsState()
     val githubRepo by adminViewModel.githubRepo.collectAsState()
     var showGithubSection by remember { mutableStateOf(false) }
@@ -266,143 +265,23 @@ fun AdminDashboardScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
-                            text = "Dual-Repo Approval Gate",
+                            text = "Gated Build Manager",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
 
                         Text(
-                            text = "Monitors a separate public repository for compiled production updates to bypass private source restrictions. Fetch the metadata, review release details, and approve live client distribution.",
+                            text = "Monitors real-time compiled code staging records. Review proposed staging builds built by secure compiler runners, and approve or reject rollout configurations.",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
 
-                        // Collapsible Repository handshake configuration card
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color.White.copy(alpha = 0.03f), RoundedCornerShape(12.dp))
-                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
-                                .padding(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Key,
-                                        contentDescription = "Handshake Config",
-                                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Target Public Release Repository",
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                                TextButton(
-                                    onClick = { showGithubSection = !showGithubSection },
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text(
-                                        text = if (showGithubSection) "HIDE" else "CONFIG",
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-
-                            if (showGithubSection) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    OutlinedTextField(
-                                        value = githubOwner,
-                                        onValueChange = { adminViewModel.githubOwner.value = it },
-                                        label = { Text("Owner (Username)", fontSize = 11.sp) },
-                                        singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                                        ),
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    OutlinedTextField(
-                                        value = githubRepo,
-                                        onValueChange = { adminViewModel.githubRepo.value = it },
-                                        label = { Text("Repo Name", fontSize = 11.sp) },
-                                        singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                                        ),
-                                        shape = RoundedCornerShape(8.dp),
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-
-                        // Version inputs
-                        OutlinedTextField(
-                            value = newVersionCode,
-                            onValueChange = { newVersionCode = it },
-                            label = { Text("Required Version Code (e.g. 48)", fontSize = 12.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        // Fetch Action button
-                        Button(
-                            onClick = {
-                                adminViewModel.fetchLatestPublicRelease(
-                                    onSuccess = { info ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar("Successfully resolved production release v${info.versionName} via unauthenticated channel.")
-                                        }
-                                    },
-                                    onError = { error ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(error)
-                                        }
-                                    }
-                                )
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(44.dp),
-                            enabled = !isUploading
-                        ) {
-                            Text("FETCH LATEST PUBLIC RELEASE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        }
-
-                        // Show fetched Release Information
-                        val activeRelease = publicRelease
-                        if (activeRelease != null) {
+                        // Show fetched Staging Build Information
+                        val activeStaging = stagingUpdate
+                        if (activeStaging != null && activeStaging.status == "PENDING_REVIEW") {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -414,13 +293,13 @@ fun AdminDashboardScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.VerifiedUser,
-                                        contentDescription = "Public Build Verified",
+                                        contentDescription = "Pending Staging Review",
                                         tint = Color(0xFF00FF87),
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
-                                        text = "Resolved Public Build: v${activeRelease.versionName}",
+                                        text = "Proposed Staging Build: v${activeStaging.versionName}",
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
@@ -431,31 +310,148 @@ fun AdminDashboardScreen(
 
                                 Column {
                                     Text(
-                                        text = "PUBLIC DOWNLOAD MIRROR LINK:",
+                                        text = "STAGING TARGET VERSION CODE:",
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = activeRelease.downloadUrl,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 11.sp,
-                                        lineHeight = 15.sp
+                                        text = "${activeStaging.versionCode}",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
                                     )
                                 }
 
                                 Column {
                                     Text(
-                                        text = "PUBLIC REPOSITORY RELEASE NOTES:",
+                                        text = "SOURCE CODE RUN ID:",
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = activeRelease.releaseNotes,
+                                        text = activeStaging.runId,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+
+                                Column {
+                                    Text(
+                                        text = "DEDUCED MIRROR DOWNLOAD LINK:",
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = activeStaging.downloadUrl,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                         fontSize = 11.sp,
-                                        lineHeight = 16.sp
+                                        lineHeight = 15.sp
+                                    )
+                                }
+                            }
+
+                            // Mandatory upgrade parameters
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        "Enforce Mandatory Upgrade",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        "When active, force all clients to complete installer rollout before accessing metrics dashboards.",
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp
+                                    )
+                                }
+                                Switch(
+                                    checked = isMandatoryUpdate,
+                                    onCheckedChange = { isMandatoryUpdate = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                    ),
+                                    enabled = !isUploading
+                                )
+                            }
+
+                            // Operational buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        adminViewModel.approveAndRolloutLive(
+                                            isMandatory = isMandatoryUpdate,
+                                            onSuccess = {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Staging approved & live rollout broadcasted!")
+                                                }
+                                            },
+                                            onError = { error ->
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(error)
+                                                }
+                                            }
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF00FF87),
+                                        contentColor = Color.Black
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp),
+                                    enabled = !isUploading
+                                ) {
+                                    Text(
+                                        "Approve Build",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        adminViewModel.rejectBuild(
+                                            onSuccess = {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Staging build has been rejected and deleted.")
+                                                }
+                                            },
+                                            onError = { error ->
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(error)
+                                                }
+                                            }
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFFF5252),
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(48.dp),
+                                    enabled = !isUploading
+                                ) {
+                                    Text(
+                                        "Reject Build",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
                                     )
                                 }
                             }
@@ -471,55 +467,24 @@ fun AdminDashboardScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DataObject,
-                                    contentDescription = "No release fetched yet",
+                                    contentDescription = "No Pending Staging",
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                                     modifier = Modifier.size(32.dp)
                                 )
                                 Text(
-                                    text = "Ready to Query Releases Channel",
+                                    text = "No Pending Staging Build",
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Tap 'FETCH LATEST PUBLIC RELEASE' above. Dual-Repository sync automatically detects the latest builds created via secure private Actions compiler scripts.",
+                                    text = "To trigger, run either manual workflow_dispatch or push branch updates. This stages the APK and alerts the Admin Gate automatically.",
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                     fontSize = 10.sp,
                                     lineHeight = 15.sp,
                                     textAlign = TextAlign.Center
                                 )
                             }
-                        }
-
-                        // Mandatory upgrade parameters
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    "Enforce Mandatory Upgrade",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    "When active, force all clients to complete installer rollout before accessing metrics dashboards.",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                    fontSize = 11.sp,
-                                    lineHeight = 15.sp
-                                )
-                            }
-                            Switch(
-                                checked = isMandatoryUpdate,
-                                onCheckedChange = { isMandatoryUpdate = it },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                ),
-                                enabled = !isUploading
-                            )
                         }
 
                         // Status Information Message
@@ -544,48 +509,6 @@ fun AdminDashboardScreen(
                                     fontWeight = FontWeight.Medium
                                 )
                             }
-                        }
-
-                        Button(
-                            onClick = {
-                                val vCodeParsed = newVersionCode.toIntOrNull()
-                                if (vCodeParsed == null) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Error: Target Version Code must be a valid integer.")
-                                    }
-                                    return@Button
-                                }
-                                adminViewModel.approveAndBroadcastPublicRelease(
-                                    versionCode = vCodeParsed,
-                                    isMandatory = isMandatoryUpdate,
-                                    onSuccess = {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar("Release Approved! Successfully Broadcasted Live Update to Student Clients.")
-                                        }
-                                    },
-                                    onError = { error ->
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(error)
-                                        }
-                                    }
-                                )
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            enabled = !isUploading && activeRelease != null
-                        ) {
-                            Text(
-                                "APPROVE & BROADCAST LIVE UPDATE",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                letterSpacing = 1.sp
-                            )
                         }
                     }
                 }
