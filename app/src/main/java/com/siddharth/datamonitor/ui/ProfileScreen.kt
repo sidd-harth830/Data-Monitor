@@ -4,6 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +28,7 @@ import com.siddharth.datamonitor.ui.theme.TextSecondary
 import com.siddharth.datamonitor.ui.theme.WifiActive
 
 @Composable
-fun ProfileScreen(viewModel: DataUsageViewModel) {
+fun ProfileScreen(viewModel: DataUsageViewModel, onAdminPortalClick: () -> Unit) {
     val history by viewModel.history.collectAsStateWithLifecycle()
     val totalSavings by viewModel.totalSavings.collectAsStateWithLifecycle()
     val peakUsage by viewModel.peakUsage.collectAsStateWithLifecycle()
@@ -212,6 +218,33 @@ fun ProfileScreen(viewModel: DataUsageViewModel) {
                         fontSize = 11.sp
                     )
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onAdminPortalClick,
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .height(48.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.VerifiedUser,
+                    contentDescription = "Admin Portal",
+                    tint = MaterialTheme.colorScheme.onSecondary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ENTER ADMIN PORTAL",
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
             }
         }
     }

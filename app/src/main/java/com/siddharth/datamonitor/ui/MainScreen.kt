@@ -50,6 +50,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.NetworkCheck
 
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+
 @Composable
 fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val navController = rememberNavController()
@@ -60,6 +63,13 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     val context = LocalContext.current
 
+    val skipLogin by themeManager.skipLoginFlow.collectAsStateWithLifecycle(initialValue = false)
+    val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
+    var currentAuthUser by remember { mutableStateOf(auth.currentUser) }
+    
+    val snackbarHostState = remember { SnackbarHostState() }
+    val showBars = hasPermission && currentRoute != "admin_dashboard" && !(!skipLogin && currentAuthUser == null)
     
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -71,54 +81,127 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         viewModel.checkPermission()
     }
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            if (hasPermission) {
-                GlassTopAppBar()
+    if (!skipLogin && currentAuthUser == null) {
+        LoginScreen(
+            themeManager = themeManager,
+            onLoginSuccess = { currentAuthUser = auth.currentUser },
+            onSkip = {
+                scope.launch {
+                    themeManager.setSkipLogin(true)
+                }
             }
-        },
-        bottomBar = {
-            if (hasPermission) {
-                FloatingBottomNav(
-                    currentRoute = currentRoute,
-                    appAccentHex = appAccentHex,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+        )
+    } else {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding(),
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            topBar = {
+                if (showBars) {
+                    GlassTopAppBar()
+                }
+            },
+            bottomBar = {
+                if (showBars) {
+                    FloatingBottomNav(
+                        currentRoute = currentRoute,
+                        appAccentHex = appAccentHex,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            }
+        ) { paddingValues ->
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)) {
+                
+                if (!hasPermission) {
+                    PermissionRequestScreen(
+                        onRequest = {
+                            permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
+                        }
+                    )
+                } else {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "home",
+                        enterTransition = { fadeIn(tween(400)) },
+                        exitTransition = { fadeOut(tween(400)) }
+                    ) {
+                        composable("home") { DashboardScreen(viewModel, themeManager) }
+                        composable("history") { HistoryScreen(viewModel) }
+                        composable("profile") { 
+                            ProfileScreen(
+                                viewModel = viewModel,
+                                onAdminPortalClick = {
+                                    val currentUser = auth.currentUser
+                                    var hasValidProvider = false
+                                    if (currentUser != null) {
+                                        for (profile in currentUser.providerData) {
+                                            val pId = profile.providerId
+                                            if (pId == "google.com" || pId == "github.com") {
+                                                hasValidProvider = true
+                                                break
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (currentUser != null && currentUser.email == "leocarnivas@gmail.com" && hasValidProvider) {
+                                        navController.navigate("admin_dashboard")
+                                    } else {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "Insufficient Permissions or Invalid Provider",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        composable("settings") { 
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                themeManager = themeManager,
+                                onAdminPortalClick = {
+                                    val currentUser = auth.currentUser
+                                    var hasValidProvider = false
+                                    if (currentUser != null) {
+                                        for (profile in currentUser.providerData) {
+                                            val pId = profile.providerId
+                                            if (pId == "google.com" || pId == "github.com") {
+                                                hasValidProvider = true
+                                                break
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (currentUser != null && currentUser.email == "leocarnivas@gmail.com" && hasValidProvider) {
+                                        navController.navigate("admin_dashboard")
+                                    } else {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "Insufficient Permissions or Invalid Provider",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        composable("admin_dashboard") {
+                            AdminDashboardScreen(onBack = { navController.popBackStack() })
                         }
                     }
-                )
-            }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
-            
-            if (!hasPermission) {
-                PermissionRequestScreen(
-                    onRequest = {
-                        permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
-                    }
-                )
-            } else {
-                NavHost(
-                    navController = navController,
-                    startDestination = "home",
-                    enterTransition = { fadeIn(tween(400)) },
-                    exitTransition = { fadeOut(tween(400)) }
-                ) {
-                    composable("home") { DashboardScreen(viewModel, themeManager) }
-                    composable("history") { HistoryScreen(viewModel) }
-                    composable("profile") { ProfileScreen(viewModel) }
-                    composable("settings") { SettingsScreen(viewModel, themeManager) }
                 }
             }
         }

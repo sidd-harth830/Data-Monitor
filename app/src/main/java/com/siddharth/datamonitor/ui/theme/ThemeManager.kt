@@ -25,6 +25,7 @@ class ThemeManager(private val context: Context) {
         val DASHBOARD_LAYOUT_KEY = stringPreferencesKey("dashboard_layout")
         val APP_ICON_KEY = stringPreferencesKey("app_icon")
         val DATA_SAVER_ACTIVE_KEY = booleanPreferencesKey("data_saver_active")
+        val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
     }
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data.map { preferences ->
@@ -79,6 +80,10 @@ class ThemeManager(private val context: Context) {
         preferences[DATA_SAVER_ACTIVE_KEY] ?: false
     }
 
+    val skipLoginFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SKIP_LOGIN_KEY] ?: false
+    }
+
     suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
@@ -130,6 +135,12 @@ class ThemeManager(private val context: Context) {
     suspend fun setDataSaverActive(active: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[DATA_SAVER_ACTIVE_KEY] = active
+        }
+    }
+
+    suspend fun setSkipLogin(skip: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SKIP_LOGIN_KEY] = skip
         }
     }
 }
