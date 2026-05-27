@@ -13,18 +13,20 @@ on:
         description: 'Source Github Actions Run ID'
         required: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   publish_live:
     name: Promoted Release Deployment
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create public releases and upload assets
+      contents: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Determine payload arguments depending on whether repository_dispatch or manual workflow_dispatch was invoked
       - name: Parse Inputs and Environment Setup
         run: |
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
@@ -35,40 +37,23 @@ jobs:
             echo "SOURCE_RUN_ID=${{ github.event.inputs.runId }}" >> $GITHUB_ENV
           fi
 
-      # Download artifact from the private repository using GitHub REST API and a Personal Access Token
+      # Completely rewritten to use the official v4 action for cross-repo downloads
       - name: Download Staged APK from Private Repository
-        run: |
-          echo "Fetching artifact from private repository run ID: $SOURCE_RUN_ID"
-          
-          # Call Github REST API with compliant API version headers to get artifact download link
-          ARTIFACT_URL=$(curl -s \
-            -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/sid-yadav7307/Data-Monitor-Private/actions/runs/$SOURCE_RUN_ID/artifacts" \
-            | jq -r '.artifacts[] | select(.name=="staged-apk") | .archive_download_url')
-          
-          if [ -z "$ARTIFACT_URL" ] || [ "$ARTIFACT_URL" = "null" ]; then
-            echo "::error::Staged APK artifact not found for run ID: $SOURCE_RUN_ID in private repository."
-            exit 1
-          fi
-          
-          # Download zip archive and extract the contained app-debug.apk
-          curl -L \
-            -H "Authorization: token ${{ secrets.PRIVATE_REPO_READ_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            -o staged-apk.zip "$ARTIFACT_URL"
-            
-          unzip staged-apk.zip -d extracted_app/
-          mv extracted_app/app-debug.apk ./app-release-live.apk
+        uses: actions/download-artifact@v4
+        with:
+          name: staged-apk
+          repository: sid-yadav7307/Data-Monitor-Private
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ secrets.PRIVATE_REPO_READ_TOKEN }}
+          path: extracted_app/
 
       - name: Create Production Release on Public Repository
         uses: softprops/action-gh-release@v2
         with:
           name: App Release v${{ env.VERSION_NAME }}
           tag_name: v${{ env.VERSION_NAME }}
-          files: app-release-live.apk
+          # The downloaded artifact will be exactly here:
+          files: extracted_app/app-debug.apk
           draft: false
           prerelease: false
           body: |
