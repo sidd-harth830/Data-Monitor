@@ -134,6 +134,52 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun broadcastManualUpdate(
+        versionCode: Int,
+        versionName: String,
+        downloadUrl: String,
+        isMandatory: Boolean,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        _isUploading.value = true
+        _uploadStatus.value = "Broadcasting manual production update..."
+
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val prodUpdate = mapOf(
+                        "versionCode" to versionCode,
+                        "versionName" to versionName,
+                        "downloadUrl" to downloadUrl,
+                        "isMandatory" to isMandatory,
+                        "releaseNotes" to "Manual production release broadcasted via Admin override.",
+                        "timestamp" to Timestamp.now()
+                    )
+
+                    val writeTask = db.collection("app_config").document("latest_update").set(prodUpdate)
+                    var count = 0
+                    while (!writeTask.isComplete && count < 80) {
+                        Thread.sleep(100)
+                        count++
+                    }
+                    if (!writeTask.isSuccessful) {
+                        throw IOException("Firestore manual production write failed.")
+                    }
+                }
+
+                _uploadStatus.value = "Ready"
+                _isUploading.value = false
+                onSuccess()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uploadStatus.value = "Error"
+                _isUploading.value = false
+                onError(e.localizedMessage ?: "Failed to broadcast manual update.")
+            }
+        }
+    }
+
     fun rejectBuild(
         onSuccess: () -> Unit,
         onError: (String) -> Unit

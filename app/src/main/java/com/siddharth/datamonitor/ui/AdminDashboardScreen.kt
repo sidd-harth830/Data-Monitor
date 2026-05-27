@@ -71,6 +71,11 @@ fun AdminDashboardScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var isMandatoryUpdate by remember { mutableStateOf(true) }
     
+    var manualVersionCode by remember { mutableStateOf("52") }
+    var manualVersionName by remember { mutableStateOf("3.5.2") }
+    var manualDownloadUrl by remember { mutableStateOf("") }
+    var showManualOverride by remember { mutableStateOf(false) }
+    
     // AdminViewModel configuration binding
     val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
     val isUploading by adminViewModel.isUploading.collectAsState()
@@ -484,6 +489,132 @@ fun AdminDashboardScreen(
                                     lineHeight = 15.sp,
                                     textAlign = TextAlign.Center
                                 )
+                            }
+                        }
+
+                        // Emergency Manual Override Bypass section
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Emergency Manual Override Bypass",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            TextButton(
+                                onClick = { showManualOverride = !showManualOverride },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = if (showManualOverride) "COLLAPSE BYPASS" else "EXPAND BYPASS",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        if (showManualOverride) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(12.dp))
+                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = manualVersionCode,
+                                        onValueChange = { manualVersionCode = it },
+                                        label = { Text("Version Code (e.g. 52)", fontSize = 11.sp) },
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+
+                                    OutlinedTextField(
+                                        value = manualVersionName,
+                                        onValueChange = { manualVersionName = it },
+                                        label = { Text("Version Name (e.g. 3.5.2)", fontSize = 11.sp) },
+                                        singleLine = true,
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+
+                                OutlinedTextField(
+                                    value = manualDownloadUrl,
+                                    onValueChange = { manualDownloadUrl = it },
+                                    label = { Text("Public GitHub Download Link (Mirror)", fontSize = 11.sp) },
+                                    singleLine = true,
+                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Button(
+                                    onClick = {
+                                        val codeInt = manualVersionCode.toIntOrNull()
+                                        if (codeInt == null) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Error: Manual Version Code must be an integer.")
+                                            }
+                                            return@Button
+                                        }
+                                        if (manualVersionName.isBlank() || manualDownloadUrl.isBlank()) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Error: Version Name and Download Link must not be blank.")
+                                            }
+                                            return@Button
+                                        }
+                                        adminViewModel.broadcastManualUpdate(
+                                            versionCode = codeInt,
+                                            versionName = manualVersionName.trim(),
+                                            downloadUrl = manualDownloadUrl.trim(),
+                                            isMandatory = isMandatoryUpdate,
+                                            onSuccess = {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar("Manual update broadcasted to all users successfully!")
+                                                }
+                                            },
+                                            onError = { err ->
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(err)
+                                                }
+                                            }
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp),
+                                    enabled = !isUploading
+                                ) {
+                                    Text("FORCE MANUAL BROADCAST TO LIVE", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
                             }
                         }
 

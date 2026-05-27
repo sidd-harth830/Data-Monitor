@@ -16,7 +16,7 @@ android {
     applicationId = "com.siddharth.datamonitor"
     minSdk = 24
     targetSdk = 36
-    versionCode = 51
+    versionCode = 52
     versionName = "3.5.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
