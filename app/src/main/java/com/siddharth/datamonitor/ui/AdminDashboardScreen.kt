@@ -69,39 +69,19 @@ fun AdminDashboardScreen(
     var workerStatus by remember { mutableStateOf("NOT ENQUEUED") }
     
     val snackbarHostState = remember { SnackbarHostState() }
-    var newVersionCode by remember { mutableStateOf("45") }
-    var newVersionName by remember { mutableStateOf("3.1.0") }
-    var releaseNotes by remember { mutableStateOf("Major system stability upgrade with remote GitHub OTA sync portal integration.") }
-    var apkUrl by remember { mutableStateOf("https://github.com/sidd-harth830/datamonitor/releases/download/v3.1.0/DataMonitor_v3.1.0.apk") }
+    var newVersionCode by remember { mutableStateOf("46") }
     var isMandatoryUpdate by remember { mutableStateOf(false) }
     
     // AdminViewModel configuration binding
     val adminViewModel: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-    val selectedApkUri by adminViewModel.selectedApkUri.collectAsState()
-    val selectedApkFileName by adminViewModel.selectedApkFileName.collectAsState()
     val isUploading by adminViewModel.isUploading.collectAsState()
     val uploadStatus by adminViewModel.uploadStatus.collectAsState()
+    val fetchedRelease by adminViewModel.fetchedRelease.collectAsState()
 
-    val githubToken by adminViewModel.githubToken.collectAsState()
     val githubOwner by adminViewModel.githubOwner.collectAsState()
     val githubRepo by adminViewModel.githubRepo.collectAsState()
 
-    var showGithubTokensSection by remember { mutableStateOf(false) }
-
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            var fileName = "Selected APK"
-            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1 && cursor.moveToFirst()) {
-                    fileName = cursor.getString(nameIndex)
-                }
-            }
-            adminViewModel.selectApk(uri, fileName)
-        }
-    }
+    var showGithubSection by remember { mutableStateOf(false) }
     
     val dbFile = remember { context.getDatabasePath("data_usage_db") }
     val dbSizeFormatted = remember(forceSyncing) {
@@ -288,21 +268,21 @@ fun AdminDashboardScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Text(
-                            text = "Secure GitHub Cloud Release Panel",
+                            text = "Automated GitHub Release Portal",
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
 
                         Text(
-                            text = "Auto-compiles updates, delivers free OTA downloads via GitHub releases, and syncs remote metadata records directly to Firestore nodes.",
+                            text = "Fetches automated releases built securely via GitHub Actions CI/CD pipelines, and broadcasts live install configurations to client environments using Firestore nodes.",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                             fontSize = 11.sp,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
 
-                        // Collapsible GitHub API credentials configuration card
+                        // Collapsible Repository handshake configuration card
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -318,48 +298,32 @@ fun AdminDashboardScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.Key,
-                                        contentDescription = "GitHub Keys",
+                                        contentDescription = "GitHub Config",
                                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Endpoint Handshake Config",
+                                        "Target GitHub Repository",
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 }
                                 TextButton(
-                                    onClick = { showGithubTokensSection = !showGithubTokensSection },
+                                    onClick = { showGithubSection = !showGithubSection },
                                     contentPadding = PaddingValues(0.dp)
                                 ) {
                                     Text(
-                                        text = if (showGithubTokensSection) "HIDE" else "SHOW",
+                                        text = if (showGithubSection) "HIDE" else "CONFIG",
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
 
-                            if (showGithubTokensSection) {
+                            if (showGithubSection) {
                                 Spacer(modifier = Modifier.height(12.dp))
-                                OutlinedTextField(
-                                    value = githubToken,
-                                    onValueChange = { adminViewModel.githubToken.value = it },
-                                    label = { Text("GitHub PAT (Access Token)", fontSize = 11.sp) },
-                                    singleLine = true,
-                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                                    ),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -395,11 +359,11 @@ fun AdminDashboardScreen(
                             }
                         }
 
-                        // Version parameters fields
+                        // Version code input configuration field
                         OutlinedTextField(
                             value = newVersionCode,
                             onValueChange = { newVersionCode = it },
-                            label = { Text("Target Version Code (e.g. 45)", fontSize = 12.sp) },
+                            label = { Text("Broadcast Version Code Target (e.g. 46)", fontSize = 12.sp) },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -409,33 +373,36 @@ fun AdminDashboardScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        OutlinedTextField(
-                            value = newVersionName,
-                            onValueChange = { newVersionName = it },
-                            label = { Text("Target Version Name (e.g. 3.1.0)", fontSize = 12.sp) },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                        // Action Button 1: Fetch details from GitHub release 
+                        Button(
+                            onClick = {
+                                adminViewModel.fetchLatestGitHubRelease(
+                                    onSuccess = { info ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Successfully fetched v${info.versionName} from GitHub!")
+                                        }
+                                    },
+                                    onError = { error ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(error)
+                                        }
+                                    }
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             ),
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            enabled = !isUploading
+                        ) {
+                            Text("FETCH LATEST GITHUB RELEASE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        }
 
-                        OutlinedTextField(
-                            value = releaseNotes,
-                            onValueChange = { releaseNotes = it },
-                            label = { Text("Release & Rollout Notes", fontSize = 12.sp) },
-                            minLines = 2,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        // Select APK asset card selector 
+                        // Glassmorphism preview card for fetched release content
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -443,49 +410,73 @@ fun AdminDashboardScreen(
                                 .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
                                 .padding(16.dp)
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            val activeRelease = fetchedRelease
+                            if (activeRelease != null) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
-                                        imageVector = Icons.Default.FilePresent,
-                                        contentDescription = "APK Icon",
-                                        tint = if (selectedApkUri != null) Color(0xFF00FF87) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        modifier = Modifier.size(24.dp)
+                                        imageVector = Icons.Default.VerifiedUser,
+                                        contentDescription = "Release Available",
+                                        tint = Color(0xFF00FF87),
+                                        modifier = Modifier.size(20.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = selectedApkFileName ?: "No APK Selected",
-                                            color = if (selectedApkUri != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 13.sp
-                                        )
-                                        Text(
-                                            text = if (selectedApkUri != null) "Ready for release sync upload" else "Please pick the target .apk installation binary",
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                            fontSize = 10.sp
-                                        )
-                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "Release Preview: v${activeRelease.versionName}",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
                                 }
-
-                                Button(
-                                    onClick = { filePickerLauncher.launch("application/vnd.android.package-archive") },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                    enabled = !isUploading
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "BINARY DOWNLOAD LINK:",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = activeRelease.downloadUrl,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                                Text(
+                                    text = "COMPILED RELEASE NOTES:",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = activeRelease.releaseNotes,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp
+                                )
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center,
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
                                 ) {
-                                    Text("PICK APK", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    Icon(
+                                        imageVector = Icons.Default.DataObject,
+                                        contentDescription = "No Release Data",
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "Please fetch to display release information",
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
                             }
                         }
 
+                        // Mandatory upgrade parameters
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -499,7 +490,7 @@ fun AdminDashboardScreen(
                                     fontWeight = FontWeight.Medium
                                 )
                                 Text(
-                                    "When active, lock-out the user-interface until build matches broadcast criteria.",
+                                    "When active, force all clients to complete installer rollout before accessing metrics dashboards.",
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     fontSize = 11.sp,
                                     lineHeight = 15.sp
@@ -549,27 +540,19 @@ fun AdminDashboardScreen(
                                     }
                                     return@Button
                                 }
-                                if (newVersionName.isBlank() || releaseNotes.isBlank()) {
+                                if (fetchedRelease == null) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("Error: Version Name and Release Notes are required.")
-                                    }
-                                    return@Button
-                                }
-                                if (selectedApkUri == null) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Error: Please select an APK file to upload.")
+                                        snackbarHostState.showSnackbar("Error: Please fetch a release from GitHub first.")
                                     }
                                     return@Button
                                 }
 
-                                adminViewModel.uploadApkToGithub(
+                                adminViewModel.broadcastUpdateToUsers(
                                     versionCode = vCodeParsed,
-                                    versionName = newVersionName.trim(),
-                                    releaseNotes = releaseNotes.trim(),
                                     isMandatory = isMandatoryUpdate,
                                     onSuccess = {
                                         scope.launch {
-                                            snackbarHostState.showSnackbar("Successfully pushed to GitHub & Broadcasted update!")
+                                            snackbarHostState.showSnackbar("Successfully Broadcasted Update To All Clients!")
                                         }
                                     },
                                     onError = { error ->
@@ -587,10 +570,10 @@ fun AdminDashboardScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            enabled = !isUploading
+                            enabled = !isUploading && fetchedRelease != null
                         ) {
                             Text(
-                                "UPLOAD & BROADCAST UPDATE",
+                                "BROADCAST UPDATE TO USERS",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp,
                                 letterSpacing = 1.sp

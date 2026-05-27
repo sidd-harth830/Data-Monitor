@@ -1,7 +1,6 @@
 package com.siddharth.datamonitor.ui
 
 import android.app.Application
-import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.FirebaseFirestore
@@ -11,13 +10,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+
+data class FetchedReleaseInfo(
+    val versionName: String,
+    val releaseNotes: String,
+    val downloadUrl: String
+)
 
 class AdminViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -27,168 +30,131 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
 
-    private val _selectedApkUri = MutableStateFlow<Uri?>(null)
-    val selectedApkUri: StateFlow<Uri?> = _selectedApkUri.asStateFlow()
+    private val _fetchedRelease = MutableStateFlow<FetchedReleaseInfo?>(null)
+    val fetchedRelease: StateFlow<FetchedReleaseInfo?> = _fetchedRelease.asStateFlow()
 
-    private val _selectedApkFileName = MutableStateFlow<String?>(null)
-    val selectedApkFileName: StateFlow<String?> = _selectedApkFileName.asStateFlow()
-
-    // Configurable GitHub details (with default placeholders that users can override in UI)
-    var githubToken = MutableStateFlow("ghp_XXXXXXXXXXXXXXplaceholder")
-    var githubOwner = MutableStateFlow("leocarnivas")
-    var githubRepo = MutableStateFlow("datamonitor")
+    // Configurable repo details (authenticated is not needed for GET /releases/latest)
+    var githubOwner = MutableStateFlow("sidd-harth830")
+    var githubRepo = MutableStateFlow("Data-Monitor")
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(120, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    fun selectApk(uri: Uri?, fileName: String?) {
-        _selectedApkUri.value = uri
-        _selectedApkFileName.value = fileName
-    }
-
-    fun uploadApkToGithub(
-        versionCode: Int,
-        versionName: String,
-        releaseNotes: String,
-        isMandatory: Boolean,
-        onSuccess: () -> Unit,
+    fun fetchLatestGitHubRelease(
+        onSuccess: (FetchedReleaseInfo) -> Unit,
         onError: (String) -> Unit
     ) {
-        val uri = _selectedApkUri.value
-        if (uri == null) {
-            onError("Error: Please select an APK file first.")
-            return
-        }
-
-        val token = githubToken.value.trim()
         val owner = githubOwner.value.trim()
         val repo = githubRepo.value.trim()
 
-        if (token.isEmpty() || token.startsWith("ghp_XXX")) {
-            onError("Error: Please provide a valid GitHub Personal Access Token (PAT).")
-            return
-        }
         if (owner.isEmpty() || repo.isEmpty()) {
             onError("Error: GitHub Owner and Repository are required.")
             return
         }
 
         _isUploading.value = true
-        _uploadStatus.value = "Creating GitHub Release..."
+        _uploadStatus.value = "Fetching latest release from GitHub..."
 
         viewModelScope.launch {
             try {
-                // Perform Network Operations on IO dispatcher
-                val downloadUrl = withContext(Dispatchers.IO) {
-                    // Step 1: Create a Release
-                    val createReleaseUrl = "https://api.github.com/repos/$owner/$repo/releases"
-                    val releaseJson = JSONObject().apply {
-                        put("tag_name", "v$versionName")
-                        put("name", "v$versionName")
-                        put("body", releaseNotes)
-                        put("draft", false)
-                        put("prerelease", false)
-                    }
-
-                    val releaseRequest = Request.Builder()
-                        .url(createReleaseUrl)
-                        .post(releaseJson.toString().toRequestBody("application/json".toMediaType()))
-                        .addHeader("Authorization", "Bearer $token")
+                val info = withContext(Dispatchers.IO) {
+                    val url = "https://api.github.com/repos/$owner/$repo/releases/latest"
+                    val request = Request.Builder()
+                        .url(url)
+                        .get()
                         .addHeader("Accept", "application/vnd.github+json")
-                        .addHeader("X-GitHub-Api-Version", "2022-11-28")
                         .build()
 
-                    val releaseResponse = httpClient.newCall(releaseRequest).execute()
-                    val releaseResponseBodyStr = releaseResponse.body?.string() ?: ""
-                    
-                    if (!releaseResponse.isSuccessful) {
-                        throw IOException("Failed to create release: HTTP ${releaseResponse.code}. Details: $releaseResponseBodyStr")
+                    val response = httpClient.newCall(request).execute()
+                    val bodyStr = response.body?.string() ?: ""
+
+                    if (!response.isSuccessful) {
+                        throw IOException("HTTP ${response.code}: $bodyStr")
                     }
 
-                    val releaseJsonObj = JSONObject(releaseResponseBodyStr)
-                    val rawUploadUrl = releaseJsonObj.getString("upload_url")
-                    
-                    // The upload URL from GitHub looks like: https://uploads.github.com/.../releases/123/assets{?name,label}
-                    // We must strip the optional suffix template to upload correctly
-                    val cleanUploadUrl = if (rawUploadUrl.contains("{")) {
-                        rawUploadUrl.substring(0, rawUploadUrl.indexOf("{"))
-                    } else {
-                        rawUploadUrl
+                    val json = JSONObject(bodyStr)
+                    val tagName = json.optString("tag_name", "")
+                    if (tagName.isEmpty()) {
+                        throw IOException("Latest release tag_name is empty or not found.")
                     }
 
-                    _uploadStatus.value = "Uploading APK bytes (this may take a few moments)..."
+                    // Strip leading 'v' if present for clean display
+                    val versionName = if (tagName.startsWith("v")) tagName.substring(1) else tagName
+                    val releaseNotes = json.optString("body", "No release notes specified.")
 
-                    // Read binary bytes of APK from selected content URI
-                    val contentResolver = getApplication<Application>().contentResolver
-                    val inputStream = contentResolver.openInputStream(uri) 
-                        ?: throw IOException("Unable to open ContentResolver stream for the selected APK file.")
-                    
-                    val apkBytes = inputStream.use { it.readBytes() }
-                    if (apkBytes.isEmpty()) {
-                        throw IOException("Selected APK file is empty.")
+                    val assets = json.optJSONArray("assets")
+                    if (assets == null || assets.length() == 0) {
+                        throw IOException("The latest release contains no binaries/assets.")
                     }
+                    val firstAsset = assets.getJSONObject(0)
+                    val downloadUrl = firstAsset.getString("browser_download_url")
 
-                    val uploadUrlWithParams = "$cleanUploadUrl?name=DataMonitor_v${versionName}.apk"
-                    val uploadRequest = Request.Builder()
-                        .url(uploadUrlWithParams)
-                        .post(apkBytes.toRequestBody("application/vnd.android.package-archive".toMediaType()))
-                        .addHeader("Authorization", "Bearer $token")
-                        .addHeader("Accept", "application/vnd.github+json")
-                        .addHeader("X-GitHub-Api-Version", "2022-11-28")
-                        .addHeader("Content-Type", "application/vnd.android.package-archive")
-                        .build()
+                    FetchedReleaseInfo(
+                        versionName = versionName,
+                        releaseNotes = releaseNotes,
+                        downloadUrl = downloadUrl
+                    )
+                }
 
-                    val uploadResponse = httpClient.newCall(uploadRequest).execute()
-                    val uploadResponseBodyStr = uploadResponse.body?.string() ?: ""
+                _fetchedRelease.value = info
+                _uploadStatus.value = "Ready"
+                _isUploading.value = false
+                onSuccess(info)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uploadStatus.value = "Error"
+                _isUploading.value = false
+                onError(e.localizedMessage ?: "Failed to query the GitHub Releases gateway.")
+            }
+        }
+    }
 
-                    if (!uploadResponse.isSuccessful) {
-                        throw IOException("Failed to upload APK asset: HTTP ${uploadResponse.code}. Details: $uploadResponseBodyStr")
-                    }
+    fun broadcastUpdateToUsers(
+        versionCode: Int,
+        isMandatory: Boolean,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val fetched = _fetchedRelease.value
+        if (fetched == null) {
+            onError("Error: Please fetch latest GitHub release details first.")
+            return
+        }
 
-                    val uploadJsonObj = JSONObject(uploadResponseBodyStr)
-                    val browserDownloadUrl = uploadJsonObj.getString("browser_download_url")
+        _isUploading.value = true
+        _uploadStatus.value = "Broadcasting update to users..."
 
-                    _uploadStatus.value = "Syncing release parameters to cloud node..."
-
-                    // Step 4: Write metadata variables to the central Firestore doc `app_config/latest_update`
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
                     val db = FirebaseFirestore.getInstance()
                     val metaUpdate = mapOf(
                         "versionCode" to versionCode,
-                        "versionName" to versionName,
-                        "releaseNotes" to releaseNotes,
-                        "downloadUrl" to browserDownloadUrl,
+                        "versionName" to fetched.versionName,
+                        "releaseNotes" to fetched.releaseNotes,
+                        "downloadUrl" to fetched.downloadUrl,
                         "isMandatory" to isMandatory,
                         "timestamp" to com.google.firebase.Timestamp.now()
                     )
 
-                    // Write to Firestore synchronously inside the coroutine (using await task behavior helper)
                     val task = db.collection("app_config").document("latest_update").set(metaUpdate)
-                    var firestoreSuccess = false
-                    var firestoreError: Exception? = null
-
-                    task.addOnCompleteListener { action ->
-                        firestoreSuccess = action.isSuccessful
-                        firestoreError = action.exception
-                    }
-
-                    // Spin-wait safely for a brief moment in IO thread for completion of Task 
-                    val maxWaitMs = 8000
-                    val startTime = System.currentTimeMillis()
-                    while (!task.isComplete && (System.currentTimeMillis() - startTime) < maxWaitMs) {
+                    
+                    // safely await task completion
+                    var count = 0
+                    while (!task.isComplete && count < 80) {
                         Thread.sleep(100)
+                        count++
                     }
 
                     if (!task.isComplete) {
-                        throw IOException("Firestore synchronization write timed out after launch.")
+                        throw IOException("Firestore sync timed out.")
                     }
                     if (!task.isSuccessful) {
-                        throw IOException("Firestore write failed: " + (firestoreError?.localizedMessage ?: "Unknown Error"))
+                        val errorMsg = task.exception?.localizedMessage ?: "Unknown cloud write exception"
+                        throw IOException("Firestore synchronized push failed: $errorMsg")
                     }
-
-                    browserDownloadUrl
                 }
 
                 _uploadStatus.value = "Completed!"
@@ -198,7 +164,7 @@ class AdminViewModel(application: Application) : AndroidViewModel(application) {
                 e.printStackTrace()
                 _uploadStatus.value = "Error"
                 _isUploading.value = false
-                onError(e.localizedMessage ?: "An unexpected transport protocol error occurred.")
+                onError(e.localizedMessage ?: "Transmission protocol failure.")
             }
         }
     }
