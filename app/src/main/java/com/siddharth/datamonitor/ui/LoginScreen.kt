@@ -135,6 +135,10 @@ fun LoginScreen(
                 auth.signInWithCredential(credential)
                     .addOnSuccessListener {
                         isLoading = false
+                        val user = auth.currentUser
+                        if (user != null) {
+                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Google")
+                        }
                         Toast.makeText(context, "Google Sign-In Successful", Toast.LENGTH_SHORT).show()
                         onLoginSuccess()
                     }
@@ -300,6 +304,10 @@ fun LoginScreen(
                                 auth.signInWithEmailAndPassword(email.trim(), password.trim())
                                     .addOnSuccessListener {
                                         isLoading = false
+                                        val user = auth.currentUser
+                                        if (user != null) {
+                                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                        }
                                         Toast.makeText(context, "Welcome Overlord", Toast.LENGTH_SHORT).show()
                                         onLoginSuccess()
                                     }
@@ -329,6 +337,10 @@ fun LoginScreen(
                                 auth.createUserWithEmailAndPassword(email.trim(), password.trim())
                                     .addOnSuccessListener {
                                         isLoading = false
+                                        val user = auth.currentUser
+                                        if (user != null) {
+                                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                        }
                                         Toast.makeText(context, "Account Register Succeeded", Toast.LENGTH_SHORT).show()
                                         onLoginSuccess()
                                     }
@@ -410,6 +422,10 @@ fun LoginScreen(
                                         auth.startActivityForSignInWithProvider(activity, provider.build())
                                             .addOnSuccessListener {
                                                 isLoading = false
+                                                val user = auth.currentUser
+                                                if (user != null) {
+                                                    com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "GitHub")
+                                                }
                                                 Toast.makeText(context, "Welcome Overlord from GitHub!", Toast.LENGTH_SHORT).show()
                                                 onLoginSuccess()
                                             }
@@ -449,7 +465,11 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             TextButton(
-                onClick = onSkip,
+                onClick = {
+                    val androidID = android.provider.Settings.Secure.getString(context.contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: java.util.UUID.randomUUID().toString()
+                    com.siddharth.datamonitor.utils.UserTelemetrySync.sync("guest_$androidID", "Guest User", "Guest")
+                    onSkip()
+                },
                 colors = ButtonDefaults.textButtonColors(contentColor = Color.White.copy(alpha = 0.6f))
             ) {
                 Text(

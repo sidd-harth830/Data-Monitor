@@ -16,8 +16,8 @@ android {
     applicationId = "com.siddharth.datamonitor"
     minSdk = 24
     targetSdk = 36
-    versionCode = 39
-    versionName = "2.5.0"
+    versionCode = 40
+    versionName = "2.6.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -75,6 +75,7 @@ dependencies {
   implementation(libs.firebase.analytics)
   implementation(libs.firebase.crashlytics)
   implementation(libs.firebase.auth)
+  implementation(libs.firebase.firestore)
   implementation("com.google.android.gms:play-services-auth:21.0.0")
   // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
