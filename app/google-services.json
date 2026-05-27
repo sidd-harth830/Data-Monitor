@@ -1,31 +1,44 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "datamonitor-dummy",
-    "storage_bucket": "datamonitor-dummy.appspot.com"
+    "project_number": "236997686171",
+    "project_id": "siddharth-data-usage-monitor",
+    "storage_bucket": "siddharth-data-usage-monitor.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef123456",
+        "mobilesdk_app_id": "1:236997686171:android:76ef098d54e48c6ee7673e",
         "android_client_info": {
           "package_name": "com.siddharth.datamonitor"
         }
       },
       "oauth_client": [
         {
-          "client_id": "123456789012-oauthcompilationdummy.apps.googleusercontent.com",
+          "client_id": "236997686171-pe3q3sktef5o2cug9vo0dtc22celp14u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.siddharth.datamonitor",
+            "certificate_hash": "a55f9e74a229f266f84dfb8bb10ed7d40459ff46"
+          }
+        },
+        {
+          "client_id": "236997686171-i3j44ute7mnbde7tvc4o6mnnr5njlol5.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "dummy_api_key_for_compilation"
+          "current_key": "AIzaSyDfR6CWfxba5J96MOV2ayAQJztqWBtlShI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "236997686171-i3j44ute7mnbde7tvc4o6mnnr5njlol5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
