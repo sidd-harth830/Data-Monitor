@@ -2,13 +2,8 @@ name: Secure Staging Build (Private Compiler)
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [ "main", "master" ]
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build_staging:
@@ -24,42 +19,37 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
-          cache: gradle
 
-      - name: Auto-Detect and Sanitize Gradle Wrapper
+      # CRITICAL FIX: Installs the compiler directly on the GitHub server.
+      # This means we no longer care if the 'gradlew' file is missing!
+      - name: Install Global Gradle Compiler
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Cloud-Compile APK
         run: |
-          echo "Locating gradlew script..."
-          GRADLEW_PATH=$(find . -name "gradlew" -not -path "*/.*" | head -n 1)
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "::error::Gradle Wrapper (gradlew) is missing from the repository structure!"
+          echo "🔍 Searching for your Android project root..."
+          
+          # Looks for the core settings file instead of the wrapper
+          ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
+          
+          if [ -z "$ROOT_DIR" ]; then
+            echo "::error::CRITICAL FAILURE: 'settings.gradle' is missing. Please ensure your AI Studio project exported correctly."
             exit 1
           fi
-          echo "Found gradlew at: $GRADLEW_PATH"
-          sed -i 's/\r$//' "$GRADLEW_PATH"
-          chmod +x "$GRADLEW_PATH"
-          echo "GRADLEW_PATH=$GRADLEW_PATH" >> $GITHUB_ENV
+          
+          ROOT_DIR=$(dirname "$ROOT_DIR")
+          echo "✅ Found Android project inside: $ROOT_DIR"
+          cd "$ROOT_DIR"
+          
+          echo "🚀 Compiling the App..."
+          # Uses the global 'gradle' tool we just installed instead of './gradlew'
+          gradle assembleDebug --stacktrace
 
-      - name: Build Secure Application Binary (STAGING)
-        run: |
-          ${{ env.GRADLEW_PATH }} assembleDebug --stacktrace
-
-      # Upload APK as a GitHub Actions Artifact named 'staged-apk'
       - name: Upload Compiled Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: staged-apk
-          path: "**/app/build/outputs/apk/debug/*.apk"
+          path: '**/app/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
-
-      # Setup Firebase Tools CLI to write staging metadata record
-      - name: Document Pending Staging Release on Firestore
-        run: |
-          npm install -g firebase-tools
-          
-          VERSION_NAME="3.5.2"
-          VERSION_CODE=52
-          RUN_ID="${{ github.run_id }}"
-          STATUS="PENDING_REVIEW"
-          TIMESTAMP=$(date +%s)
-          
-          firebase firestore:documents:set "app_config/staging_update" "{\"versionCode\": $VERSION_CODE, \"versionName\": \"$VERSION_NAME\", \"runId\": \"$RUN_ID\", \"status\": \"$STATUS\", \"timestamp\": {\"seconds\": $TIMESTAMP}}" --token "${{ secrets.FIREBASE_TOKEN }}"
