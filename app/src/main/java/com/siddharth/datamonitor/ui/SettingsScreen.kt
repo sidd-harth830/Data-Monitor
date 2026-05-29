@@ -119,21 +119,23 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     ) {
         Text(
             text = "CONFIG",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            letterSpacing = 1.sp
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
         // Premium Theme Selector: System Default, Light Monogram, Dark Monogram
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "THEME SELECTOR",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -151,7 +153,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
@@ -166,7 +168,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         Spacer(modifier = Modifier.height(24.dp))
         
         // App Icon Selection
-        val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
+         val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
         var showIconConfirmDialog by remember { mutableStateOf<String?>(null) }
         
         if (showIconConfirmDialog != null) {
@@ -196,58 +198,64 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 textContentColor = MaterialTheme.colorScheme.onSecondary
             )
         }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "APP ICON",
-                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                fontSize = 12.sp,
-                letterSpacing = 1.5.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                val icons = listOf(
-                    Triple("DEFAULT", "Studio Default", R.drawable.ic_launcher_spring),
-                    Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_custom1),
-                    Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_custom2),
-                    Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_custom3),
-                    Triple("ICON_4", "Custom 4", R.drawable.ic_launcher_custom4),
-                    Triple("ICON_5", "Custom 5", R.drawable.ic_launcher_custom5)
+        
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "APP ICON SELECTOR",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    val icons = listOf(
+                        Triple("DEFAULT", "Studio Default", R.drawable.ic_launcher_spring),
+                        Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_custom1),
+                        Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_custom2),
+                        Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_custom3),
+                        Triple("ICON_4", "Custom 4", R.drawable.ic_launcher_custom4),
+                        Triple("ICON_5", "Custom 5", R.drawable.ic_launcher_custom5)
+                    )
 
-                icons.forEach { (key, label, drawRes) ->
-                    val isSelected = currentIcon == key
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Surface(
-                            onClick = {
-                                showIconConfirmDialog = key
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
-                            border = androidx.compose.foundation.BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) MaterialTheme.colorScheme.primary else customDividerColor),
-                            modifier = Modifier.size(64.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    painter = painterResource(id = drawRes),
-                                    contentDescription = label,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(48.dp)
-                                )
+                    icons.forEach { (key, label, drawRes) ->
+                        val isSelected = currentIcon == key
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Surface(
+                                onClick = {
+                                    showIconConfirmDialog = key
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else customDividerColor
+                                ),
+                                modifier = Modifier.size(64.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(id = drawRes),
+                                        contentDescription = label,
+                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(48.dp)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = label,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                            )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = label,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                        )
                     }
                 }
             }
@@ -278,10 +286,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "LIVE NETWORK HEALTH TESTER",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -367,10 +375,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "DASHBOARD LAYOUT",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -387,8 +395,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             onClick = { scope.launch { themeManager.setDashboardLayout(layout) } },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
@@ -407,10 +415,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "FONT SELECTOR",
-                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -427,7 +435,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                             ),
                             shape = RoundedCornerShape(12.dp),
                             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
@@ -445,13 +453,22 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "SET DAILY CEILING LIMIT (MB)",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "DATA CEILING CONFIGURATION",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "DAILY CEILING LIMIT (MB)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = dailyDataLimitMB,
                     onValueChange = { scope.launch { themeManager.setDailyDataLimit(it) } },
@@ -465,20 +482,20 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         unfocusedIndicatorColor = customIndicatorColor,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "SET MONTHLY BILLING CYCLE LIMIT (MB)",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "MONTHLY BILLING CYCLE LIMIT (MB)",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = dataLimitMB,
                     onValueChange = { scope.launch { themeManager.setDataLimit(it) } },
@@ -492,7 +509,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         unfocusedIndicatorColor = customIndicatorColor,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
