@@ -1,21 +1,61 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ProGuard and R8 Keep Rules for Data Usage Monitor v3.5.3
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# De-obfuscation and Crashlytics mapping attributes
+-keepattributes SourceFile,LineNumberTable,*Annotation*,Signature,InnerClasses,EnclosingMethod
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Google Play Services and Firebase classes
+-keep class com.google.android.gms.** { <fields>; <methods>; }
+-keep class com.google.firebase.** { <fields>; <methods>; }
+-keep class com.google.android.play.** { <fields>; <methods>; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Firebase Auth keep rules to prevent stripping of provider and token classes
+-keep class com.google.firebase.auth.** { *; }
+-keep class com.google.android.gms.auth.** { *; }
+
+# Firebase Firestore keep rules for data transfer objects / serialization
+-keep class com.google.firebase.firestore.** { *; }
+-dontwarn com.google.firebase.firestore.**
+
+# Firebase Crashlytics & Analytics keep rules
+-keep class com.google.firebase.crashlytics.** { *; }
+-keep class com.google.firebase.analytics.** { *; }
+-dontwarn com.google.firebase.crashlytics.**
+-dontwarn com.google.firebase.analytics.**
+
+# Kotlin Coroutines keep rules
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+
+# Google / Firebase Property annotations
+-keepclassmembers class * {
+    @com.google.firebase.firestore.PropertyName <fields>;
+    @com.google.firebase.firestore.PropertyName <methods>;
+    @com.google.firebase.database.PropertyName <fields>;
+    @com.google.firebase.database.PropertyName <methods>;
+}
+
+# Preserve standard Android components and initialization classes from being minified/optimized out of existence
+-keep class * extends android.app.Application
+-keep class * extends android.app.Activity
+-keep class * extends android.app.Service
+-keep class * extends android.content.BroadcastReceiver
+-keep class * extends android.content.ContentProvider
+-keep class * extends androidx.work.ListenableWorker { *; }
+
+# Keep application package components to ensure safe serialization & reflection
+-keep class com.siddharth.datamonitor.data.** { *; }
+-keep class com.siddharth.datamonitor.ui.** { *; }
+-keep class com.siddharth.datamonitor.utils.** { *; }
+-keep class com.siddharth.datamonitor.worker.** { *; }
+
+# Third-Party Libraries Support
+-keep class com.squareup.moshi.** { *; }
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-dontwarn okio.**
+-dontwarn com.squareup.moshi.**
+
+# Vico chart rendering package keep rules
+-keep class com.patrykandpatrick.vico.** { *; }
+-dontwarn com.patrykandpatrick.vico.**
+

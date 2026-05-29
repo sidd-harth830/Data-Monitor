@@ -10,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.firebase.FirebaseApp
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.siddharth.datamonitor.ui.DataUsageViewModel
 import com.siddharth.datamonitor.ui.MainScreen
 import com.siddharth.datamonitor.ui.theme.DataMonitorTheme
@@ -25,7 +27,28 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
-        setupDailyWorker()
+        // Cleanly initialize Firebase if not already initialized
+        try {
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                FirebaseApp.initializeApp(this)
+            }
+            // Aggressive logging enabling
+            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // Isolate work manager or early synchronization startup failures
+        try {
+            setupDailyWorker()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } catch (inner: Exception) {
+                inner.printStackTrace()
+            }
+        }
         
         setContent {
             val themeManager = remember { ThemeManager(this) }
@@ -39,7 +62,16 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Save current data right away so we don't start empty, 
         // will only save if permitted.
-        viewModel.checkPermission()
+        try {
+            viewModel.checkPermission()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            try {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } catch (inner: Exception) {
+                inner.printStackTrace()
+            }
+        }
     }
 
     private fun setupDailyWorker() {
@@ -53,6 +85,11 @@ class MainActivity : ComponentActivity() {
             )
         } catch (e: Exception) {
             e.printStackTrace()
+            try {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } catch (inner: Exception) {
+                inner.printStackTrace()
+            }
         }
     }
 }

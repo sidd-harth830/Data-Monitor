@@ -39,8 +39,7 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
-import com.google.firebase.crashlytics.ktx.crashlytics
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.siddharth.datamonitor.BuildConfig
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 
@@ -138,7 +137,7 @@ fun LoginScreen(
                     }
                     .addOnFailureListener { e ->
                         isLoading = false
-                        Firebase.crashlytics.recordException(e)
+                        FirebaseCrashlytics.getInstance().recordException(e)
                         if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                             errorMessage = "Account exists. Please use the method you originally signed up with."
                             Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
@@ -149,11 +148,11 @@ fun LoginScreen(
             } else {
                 isLoading = false
                 errorMessage = "Failed to extract Google Identification Token"
-                Firebase.crashlytics.recordException(Exception("Failed to extract Google Identification Token"))
+                FirebaseCrashlytics.getInstance().recordException(Exception("Failed to extract Google Identification Token"))
             }
         } catch (e: Exception) {
             isLoading = false
-            Firebase.crashlytics.recordException(e)
+            FirebaseCrashlytics.getInstance().recordException(e)
             if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                 errorMessage = "Account exists. Please use the method you originally signed up with."
                 Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
@@ -321,7 +320,7 @@ fun LoginScreen(
                                     .addOnFailureListener { e ->
                                         isLoading = false
                                         errorMessage = e.localizedMessage ?: "Sign In Failed"
-                                        Firebase.crashlytics.recordException(e)
+                                        FirebaseCrashlytics.getInstance().recordException(e)
                                     }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
@@ -355,7 +354,7 @@ fun LoginScreen(
                                     .addOnFailureListener { e ->
                                         isLoading = false
                                         errorMessage = e.localizedMessage ?: "Account Creation Failed"
-                                        Firebase.crashlytics.recordException(e)
+                                        FirebaseCrashlytics.getInstance().recordException(e)
                                     }
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
@@ -446,7 +445,7 @@ fun LoginScreen(
                                             }
                                             .addOnFailureListener { e ->
                                                 isLoading = false
-                                                Firebase.crashlytics.recordException(e)
+                                                FirebaseCrashlytics.getInstance().recordException(e)
                                                 if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                                                     errorMessage = "Account exists. Please use the method you originally signed up with."
                                                     Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
