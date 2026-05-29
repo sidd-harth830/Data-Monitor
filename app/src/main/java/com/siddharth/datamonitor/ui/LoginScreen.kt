@@ -14,17 +14,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -39,47 +36,10 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.OAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.siddharth.datamonitor.BuildConfig
 import com.siddharth.datamonitor.ui.theme.ThemeManager
-
-@Composable
-fun AuthGlassCard(
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(24.dp),
-    content: @Composable BoxScope.() -> Unit
-) {
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                clip = true
-                this.shape = shape
-            }
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-            .border(
-                width = 1.2.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
-                    )
-                ),
-                shape = shape
-            )
-    ) {
-        // Frosty blur background
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .blur(20.dp)
-        )
-        
-        Box(
-            modifier = Modifier,
-            content = content
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +52,7 @@ fun LoginScreen(
     val activity = context as? Activity
     val auth = remember { FirebaseAuth.getInstance() }
     
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -99,7 +60,7 @@ fun LoginScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val accentColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
 
     // Dynamic resource lookup for default_web_client_id 
     val defaultWebClientId = remember {
@@ -167,23 +128,6 @@ fun LoginScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // High contrast glowing layered auras in the background
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(280.dp)
-                .offset(x = 60.dp, y = (-60).dp)
-                .background(Brush.radialGradient(listOf(accentColor.copy(alpha = 0.22f), Color.Transparent)))
-        )
-        
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .size(340.dp)
-                .offset(x = (-90).dp, y = 100.dp)
-                .background(Brush.radialGradient(listOf(secondaryColor.copy(alpha = 0.16f), Color.Transparent)))
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -206,14 +150,14 @@ fun LoginScreen(
             
             Text(
                 text = "V${BuildConfig.VERSION_NAME} SECURE CORE OVERLORD",
-                color = accentColor,
+                color = if (isLight) Color.Black else Color.White,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 28.dp)
             )
 
-            AuthGlassCard(
+            GlassCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
@@ -227,7 +171,7 @@ fun LoginScreen(
                     Text(
                         text = "Authentication Portal",
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 18.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -242,6 +186,26 @@ fun LoginScreen(
                             textAlign = TextAlign.Center
                         )
                     }
+
+                    // Required Name field for registration
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it; errorMessage = null },
+                        label = { Text("Full Name (Required for sign-up only)", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = accentColor) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedBorderColor = accentColor,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
                         value = email,
@@ -324,7 +288,7 @@ fun LoginScreen(
                                     }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(4.dp), // Stark flat styling
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
@@ -336,20 +300,35 @@ fun LoginScreen(
 
                         OutlinedButton(
                             onClick = {
+                                if (name.isBlank()) {
+                                    errorMessage = "Name is required for registration"
+                                    return@OutlinedButton
+                                }
                                 if (email.isBlank() || password.isBlank() || password.length < 6) {
                                     errorMessage = "Password must be at least 6 characters"
                                     return@OutlinedButton
                                 }
                                 isLoading = true
                                 auth.createUserWithEmailAndPassword(email.trim(), password.trim())
-                                    .addOnSuccessListener {
-                                        isLoading = false
-                                        val user = auth.currentUser
+                                    .addOnSuccessListener { authResult ->
+                                        val user = authResult.user
                                         if (user != null) {
-                                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                            val profileUpdates = UserProfileChangeRequest.Builder()
+                                                .setDisplayName(name.trim())
+                                                .build()
+                                            user.updateProfile(profileUpdates)
+                                                .addOnCompleteListener { profileTask ->
+                                                    isLoading = false
+                                                    if (profileTask.isSuccessful) {
+                                                        com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                                    }
+                                                    Toast.makeText(context, "Account Register Succeeded", Toast.LENGTH_SHORT).show()
+                                                    onLoginSuccess()
+                                                }
+                                        } else {
+                                            isLoading = false
+                                            onLoginSuccess()
                                         }
-                                        Toast.makeText(context, "Account Register Succeeded", Toast.LENGTH_SHORT).show()
-                                        onLoginSuccess()
                                     }
                                     .addOnFailureListener { e ->
                                         isLoading = false
@@ -358,10 +337,7 @@ fun LoginScreen(
                                     }
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
-                                brush = Brush.linearGradient(listOf(accentColor, accentColor.copy(alpha = 0.4f)))
-                            ),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(4.dp), // Stark flat styling
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
@@ -393,19 +369,16 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // Google Sign-In Button
+                            // Google Sign-In Button (Premium Multicolored Icon)
                             OutlinedButton(
                                 onClick = {
                                     isLoading = true
                                     val signInIntent = googleSignInClient.signInIntent
                                     googleSignInLauncher.launch(signInIntent)
                                 },
-                                shape = RoundedCornerShape(12.dp),
-                                border = ButtonDefaults.outlinedButtonBorder.copy(
-                                    brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)))
-                                ),
+                                shape = RoundedCornerShape(4.dp), // Stark flat styling
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                                    containerColor = MaterialTheme.colorScheme.surface,
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 modifier = Modifier
@@ -419,7 +392,7 @@ fun LoginScreen(
                                     Icon(
                                         painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_google),
                                         contentDescription = "Google Icon",
-                                        tint = Color.Unspecified,
+                                        tint = Color.Unspecified, // Keep original high-quality vector multi-colors intact
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -457,12 +430,9 @@ fun LoginScreen(
                                         errorMessage = "Internal Error: Active Activity missing."
                                     }
                                 },
-                                shape = RoundedCornerShape(12.dp),
-                                border = ButtonDefaults.outlinedButtonBorder.copy(
-                                    brush = Brush.linearGradient(listOf(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f), MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)))
-                                ),
+                                shape = RoundedCornerShape(4.dp), // Stark flat styling
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f),
+                                    containerColor = MaterialTheme.colorScheme.surface,
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 ),
                                 modifier = Modifier
@@ -476,7 +446,7 @@ fun LoginScreen(
                                     Icon(
                                         painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_github),
                                         contentDescription = "GitHub Icon",
-                                        tint = Color.Unspecified,
+                                        tint = MaterialTheme.colorScheme.onSurface, // Monochromatic for Vercel styling matching the theme
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))

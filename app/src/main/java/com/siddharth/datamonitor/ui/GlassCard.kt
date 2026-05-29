@@ -9,56 +9,36 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.blur
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.CompositionLocalProvider
 
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(24.dp),
+    shape: Shape = RoundedCornerShape(6.dp), // Stark Vercel style (4dp to 8dp max)
     content: @Composable BoxScope.() -> Unit
 ) {
-    // Check if light or dark theme based on MaterialTheme resources
-    // Minimal Light backgrounds are clear whites, OLED Dark / Cyber Neon are dark
-    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
+    val colorScheme = MaterialTheme.colorScheme
+    // Stark stark background matching themes directly
+    val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
     
-    val tintColor = if (isLight) {
-        Color.White.copy(alpha = 0.55f) // solid high contrast light tint
-    } else {
-        Color.Black.copy(alpha = 0.45f) // solid high contrast dark tint
-    }
-    
-    val borderColor = if (isLight) {
-        Color.Black.copy(alpha = 0.12f)
-    } else {
-        Color.White.copy(alpha = 0.18f)
-    }
+    val backgroundColor = if (isLight) Color(0xFFFFFFFF) else Color(0xFF000000)
+    val borderColor = if (isLight) Color(0xFFEAEAEA) else Color(0xFF333333) // Subtle 1dp border
 
     Box(
         modifier = modifier
             .clip(shape)
+            .background(backgroundColor)
             .border(
-                width = 1.2.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(borderColor, borderColor.copy(alpha = 0.05f))
-                ),
+                width = 1.dp, // Subtle exactly 1dp gray border
+                color = borderColor,
                 shape = shape
             )
     ) {
-        // Background blur layer (does not blur child text content)
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .background(tintColor)
-                .blur(16.dp)
-        )
-        
-        // Children content slot
+        // Flat styling - strictly no background blur, no drop shadows, no transparency gradients
         CompositionLocalProvider(LocalContentColor provides if (isLight) Color.Black else Color.White) {
             Box(
                 modifier = Modifier,
@@ -67,4 +47,3 @@ fun GlassCard(
         }
     }
 }
-

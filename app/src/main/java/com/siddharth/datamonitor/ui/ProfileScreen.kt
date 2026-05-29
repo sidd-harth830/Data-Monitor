@@ -1,16 +1,17 @@
 package com.siddharth.datamonitor.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -18,28 +19,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.blur
-import androidx.compose.foundation.border
-import androidx.compose.ui.graphics.Brush
+import com.google.firebase.auth.FirebaseAuth
 import com.siddharth.datamonitor.ui.theme.PrimaryNeon
 import com.siddharth.datamonitor.ui.theme.SecondaryNeon
-import com.siddharth.datamonitor.ui.theme.TextPrimary
-import com.siddharth.datamonitor.ui.theme.TextSecondary
-import com.siddharth.datamonitor.ui.theme.WifiActive
 import com.siddharth.datamonitor.ui.theme.ThemeManager
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
@@ -94,29 +89,11 @@ fun ProfileScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        Box(
+        GlassCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .border(
-                    width = 1.2.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.22f),
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
+                .padding(vertical = 4.dp)
         ) {
-            // Background blur layer (does not blur child text content)
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-                    .blur(20.dp)
-            )
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,7 +107,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(24.dp)),
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -168,8 +145,10 @@ fun ProfileScreen(
                     Button(
                         onClick = onNavigateToAuth,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                        shape = RoundedCornerShape(4.dp), // Stark Vercel flat borders
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -194,7 +173,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), RoundedCornerShape(24.dp)),
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -206,38 +185,67 @@ fun ProfileScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
+                            // Primary Text: Actual registered name (from user profile)
+                            val registeredName = currentUser.displayName ?: "Authorized Core User"
                             Text(
-                                text = currentUser.displayName ?: currentUser.email ?: "Authorized User",
+                                text = if (registeredName.isNotBlank()) registeredName else "Authorized Core User",
                                 color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            val provider = remember(currentUser) {
-                                var pName = "Local Email"
-                                for (p in currentUser.providerData) {
-                                    when (p.providerId) {
-                                        "google.com" -> pName = "Google Sign-In"
-                                        "github.com" -> pName = "GitHub Sign-In"
+                            
+                            // Secondary Text below: User's actual email Address and provider badge
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                Text(
+                                    text = currentUser.email ?: "No Registered Email",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    fontSize = 13.sp
+                                )
+                                
+                                // Elegant Badge next to secondary email representing specific auth provider
+                                val providerId = remember(currentUser) {
+                                    var id = "password" // Default to Email Envelope
+                                    for (p in currentUser.providerData) {
+                                        when (p.providerId) {
+                                            "google.com" -> id = "google.com"
+                                            "github.com" -> id = "github.com"
+                                        }
+                                    }
+                                    id
+                                }
+                                
+                                when (providerId) {
+                                    "google.com" -> {
+                                        Icon(
+                                            painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_google),
+                                            contentDescription = "Google Authentication Provider",
+                                            tint = Color.Unspecified, // Retain gorgeous official multicolors
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                    "github.com" -> {
+                                        Icon(
+                                            painter = androidx.compose.ui.res.painterResource(id = com.siddharth.datamonitor.R.drawable.ic_github),
+                                            contentDescription = "GitHub Authentication Provider",
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                    else -> {
+                                        Icon(
+                                            imageVector = Icons.Default.Email,
+                                            contentDescription = "Email Authentication Provider",
+                                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(14.dp)
+                                        )
                                     }
                                 }
-                                pName
                             }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Provider: $provider",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                fontSize = 12.sp
-                            )
                         }
-                    }
-
-                    if (currentUser.email != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Email: ${currentUser.email}",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                            fontSize = 13.sp
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -250,8 +258,10 @@ fun ProfileScreen(
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                        shape = RoundedCornerShape(4.dp), // Stark Vercel flat borders
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
@@ -320,11 +330,13 @@ fun ProfileScreen(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
                         border = androidx.compose.foundation.BorderStroke(
-                            1.2.dp, 
-                            Brush.linearGradient(listOf(PrimaryNeon, SecondaryNeon))
+                            1.dp, 
+                            MaterialTheme.colorScheme.outline
                         ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(44.dp)
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
                     ) {
                         Text(
                             text = "Authenticate Now",
@@ -410,8 +422,10 @@ fun ProfileScreen(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().height(44.dp)
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
                         ) {
                             Text(
                                 text = "Sync Now",
@@ -459,7 +473,7 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(24.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
                 ) {
                     Row(modifier = Modifier.fillMaxSize()) {
                         Box(
@@ -467,10 +481,10 @@ fun ProfileScreen(
                                 .weight(safeWifiWeight)
                                 .fillMaxHeight()
                                 .background(MaterialTheme.colorScheme.tertiary, androidx.compose.foundation.shape.RoundedCornerShape(
-                                    topStart = 12.dp, 
-                                    bottomStart = 12.dp, 
-                                    topEnd = if (totalMobile == 0L) 12.dp else 0.dp, 
-                                    bottomEnd = if (totalMobile == 0L) 12.dp else 0.dp
+                                    topStart = 4.dp, 
+                                    bottomStart = 4.dp, 
+                                    topEnd = if (totalMobile == 0L) 4.dp else 0.dp, 
+                                    bottomEnd = if (totalMobile == 0L) 4.dp else 0.dp
                                 ))
                         )
                         Box(
@@ -478,10 +492,10 @@ fun ProfileScreen(
                                 .weight(safeCellWeight)
                                 .fillMaxHeight()
                                 .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(
-                                    topStart = if (totalWifi == 0L) 12.dp else 0.dp, 
-                                    bottomStart = if (totalWifi == 0L) 12.dp else 0.dp, 
-                                    topEnd = 12.dp, 
-                                    bottomEnd = 12.dp
+                                    topStart = if (totalWifi == 0L) 4.dp else 0.dp, 
+                                    bottomStart = if (totalWifi == 0L) 4.dp else 0.dp, 
+                                    topEnd = 4.dp, 
+                                    bottomEnd = 4.dp
                                 ))
                         )
                     }
@@ -492,7 +506,7 @@ fun ProfileScreen(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.size(10.dp).background(MaterialTheme.colorScheme.tertiary, androidx.compose.foundation.shape.RoundedCornerShape(5.dp)))
+                            Box(modifier = Modifier.size(10.dp).background(MaterialTheme.colorScheme.tertiary, androidx.compose.foundation.shape.RoundedCornerShape(2.dp)))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "Wi-Fi", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
                         }
@@ -503,7 +517,7 @@ fun ProfileScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(text = "Cellular", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Box(modifier = Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(5.dp)))
+                            Box(modifier = Modifier.size(10.dp).background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.RoundedCornerShape(2.dp)))
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(text = formatBytes(totalMobile), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 14.sp)
@@ -579,6 +593,5 @@ fun ProfileScreen(
                 }
             }
         }
-
     }
 }

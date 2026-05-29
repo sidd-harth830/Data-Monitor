@@ -3,6 +3,7 @@ package com.siddharth.datamonitor.ui.theme
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -51,17 +52,19 @@ data class ThemePalette(
     }
 }
 
+// Map existing theme enums of Data Monitor cleanly to Next.js/Vercel styling tokens
+// to ensure seamless backwards compatibility while strictly enforcing the Stark Vercel aesthetics
 val palettes = mapOf(
-    AppTheme.SPRING to ThemePalette(Color(0xFFA8DF8E), Color(0xFFFFAAB8), Color(0xFFF0FFDF), Color(0xFFFFD8DF), Color.Black, true),
-    AppTheme.DESERT to ThemePalette(Color(0xFFC7522A), Color(0xFF74A892), Color(0xFFFBF2C4), Color(0xFFE5C185), Color(0xFF008585), true),
-    AppTheme.FOREST to ThemePalette(Color(0xFF628141), Color(0xFF8BAE66), Color(0xFF1B211A), Color(0xFF1B211A), Color(0xFFEBD5AB), false),
-    AppTheme.MIDNIGHT_AMOLED to ThemePalette(Color(0xFF00FFFF), Color(0xFF00CCCC), Color(0xFF000000), Color(0xFF000000), Color.White, false),
-    AppTheme.SOLARIZED_LIGHT to ThemePalette(Color(0xFF268BD2), Color(0xFF2AA198), Color(0xFFFDF6E3), Color(0xFFEEE8D5), Color.Black, true),
-    AppTheme.OCEAN_DEEP to ThemePalette(Color(0xFF008080), Color(0xFFFFDC00), Color(0xFF001F3F), Color(0xFF1B263B), Color.White, false),
-    AppTheme.SUNSET_BLAZE to ThemePalette(Color(0xFFFF5722), Color(0xFFFFD54F), Color(0xFF3E0000), Color(0xFF5A1818), Color.White, false),
-    AppTheme.CYBERPUNK to ThemePalette(Color(0xFFFFFF00), Color(0xFFFF00FF), Color(0xFF000000), Color(0xFF1A001A), Color.White, false),
-    AppTheme.LAVENDER_HAZE to ThemePalette(Color(0xFF9C27B0), Color(0xFFFFCDD2), Color(0xFFF3E5F5), Color(0xFFE9D5FF), Color.Black, true),
-    AppTheme.MATRIX to ThemePalette(Color(0xFF00FF00), Color(0xFF00FFFF), Color(0xFF000000), Color(0xFF0A140A), Color.White, false)
+    AppTheme.SPRING to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.DESERT to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.FOREST to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.MIDNIGHT_AMOLED to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.SOLARIZED_LIGHT to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.OCEAN_DEEP to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.SUNSET_BLAZE to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.CYBERPUNK to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.LAVENDER_HAZE to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.MATRIX to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false)
 )
 
 private fun Context.findActivity(): Activity? {
@@ -75,19 +78,41 @@ private fun Context.findActivity(): Activity? {
 
 @Composable
 fun DataMonitorTheme(
-    theme: AppTheme = AppTheme.FOREST,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
-    val palette = palettes[theme] ?: palettes[AppTheme.FOREST]!!
-    val baseScheme = palette.toColorScheme()
-    
-    val colorScheme = if (appAccentColor != null) {
-        baseScheme.copy(primary = appAccentColor)
+    // Determine light or dark color scheme based strictly on darkTheme preference and next.js design standards
+    val colorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = VercelDarkPrimary,
+            secondary = VercelDarkSecondary,
+            tertiary = StatusSuccess,
+            background = VercelDarkBackground,
+            surface = VercelDarkSurface,
+            onPrimary = VercelDarkBackground,
+            onSecondary = VercelDarkTextPrimary,
+            onBackground = VercelDarkTextPrimary,
+            onSurface = VercelDarkTextPrimary,
+            outline = VercelDarkBorder,
+            outlineVariant = VercelDarkBorder
+        )
     } else {
-        baseScheme
+        lightColorScheme(
+            primary = VercelLightPrimary,
+            secondary = VercelLightSecondary,
+            tertiary = StatusSuccess,
+            background = VercelLightBackground,
+            surface = VercelLightSurface,
+            onPrimary = VercelLightBackground,
+            onSecondary = VercelLightTextPrimary,
+            onBackground = VercelLightTextPrimary,
+            onSurface = VercelLightTextPrimary,
+            outline = VercelLightBorder,
+            outlineVariant = VercelLightBorder
+        )
     }
-    
+
     val typography = createTypography()
 
     val view = LocalView.current
@@ -96,7 +121,9 @@ fun DataMonitorTheme(
             val activity = view.context.findActivity()
             if (activity != null) {
                 val window = activity.window
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = palette.isLight
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                // Draw navigation bar matching backing theme
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
@@ -108,20 +135,35 @@ fun DataMonitorTheme(
     )
 }
 
+// Deprecated forest-based interface backward compatibility mapping
+@Composable
+fun DataMonitorTheme(
+    theme: AppTheme,
+    appAccentColor: Color? = null,
+    content: @Composable () -> Unit
+) {
+    val palette = palettes[theme] ?: palettes[AppTheme.MIDNIGHT_AMOLED]!!
+    DataMonitorTheme(darkTheme = !palette.isLight, appAccentColor = appAccentColor, content = content)
+}
+
 @Composable
 fun DynamicThemeProvider(
     themeManager: ThemeManager,
     content: @Composable () -> Unit
 ) {
-    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val defaultTheme = if (isSystemDark) AppTheme.MIDNIGHT_AMOLED else AppTheme.LAVENDER_HAZE
+    val isSystemDark = isSystemInDarkTheme()
     val currentThemeRaw by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = null)
-    val currentTheme = currentThemeRaw ?: defaultTheme
+    
+    // Strict priority: Map system preference if currentThemeRaw is not overridden
+    val isDark = if (currentThemeRaw == null) {
+        isSystemDark
+    } else {
+        ! (palettes[currentThemeRaw]?.isLight ?: !isSystemDark)
+    }
 
     DataMonitorTheme(
-        theme = currentTheme,
+        darkTheme = isDark,
         appAccentColor = null,
         content = content
     )
 }
-
