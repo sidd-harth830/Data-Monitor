@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.RemoteException
 import java.util.Calendar
 
@@ -18,7 +19,12 @@ data class AppUsageInfo(
 class NetworkUsageTracker(private val context: Context) {
 
     fun getTopAppsUsage(): List<AppUsageInfo> {
-        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return emptyList()
+        }
+        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as? NetworkStatsManager
+            ?: return emptyList()
+
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
@@ -106,7 +112,12 @@ class NetworkUsageTracker(private val context: Context) {
     }
     
     fun getUsageForDay(transportType: Int, startTime: Long, endTime: Long): Long {
-        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return 0L
+        }
+        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as? NetworkStatsManager
+            ?: return 0L
+
         val networkType = if (transportType == NetworkCapabilities.TRANSPORT_WIFI) {
             ConnectivityManager.TYPE_WIFI
         } else {
@@ -147,7 +158,6 @@ class NetworkUsageTracker(private val context: Context) {
     }
 
     fun getHourlyUsageForLast7Days(): List<com.siddharth.datamonitor.data.HourlyUsageLog> {
-        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
         val calendar = Calendar.getInstance()
         val endTime = calendar.timeInMillis
         calendar.add(Calendar.DAY_OF_YEAR, -6)
@@ -160,39 +170,44 @@ class NetworkUsageTracker(private val context: Context) {
         val hourlyLogs = mutableMapOf<Pair<String, Int>, Pair<Long, Long>>() 
         val df = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
 
-        try {
-            val wifiStats = networkStatsManager.queryDetails(ConnectivityManager.TYPE_WIFI, null, startTime, endTime)
-            val bucket = NetworkStats.Bucket()
-            while (wifiStats.hasNextBucket()) {
-                wifiStats.getNextBucket(bucket)
-                val time = bucket.startTimeStamp
-                val bucketCal = Calendar.getInstance()
-                bucketCal.timeInMillis = time
-                val dateStr = df.format(bucketCal.time)
-                val hour = bucketCal.get(Calendar.HOUR_OF_DAY)
-                val bytes = bucket.rxBytes + bucket.txBytes
-                
-                val current = hourlyLogs.getOrDefault(Pair(dateStr, hour), Pair(0L, 0L))
-                hourlyLogs[Pair(dateStr, hour)] = Pair(current.first, current.second + bytes)
-            }
-            wifiStats.close()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as? NetworkStatsManager
+            if (networkStatsManager != null) {
+                try {
+                    val wifiStats = networkStatsManager.queryDetails(ConnectivityManager.TYPE_WIFI, null, startTime, endTime)
+                    val bucket = NetworkStats.Bucket()
+                    while (wifiStats.hasNextBucket()) {
+                        wifiStats.getNextBucket(bucket)
+                        val time = bucket.startTimeStamp
+                        val bucketCal = Calendar.getInstance()
+                        bucketCal.timeInMillis = time
+                        val dateStr = df.format(bucketCal.time)
+                        val hour = bucketCal.get(Calendar.HOUR_OF_DAY)
+                        val bytes = bucket.rxBytes + bucket.txBytes
+                        
+                        val current = hourlyLogs.getOrDefault(Pair(dateStr, hour), Pair(0L, 0L))
+                        hourlyLogs[Pair(dateStr, hour)] = Pair(current.first, current.second + bytes)
+                    }
+                    wifiStats.close()
 
-            val mobileStats = networkStatsManager.queryDetails(ConnectivityManager.TYPE_MOBILE, null, startTime, endTime)
-            while (mobileStats.hasNextBucket()) {
-                mobileStats.getNextBucket(bucket)
-                val time = bucket.startTimeStamp
-                val bucketCal = Calendar.getInstance()
-                bucketCal.timeInMillis = time
-                val dateStr = df.format(bucketCal.time)
-                val hour = bucketCal.get(Calendar.HOUR_OF_DAY)
-                val bytes = bucket.rxBytes + bucket.txBytes
-                
-                val current = hourlyLogs.getOrDefault(Pair(dateStr, hour), Pair(0L, 0L))
-                hourlyLogs[Pair(dateStr, hour)] = Pair(current.first + bytes, current.second)
+                    val mobileStats = networkStatsManager.queryDetails(ConnectivityManager.TYPE_MOBILE, null, startTime, endTime)
+                    while (mobileStats.hasNextBucket()) {
+                        mobileStats.getNextBucket(bucket)
+                        val time = bucket.startTimeStamp
+                        val bucketCal = Calendar.getInstance()
+                        bucketCal.timeInMillis = time
+                        val dateStr = df.format(bucketCal.time)
+                        val hour = bucketCal.get(Calendar.HOUR_OF_DAY)
+                        val bytes = bucket.rxBytes + bucket.txBytes
+                        
+                        val current = hourlyLogs.getOrDefault(Pair(dateStr, hour), Pair(0L, 0L))
+                        hourlyLogs[Pair(dateStr, hour)] = Pair(current.first + bytes, current.second)
+                    }
+                    mobileStats.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
-            mobileStats.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
 
         val result = mutableListOf<com.siddharth.datamonitor.data.HourlyUsageLog>()
