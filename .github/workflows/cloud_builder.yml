@@ -1,11 +1,17 @@
-name: SHA Extractor and APK Builder
+name: Cloud Builder CI
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
-  build_and_extract:
-    name: Build & Extract Keys
+  build:
+    name: Build APK and Extract Keys
     runs-on: ubuntu-latest
 
     steps:
@@ -17,47 +23,50 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+          cache: gradle
 
-      - name: Install Global Gradle Compiler
+      - name: Setup Gradle (v8.7)
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: 🛠️ Generate Missing Debug Keystore
+      - name: Prepare Environment File
         run: |
           ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
-          ROOT_DIR=$(dirname "$ROOT_DIR")
-          cd "$ROOT_DIR"
-          
-          echo "Generating a new debug.keystore..."
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-          echo "✅ Keystore successfully created!"
+          cd "$(dirname "$ROOT_DIR")"
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            echo "GEMINI_API_KEY=dummy_key" > .env
+          fi
 
-      - name: 🔑 EXTRACT SHA-1 AND SHA-256 KEYS
+      - name: Forcefully Generate Debug Keystore
         run: |
           ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
-          ROOT_DIR=$(dirname "$ROOT_DIR")
-          cd "$ROOT_DIR"
-          
-          gradle signingReport > keys.txt
-          
-          echo "================================================="
-          echo "📋 COPY THESE KEYS INTO FIREBASE:"
-          echo "================================================="
-          grep "SHA1: " keys.txt | head -n 1
-          grep "SHA-256: " keys.txt | head -n 1
-          echo "================================================="
+          cd "$(dirname "$ROOT_DIR")"
+          rm -f ./debug.keystore
+          keytool -genkey -v -keystore ./debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: 🚀 Compile Test APK
+      - name: Extract Firebase Cryptographic Keys
         run: |
           ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
-          ROOT_DIR=$(dirname "$ROOT_DIR")
-          cd "$ROOT_DIR"
-          
+          cd "$(dirname "$ROOT_DIR")"
+          echo "Running gradle signingReport..."
+          gradle signingReport > signing_report.txt
+          cat signing_report.txt
+          echo "=================== EXTRACTED KEYS FOR FIREBASE ==================="
+          grep -E "SHA1:|SHA-256:" signing_report.txt || true
+          echo "=================================================================="
+
+      - name: Compile App Binary (APK)
+        run: |
+          ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
+          cd "$(dirname "$ROOT_DIR")"
           gradle assembleDebug
 
-      - name: 📦 Upload APK for Download
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: test-ready-apk
-          path: '**/app/build/outputs/apk/**/*.apk'
+          path: "**/app/build/outputs/apk/debug/*.apk"
+          if-no-files-found: error
