@@ -24,18 +24,18 @@ fun GlassCard(
     val colorScheme = MaterialTheme.colorScheme
     val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
     
-    // Premium Glassmorphism background colors (alpha 0.1 to 0.4 on background/overlays)
+    // Premium Glassmorphism background colors (alpha 0.1 to 0.2)
     val backgroundColor = if (isLight) {
-        Color(0xFFFFFFFF).copy(alpha = 0.35f) // Semi-transparent clean white
+        Color(0xFFFFFFFF).copy(alpha = 0.15f) // Subtle semi-transparent clean white
     } else {
-        Color(0xFF0F0F0F).copy(alpha = 0.30f) // Deep premium semi-transparent dark slate
+        Color(0xFF0A0A0A).copy(alpha = 0.15f) // Subtle premium semi-transparent dark slate
     }
     
     // Very thin, elegant, high-contrast border (0.5dp) to remove ugly thick borders
     val borderColor = if (isLight) {
-        Color.Black.copy(alpha = 0.08f)
+        Color.Black.copy(alpha = 0.06f)
     } else {
-        Color.White.copy(alpha = 0.15f)
+        Color.White.copy(alpha = 0.12f)
     }
 
     Box(

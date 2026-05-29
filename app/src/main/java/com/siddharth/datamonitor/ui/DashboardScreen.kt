@@ -278,7 +278,7 @@ fun DashboardLayoutStandard(
             )
             LiveSpeedCard(
                 title = "UPLOAD",
-                speedColor = MaterialTheme.colorScheme.secondary,
+                speedColor = MaterialTheme.colorScheme.onSurface,
                 speedBytes = uploadSpeed,
                 modifier = Modifier.weight(1f)
             )
@@ -463,7 +463,7 @@ fun DashboardLayoutPro(
             )
             LiveSpeedCard(
                 title = "UPLOAD TX",
-                speedColor = MaterialTheme.colorScheme.secondary,
+                speedColor = MaterialTheme.colorScheme.onSurface,
                 speedBytes = uploadSpeed,
                 modifier = Modifier.weight(1f)
             )
@@ -551,7 +551,12 @@ fun AnalyticalWaveChart(
                 .fillMaxWidth()
                 .height(140.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)),
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.12f))
+                .border(
+                    width = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.material3.CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -567,7 +572,12 @@ fun AnalyticalWaveChart(
             .fillMaxWidth()
             .height(140.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.12f))
+            .border(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(16.dp)
+            )
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
@@ -682,7 +692,7 @@ fun DashboardLayoutGrid(
                     title = "WI-FI TELEMETRY",
                     value = formatBytes(wifiUsage),
                     subtitle = "Local wireless network",
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -709,7 +719,7 @@ fun DashboardLayoutGrid(
                     title = "REMAINING CYCLES",
                     value = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
                     subtitle = "Remaining plan space",
-                    color = MaterialTheme.colorScheme.secondary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 GridBlockCard(
@@ -1053,7 +1063,7 @@ fun DailyDataLimitTracker(
 
                 Text(
                     text = "$percentString%",
-                    color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+                    color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 3.dp)
