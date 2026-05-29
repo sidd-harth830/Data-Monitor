@@ -419,7 +419,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 ) {
                     listOf(
                         com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT to "System Default",
-                        com.siddharth.datamonitor.ui.theme.FontProfile.PREMIUM to "Acorn Premium"
+                        com.siddharth.datamonitor.ui.theme.FontProfile.PREMIUM to "Plus Jakarta Sans"
                     ).forEach { (profile, label) ->
                         val isSelected = fontProfile == profile
                         Button(

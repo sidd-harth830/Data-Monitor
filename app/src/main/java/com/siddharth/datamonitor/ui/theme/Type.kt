@@ -6,24 +6,52 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.googlefonts.Font
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
-// Try loading R.font.acorn safely or fallback to Serif
-val AcornFontFamily = try {
+// Configuration & state for dynamic font load failure notifier
+object FontSettings {
+    var onFontLoadFailed: (() -> Unit)? = null
+    private var hasLoggedFailed = false
+
+    fun triggerFontLoadFailed(e: Throwable) {
+        if (!hasLoggedFailed) {
+            hasLoggedFailed = true
+            try {
+                FirebaseCrashlytics.getInstance().recordException(e)
+            } catch (ex: Throwable) {
+                // Safe check if Firebase not initialized
+            }
+            onFontLoadFailed?.invoke()
+        }
+    }
+}
+
+// Loading Plus Jakarta Sans premium Google Font safely
+val PremiumFontFamily: FontFamily = try {
+    val provider = GoogleFont.Provider(
+        providerAuthority = "com.google.android.gms.fonts",
+        providerPackage = "com.google.android.gms",
+        certificates = com.siddharth.datamonitor.R.array.com_google_android_gms_fonts_certs
+    )
+    val fontName = GoogleFont("Plus Jakarta Sans")
     FontFamily(
-        Font(com.siddharth.datamonitor.R.font.acorn, FontWeight.Normal),
-        Font(com.siddharth.datamonitor.R.font.acorn, FontWeight.Medium),
-        Font(com.siddharth.datamonitor.R.font.acorn, FontWeight.SemiBold),
-        Font(com.siddharth.datamonitor.R.font.acorn, FontWeight.Bold)
+        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
+        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
+        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
+        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
     )
 } catch (e: Throwable) {
-    FontFamily.Serif
+    FontSettings.triggerFontLoadFailed(e)
+    FontFamily.SansSerif
 }
 
 // Clean default standard system Sans Serif for layout body, microcopy, and actions
 val SansSerifFontFamily = FontFamily.SansSerif
 
 fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
-    val displayFontFamily = if (profile == FontProfile.PREMIUM) AcornFontFamily else SansSerifFontFamily
+    val displayFontFamily = if (profile == FontProfile.PREMIUM) PremiumFontFamily else SansSerifFontFamily
     val bodyFontFamily = SansSerifFontFamily
 
     return Typography(
