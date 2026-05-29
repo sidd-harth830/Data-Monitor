@@ -1,11 +1,11 @@
-name: Cloud Builder & SHA-1 Extractor
+name: SHA-1 Extractor and APK Builder
 
 on:
   workflow_dispatch:
 
 jobs:
   build_and_extract:
-    name: Extract Keys and Build APK
+    name: Build & Extract
     runs-on: ubuntu-latest
 
     steps:
@@ -23,14 +23,23 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: 🔑 EXTRACT SHA-1 KEY FOR FIREBASE
+      # 🔥 THE FIX: Generate the missing keystore file
+      - name: 🛠️ Generate Missing Debug Keystore
         run: |
-          # Find the Android project folder
           ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
           ROOT_DIR=$(dirname "$ROOT_DIR")
           cd "$ROOT_DIR"
           
-          echo "Generating cryptographic report..."
+          echo "Generating a new debug.keystore..."
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          echo "✅ Keystore successfully created!"
+
+      - name: 🔑 EXTRACT SHA-1 KEY FOR FIREBASE
+        run: |
+          ROOT_DIR=$(find . -maxdepth 3 -name "settings.gradle*" -type f | head -n 1)
+          ROOT_DIR=$(dirname "$ROOT_DIR")
+          cd "$ROOT_DIR"
+          
           gradle signingReport > keys.txt
           
           echo "================================================="
@@ -44,7 +53,6 @@ jobs:
           ROOT_DIR=$(dirname "$ROOT_DIR")
           cd "$ROOT_DIR"
           
-          # We build a Debug APK here because Release APKs require passwords we don't have in the cloud yet
           gradle assembleDebug
 
       - name: 📦 Upload APK for Download
