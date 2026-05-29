@@ -114,6 +114,18 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
                 .navigationBarsPadding()
         ) {
+        val dailyLimitTracker = @Composable {
+            DailyDataLimitTracker(
+                todayUsageBytes = mobileUsage,
+                dailyLimitMBStr = dailyDataLimitMBStr,
+                onSaveLimit = { limit ->
+                    scope.launch {
+                        themeManager.setDailyDataLimit(limit)
+                    }
+                }
+            )
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -121,7 +133,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         ) {
             Text(
                 text = "DASHBOARD",
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
@@ -143,18 +156,6 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         }
         
         Spacer(modifier = Modifier.height(32.dp))
-
-        DailyDataLimitTracker(
-            todayUsageBytes = mobileUsage,
-            dailyLimitMBStr = dailyDataLimitMBStr,
-            onSaveLimit = { limit ->
-                scope.launch {
-                    themeManager.setDailyDataLimit(limit)
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
         
         when (dashboardLayout) {
             DashboardLayoutPreference.STANDARD -> {
@@ -166,7 +167,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     dataLimitBytes = dataLimitBytes,
                     topApps = topApps,
                     isUnlimited5GActive = isUnlimited5GActive,
-                    bytesLeft = bytesLeft
+                    bytesLeft = bytesLeft,
+                    dailyLimitTracker = dailyLimitTracker
                 )
             }
             DashboardLayoutPreference.PRO -> {
@@ -180,7 +182,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     topApps = topApps,
                     isUnlimited5GActive = isUnlimited5GActive,
                     bytesLeft = bytesLeft,
-                    liveSpeeds = liveSpeeds
+                    liveSpeeds = liveSpeeds,
+                    dailyLimitTracker = dailyLimitTracker
                 )
             }
             DashboardLayoutPreference.GRID -> {
@@ -194,7 +197,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     topApps = topApps,
                     isUnlimited5GActive = isUnlimited5GActive,
                     bytesLeft = bytesLeft,
-                    todayHourlyLogs = todayHourlyLogs
+                    todayHourlyLogs = todayHourlyLogs,
+                    dailyLimitTracker = dailyLimitTracker
                 )
             }
         }
@@ -211,7 +215,8 @@ fun DashboardLayoutStandard(
     dataLimitBytes: Long,
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
-    bytesLeft: Long
+    bytesLeft: Long,
+    dailyLimitTracker: @Composable () -> Unit
 ) {
     Column {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -223,7 +228,11 @@ fun DashboardLayoutStandard(
             )
         }
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        dailyLimitTracker()
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Data Left Card
         GlassCard(modifier = Modifier.fillMaxWidth().height(84.dp)) {
@@ -359,7 +368,8 @@ fun DashboardLayoutPro(
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
     bytesLeft: Long,
-    liveSpeeds: List<Pair<Long, Long>>?
+    liveSpeeds: List<Pair<Long, Long>>?,
+    dailyLimitTracker: @Composable () -> Unit
 ) {
     Column {
         // High density analytics header
@@ -372,8 +382,8 @@ fun DashboardLayoutPro(
                 ) {
                     Text(
                         text = "ANALYTICS ENGINE",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.5.sp
                     )
@@ -408,6 +418,10 @@ fun DashboardLayoutPro(
             }
         }
         
+        Spacer(modifier = Modifier.height(16.dp))
+
+        dailyLimitTracker()
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Grid Analytics Section
@@ -666,13 +680,14 @@ fun DashboardLayoutGrid(
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
     bytesLeft: Long,
-    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>
+    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>,
+    dailyLimitTracker: @Composable () -> Unit
 ) {
     Column {
         Text(
             text = "DENSE SYSTEM GRID",
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
-            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.5.sp,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -732,7 +747,11 @@ fun DashboardLayoutGrid(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        dailyLimitTracker()
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "FAST DISPATCH STREAM",
