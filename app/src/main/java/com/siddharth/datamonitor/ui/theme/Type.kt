@@ -47,11 +47,15 @@ val PremiumFontFamily: FontFamily = try {
     FontFamily.SansSerif
 }
 
+val AcornFontFamily = FontFamily(
+    androidx.compose.ui.text.font.Font(com.siddharth.datamonitor.R.font.acorn)
+)
+
 // Clean default standard system Sans Serif for layout body, microcopy, and actions
 val SansSerifFontFamily = FontFamily.SansSerif
 
 fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
-    val displayFontFamily = if (profile == FontProfile.PREMIUM) PremiumFontFamily else SansSerifFontFamily
+    val displayFontFamily = AcornFontFamily
     val bodyFontFamily = SansSerifFontFamily
 
     return Typography(

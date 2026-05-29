@@ -19,12 +19,12 @@ val VercelDarkOnSecondary = Color(0xFFFFFFFF)     // Stark white text on dark se
 val VercelLightBackground = Color(0xFFFAFAFA)     // Very light off-white
 val VercelLightSurface = Color(0xFFFFFFFF)        // Pure white surface
 val VercelLightBorder = Color(0xFFE2E8F0)         // Slate outline
-val VercelLightTextPrimary = Color(0xFF0F172A)    // Dark slate text
+val VercelLightTextPrimary = Color(0xFF000000)    // Pure black text
 val VercelLightTextSecondary = Color(0xFF64748B)  // Muted slate gray
-val VercelLightPrimary = Color(0xFF0F172A)       // Crisp deep slate active
+val VercelLightPrimary = Color(0xFF000000)        // Pure monogram black for active accents
 val VercelLightSecondary = Color(0xFFE2E8F0)     // Light slate gray for secondary container background
 val VercelLightOnPrimary = Color(0xFFFFFFFF)      // Stark white text on dark primary
-val VercelLightOnSecondary = Color(0xFF0F172A)    // Deep slate text on light secondary
+val VercelLightOnSecondary = Color(0xFF000000)    // Pure black text on light secondary
 
 // Helper Status Colors
 val StatusSuccess = Color(0xFF10B981) // Vibrant Emerald Green
@@ -43,9 +43,9 @@ val TextSecondary = Color(0xFF888888)
 val WifiActive = Color(0xFF0070F3)
 val MobileActive = Color(0xFFF81CE5)
 val LightBackground = Color(0xFFFAFAFA)
-val LightPrimary = Color(0xFF0F172A)
+val LightPrimary = Color(0xFF000000)
 val LightSecondary = Color(0xFF64748B)
 val LightGlass = Color(0x22000000)
 val LightGlassBorder = Color(0xFFE2E8F0)
-val LightTextPrimary = Color(0xFF0F172A)
+val LightTextPrimary = Color(0xFF000000)
 val LightTextSecondary = Color(0xFF64748B)

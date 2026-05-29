@@ -74,6 +74,15 @@ class MainActivity : ComponentActivity() {
         // will only save if permitted.
         try {
             viewModel.checkPermission()
+            
+            // Post-delayed secondary check (500ms) to ensure settings updates propagate correctly
+            window.decorView.postDelayed({
+                try {
+                    viewModel.checkPermission()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }, 500)
         } catch (e: Exception) {
             e.printStackTrace()
             try {

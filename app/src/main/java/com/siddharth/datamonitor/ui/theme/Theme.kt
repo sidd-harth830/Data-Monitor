@@ -34,7 +34,8 @@ data class ThemePalette(
             onSecondary = Color.Black,          // High-contrast clear dark text on secondary
             onTertiary = Color.White,
             onBackground = text,
-            onSurface = text
+            onSurface = text,
+            onSurfaceVariant = VercelLightTextSecondary
         )
     } else {
         darkColorScheme(
@@ -47,7 +48,8 @@ data class ThemePalette(
             onSecondary = Color.White,          // High-contrast clear light text on secondary
             onTertiary = Color.Black,
             onBackground = text,
-            onSurface = text
+            onSurface = text,
+            onSurfaceVariant = VercelDarkTextSecondary
         )
     }
 }
@@ -95,6 +97,7 @@ fun DataMonitorTheme(
             onSecondary = VercelDarkOnSecondary,  // White on Slate Gray (100% readable)
             onBackground = VercelDarkTextPrimary,
             onSurface = VercelDarkTextPrimary,
+            onSurfaceVariant = VercelDarkTextSecondary,
             outline = VercelDarkBorder,
             outlineVariant = VercelDarkBorder
         )
@@ -109,6 +112,7 @@ fun DataMonitorTheme(
             onSecondary = VercelLightOnSecondary,  // Black on Light Gray (100% readable)
             onBackground = VercelLightTextPrimary,
             onSurface = VercelLightTextPrimary,
+            onSurfaceVariant = VercelLightTextSecondary,
             outline = VercelLightBorder,
             outlineVariant = VercelLightBorder
         )

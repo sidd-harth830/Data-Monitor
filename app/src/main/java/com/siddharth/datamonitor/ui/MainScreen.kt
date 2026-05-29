@@ -3,6 +3,7 @@ package com.siddharth.datamonitor.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -51,6 +52,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.rounded.NetworkCheck
 
+import androidx.compose.material.icons.rounded.Warning
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import android.net.Uri
@@ -449,15 +451,18 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = "ACCESS REQUIRED",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -466,10 +471,10 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         GlassCard(
             shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(0.8f)
+            modifier = Modifier.fillMaxWidth(0.85f)
         ) {
             Button(
                 onClick = onRequest,
@@ -477,6 +482,49 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().height(56.dp)
             ) {
                 Text("AUTHENTICATE", fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(0.95f),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.12f)
+            ),
+            border = BorderStroke(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = "Alert Warning Icon",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(24.dp).padding(top = 2.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "RESTRICTED SETTINGS HELPER",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "If permission is grayed out, go to Phone Settings -> Apps -> Data Monitor -> 3 Dots (Top Right) -> Allow Restricted Settings.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        lineHeight = 20.sp
+                    )
+                }
             }
         }
     }
