@@ -26,23 +26,35 @@ fun Modifier.glassCard(
     val colorScheme = MaterialTheme.colorScheme
     val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
     
-    // Transparent glass backdrop: White (0.05f) for dark mode, black (0.05f) for light mode
-    val backgroundColor = if (isLight) {
-        Color.Black.copy(alpha = 0.05f)
+    // Premium linear glass reflection brush simulating specular light highlights
+    val backgroundBrush = if (isLight) {
+        androidx.compose.ui.graphics.Brush.linearGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.35f),
+                Color.White.copy(alpha = 0.12f),
+                Color.Black.copy(alpha = 0.03f)
+            )
+        )
     } else {
-        Color.White.copy(alpha = 0.05f)
+        androidx.compose.ui.graphics.Brush.linearGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.08f),
+                Color.White.copy(alpha = 0.03f),
+                Color.Black.copy(alpha = 0.15f)
+            )
+        )
     }
     
-    // Thin high-contrast border: White (0.1f) for dark mode, black (0.1f) for light mode
+    // Crisp ultra-thin 0.5dp border: White for high-end dark contrast, dark translucent for light theme
     val borderColor = if (isLight) {
-        Color.Black.copy(alpha = 0.1f)
+        Color.Black.copy(alpha = 0.08f)
     } else {
-        Color.White.copy(alpha = 0.1f)
+        Color.White.copy(alpha = 0.15f)
     }
 
     return this
         .clip(shape)
-        .background(backgroundColor)
+        .background(backgroundBrush)
         .border(
             border = BorderStroke(0.5.dp, borderColor),
             shape = shape

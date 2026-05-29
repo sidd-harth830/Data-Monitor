@@ -178,20 +178,24 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             }
 
             if (isUnlimited5GActive) {
-                Box(
+                GlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-                        .border(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(
-                        text = "⚡ UNLIMITED 5G CARRIER DETECTED",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "⚡ UNLIMITED 5G CARRIER DETECTED",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 1.sp
+                        )
+                    }
                 }
             }
             
@@ -618,20 +622,18 @@ fun AnalyticalWaveChart(
     modifier: Modifier = Modifier
 ) {
     if (liveSpeeds == null) {
-        Box(
+        GlassCard(
             modifier = modifier
                 .fillMaxWidth()
-                .height(140.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.12f))
-                .border(
-                    width = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(16.dp)
-                ),
-            contentAlignment = Alignment.Center
+                .height(140.dp),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            androidx.compose.material3.CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
         }
         return
     }
@@ -639,30 +641,21 @@ fun AnalyticalWaveChart(
     val primaryColor = com.siddharth.datamonitor.ui.theme.StatusWifi
     val secondaryColor = com.siddharth.datamonitor.ui.theme.StatusMobile
 
-    // High contrast container colors based on theme backgrounds so as not to blend in
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f
-    val chartBgColor = if (isLight) Color(0xFFF1F5F9) else Color(0xFF111111)
-    val chartBorderColor = if (isLight) Color(0xFFE2E8F0) else Color(0xFF222222)
 
-    Box(
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .height(140.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(chartBgColor)
-            .border(
-                width = 0.5.dp,
-                color = chartBorderColor,
-                shape = RoundedCornerShape(16.dp)
-            )
+            .height(140.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
             val midY = height / 2f
             
-            // Draw grid lines - highly clear contrast
-            val gridColor = if (isLight) Color(0x1F000000) else Color(0x33FFFFFF)
+            // Draw grid lines - highly clear contrast and beautifully soft
+            val gridColor = if (isLight) Color(0x0D000000) else Color(0x1AFFFFFF)
             for (i in 1..4) {
                 val y = height * (i / 5f)
                 drawLine(gridColor, start = androidx.compose.ui.geometry.Offset(0f, y), end = androidx.compose.ui.geometry.Offset(width, y), strokeWidth = 1.dp.toPx())

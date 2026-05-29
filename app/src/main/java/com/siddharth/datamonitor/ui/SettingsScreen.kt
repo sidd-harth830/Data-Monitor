@@ -87,6 +87,74 @@ fun changeAppIcon(context: Context, iconChoice: String) {
     }
 }
 
+@Composable
+fun <T> PremiumTabSelector(
+    options: List<Pair<T, String>>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
+    val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
+    
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        options.forEach { (option, label) ->
+            val isSelected = option == selectedOption
+            
+            val containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+            }
+            
+            val contentColor = if (isSelected) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onBackground
+            }
+            
+            val borderStroke = androidx.compose.foundation.BorderStroke(
+                width = 0.5.dp,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    customDividerColor
+                }
+            )
+
+            Surface(
+                onClick = { onOptionSelected(option) },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = containerColor,
+                border = borderStroke
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = BricolageFontFamily
+                        ),
+                        color = contentColor,
+                        maxLines = 1,
+                        fontSize = 11.sp,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
@@ -138,30 +206,17 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
+                PremiumTabSelector(
+                    options = listOf(
                         MonogramTheme.SYSTEM_DEFAULT to "System Default",
                         MonogramTheme.LIGHT_MONOGRAM to "Light Monogram",
                         MonogramTheme.DARK_MONOGRAM to "Dark Monogram"
-                    ).forEach { (themeOption, label) ->
-                        val isSelected = monogramTheme == themeOption
-                        Button(
-                            onClick = { scope.launch { themeManager.setMonogramTheme(themeOption) } },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                        ) {
-                            Text(label, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        }
+                    ),
+                    selectedOption = monogramTheme,
+                    onOptionSelected = { themeOption ->
+                        scope.launch { themeManager.setMonogramTheme(themeOption) }
                     }
-                }
+                )
             }
         }
         
@@ -381,30 +436,17 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
+                PremiumTabSelector(
+                    options = listOf(
                         DashboardLayoutPreference.STANDARD to "Standard",
                         DashboardLayoutPreference.PRO to "Pro Wave",
                         DashboardLayoutPreference.GRID to "Grid Block"
-                    ).forEach { (layout, label) ->
-                        val isSelected = currentLayout == layout
-                        Button(
-                            onClick = { scope.launch { themeManager.setDashboardLayout(layout) } },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                        ) {
-                            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
+                    ),
+                    selectedOption = currentLayout,
+                    onOptionSelected = { layout ->
+                        scope.launch { themeManager.setDashboardLayout(layout) }
                     }
-                }
+                )
             }
         }
 
@@ -421,29 +463,16 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
+                PremiumTabSelector(
+                    options = listOf(
                         com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT to "System Default",
                         com.siddharth.datamonitor.ui.theme.FontProfile.PREMIUM to "Plus Jakarta Sans"
-                    ).forEach { (profile, label) ->
-                        val isSelected = fontProfile == profile
-                        Button(
-                            onClick = { scope.launch { themeManager.setFontProfile(profile) } },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                        ) {
-                            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
+                    ),
+                    selectedOption = fontProfile,
+                    onOptionSelected = { profile ->
+                        scope.launch { themeManager.setFontProfile(profile) }
                     }
-                }
+                )
             }
         }
 
@@ -575,15 +604,21 @@ fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedCh
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
-                fontFamily = MaterialTheme.typography.titleMedium.fontFamily
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    fontFamily = BricolageFontFamily
+                )
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 color = MaterialTheme.colorScheme.onSecondary,
-                fontSize = 12.sp
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    fontFamily = BricolageFontFamily
+                )
             )
         }
         Switch(
