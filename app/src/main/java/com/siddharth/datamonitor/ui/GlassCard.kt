@@ -33,26 +33,20 @@ fun Modifier.glassCard(
         Color.White.copy(alpha = 0.05f)
     }
     
-    // Ultra-thin high-contrast border: White (0.2f) for dark mode, black (0.12f) for light mode
+    // Thin high-contrast border: White (0.1f) for dark mode, black (0.1f) for light mode
     val borderColor = if (isLight) {
-        Color.Black.copy(alpha = 0.12f)
+        Color.Black.copy(alpha = 0.1f)
     } else {
-        Color.White.copy(alpha = 0.2f)
+        Color.White.copy(alpha = 0.1f)
     }
 
-    val baseModifier = this
+    return this
         .clip(shape)
         .background(backgroundColor)
         .border(
             border = BorderStroke(0.5.dp, borderColor),
             shape = shape
         )
-
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        baseModifier.blur(12.dp, BlurredEdgeTreatment(shape))
-    } else {
-        baseModifier
-    }
 }
 
 @Composable
@@ -65,8 +59,16 @@ fun GlassCard(
     val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
 
     Box(
-        modifier = modifier.glassCard(shape)
+        modifier = modifier
     ) {
+        // Isolated background glass layer with backdrop blur
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .glassCard(shape)
+        )
+        
+        // Crisp foreground content container - 100% sharp and unblurred
         CompositionLocalProvider(LocalContentColor provides if (isLight) colorScheme.onBackground else Color.White) {
             Box(
                 modifier = Modifier,

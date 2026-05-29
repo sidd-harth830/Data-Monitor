@@ -581,15 +581,20 @@ fun AnalyticalWaveChart(
     val primaryColor = com.siddharth.datamonitor.ui.theme.StatusWifi
     val secondaryColor = com.siddharth.datamonitor.ui.theme.StatusMobile
 
+    // High contrast container colors based on theme backgrounds so as not to blend in
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f
+    val chartBgColor = if (isLight) Color(0xFFF1F5F9) else Color(0xFF111111)
+    val chartBorderColor = if (isLight) Color(0xFFE2E8F0) else Color(0xFF222222)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(140.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.12f))
+            .background(chartBgColor)
             .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                width = 1.dp,
+                color = chartBorderColor,
                 shape = RoundedCornerShape(16.dp)
             )
     ) {
@@ -598,8 +603,8 @@ fun AnalyticalWaveChart(
             val height = size.height
             val midY = height / 2f
             
-            // Draw grid lines
-            val gridColor = primaryColor.copy(alpha = 0.06f)
+            // Draw grid lines - highly clear contrast
+            val gridColor = if (isLight) Color(0x1F000000) else Color(0x33FFFFFF)
             for (i in 1..4) {
                 val y = height * (i / 5f)
                 drawLine(gridColor, start = androidx.compose.ui.geometry.Offset(0f, y), end = androidx.compose.ui.geometry.Offset(width, y), strokeWidth = 1.dp.toPx())

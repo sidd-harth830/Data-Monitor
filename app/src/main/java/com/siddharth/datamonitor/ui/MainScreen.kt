@@ -448,6 +448,8 @@ fun FloatingBottomNav(
 
 @Composable
 fun PermissionRequestScreen(onRequest: () -> Unit) {
+    var showHelpDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -471,7 +473,31 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        TextButton(
+            onClick = { showHelpDialog = true },
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Warning,
+                    contentDescription = "Help Guide",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = "Permission Grayed Out? View Guide",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
         GlassCard(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(0.85f)
@@ -526,6 +552,41 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                     )
                 }
             }
+        }
+
+        if (showHelpDialog) {
+            AlertDialog(
+                onDismissRequest = { showHelpDialog = false },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Warning,
+                            contentDescription = "Warning",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Restricted Settings Helper",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                    }
+                },
+                text = {
+                    Text(
+                        text = "If permission is grayed out, go to Phone Settings -> Apps -> Data Monitor -> 3 Dots (Top Right) -> Allow Restricted Settings.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { showHelpDialog = false }) {
+                        Text("GOT IT", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                    }
+                },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+            )
         }
     }
 }

@@ -118,7 +118,8 @@ fun DataMonitorTheme(
         )
     }
 
-    val typography = createTypography(fontProfile)
+    // Force override theme typography to use the premium system-wide AppTypography
+    val typography = AppTypography
 
     val view = LocalView.current
     if (!view.isInEditMode) {
