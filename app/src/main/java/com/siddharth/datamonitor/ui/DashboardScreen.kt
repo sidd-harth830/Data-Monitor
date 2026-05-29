@@ -83,6 +83,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dailyDataLimitMBStr by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
     val topApps by viewModel.topApps.collectAsStateWithLifecycle()
     val isUnlimited5GActive by viewModel.isUnlimited5GActive.collectAsStateWithLifecycle()
+    val liveSpeeds by viewModel.liveSpeeds.collectAsStateWithLifecycle()
     
     val dashboardLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
 
@@ -114,7 +115,106 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
                 .navigationBarsPadding()
         ) {
-        val dailyLimitTracker = @Composable {
+            // Header (Greeting/Authentication badges)
+            val auth = remember { com.google.firebase.auth.FirebaseAuth.getInstance() }
+            val currentUser = auth.currentUser
+            val userEmail = currentUser?.email
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Hello,",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = if (userEmail != null) userEmail.substringBefore("@").uppercase(Locale.getDefault()) else "EXPLORER",
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                
+                // Premium elegant auth status badge
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .border(
+                            width = 0.5.dp,
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(
+                                    color = if (userEmail != null) MaterialTheme.colorScheme.primary else Color(0xFFFFB300),
+                                    shape = RoundedCornerShape(3.dp)
+                                )
+                        )
+                        Text(
+                            text = if (userEmail != null) "SYNC REGISTRY" else "LOCAL ACCOUNT",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+
+            if (isUnlimited5GActive) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                        .border(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "⚡ UNLIMITED 5G CARRIER DETECTED",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Pro Wave Graph (Main Analytics Engine as a standalone premium card below the header)
+            Text(
+                text = "REAL-TIME SPECTRUM WAVE CHART",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            AnalyticalWaveChart(
+                liveSpeeds = liveSpeeds,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Daily Data Limit tracker (placed perfectly below the Wave chart)
             DailyDataLimitTracker(
                 todayUsageBytes = mobileUsage,
                 dailyLimitMBStr = dailyDataLimitMBStr,
@@ -124,85 +224,60 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     }
                 }
             )
-        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Subheader for layout specific secondary metrics
             Text(
-                text = "DASHBOARD",
-                style = MaterialTheme.typography.displaySmall,
+                text = "DETAILED GATEWAY METRICS",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                letterSpacing = 1.2.sp,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            if (isUnlimited5GActive) {
-                Box(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = "⚡ UNLIMITED 5G ACTIVE",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+            when (dashboardLayout) {
+                DashboardLayoutPreference.STANDARD -> {
+                    DashboardLayoutStandard(
+                        mobileUsage = mobileUsage,
+                        wifiUsage = wifiUsage,
+                        downloadSpeed = downloadSpeed,
+                        uploadSpeed = uploadSpeed,
+                        dataLimitBytes = dataLimitBytes,
+                        topApps = topApps,
+                        isUnlimited5GActive = isUnlimited5GActive,
+                        bytesLeft = bytesLeft
+                    )
+                }
+                DashboardLayoutPreference.PRO -> {
+                    DashboardLayoutPro(
+                        mobileUsage = mobileUsage,
+                        wifiUsage = wifiUsage,
+                        downloadSpeed = downloadSpeed,
+                        uploadSpeed = uploadSpeed,
+                        dataLimitBytes = dataLimitBytes,
+                        topApps = topApps,
+                        isUnlimited5GActive = isUnlimited5GActive,
+                        bytesLeft = bytesLeft
+                    )
+                }
+                DashboardLayoutPreference.GRID -> {
+                    val todayHourlyLogs by viewModel.todayHourlyLogs.collectAsStateWithLifecycle(initialValue = emptyList())
+                    DashboardLayoutGrid(
+                        mobileUsage = mobileUsage,
+                        wifiUsage = wifiUsage,
+                        downloadSpeed = downloadSpeed,
+                        uploadSpeed = uploadSpeed,
+                        dataLimitBytes = dataLimitBytes,
+                        topApps = topApps,
+                        isUnlimited5GActive = isUnlimited5GActive,
+                        bytesLeft = bytesLeft,
+                        todayHourlyLogs = todayHourlyLogs
                     )
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        when (dashboardLayout) {
-            DashboardLayoutPreference.STANDARD -> {
-                DashboardLayoutStandard(
-                    mobileUsage = mobileUsage,
-                    wifiUsage = wifiUsage,
-                    downloadSpeed = downloadSpeed,
-                    uploadSpeed = uploadSpeed,
-                    dataLimitBytes = dataLimitBytes,
-                    topApps = topApps,
-                    isUnlimited5GActive = isUnlimited5GActive,
-                    bytesLeft = bytesLeft,
-                    dailyLimitTracker = dailyLimitTracker
-                )
-            }
-            DashboardLayoutPreference.PRO -> {
-                val liveSpeeds by viewModel.liveSpeeds.collectAsStateWithLifecycle()
-                DashboardLayoutPro(
-                    mobileUsage = mobileUsage,
-                    wifiUsage = wifiUsage,
-                    downloadSpeed = downloadSpeed,
-                    uploadSpeed = uploadSpeed,
-                    dataLimitBytes = dataLimitBytes,
-                    topApps = topApps,
-                    isUnlimited5GActive = isUnlimited5GActive,
-                    bytesLeft = bytesLeft,
-                    liveSpeeds = liveSpeeds,
-                    dailyLimitTracker = dailyLimitTracker
-                )
-            }
-            DashboardLayoutPreference.GRID -> {
-                val todayHourlyLogs by viewModel.todayHourlyLogs.collectAsStateWithLifecycle(initialValue = emptyList())
-                DashboardLayoutGrid(
-                    mobileUsage = mobileUsage,
-                    wifiUsage = wifiUsage,
-                    downloadSpeed = downloadSpeed,
-                    uploadSpeed = uploadSpeed,
-                    dataLimitBytes = dataLimitBytes,
-                    topApps = topApps,
-                    isUnlimited5GActive = isUnlimited5GActive,
-                    bytesLeft = bytesLeft,
-                    todayHourlyLogs = todayHourlyLogs,
-                    dailyLimitTracker = dailyLimitTracker
-                )
-            }
-        }
-    }
 }
 }
 
@@ -215,8 +290,7 @@ fun DashboardLayoutStandard(
     dataLimitBytes: Long,
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
-    bytesLeft: Long,
-    dailyLimitTracker: @Composable () -> Unit
+    bytesLeft: Long
 ) {
     Column {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -228,10 +302,6 @@ fun DashboardLayoutStandard(
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-
-        dailyLimitTracker()
-
         Spacer(modifier = Modifier.height(24.dp))
 
         // Data Left Card
@@ -367,61 +437,49 @@ fun DashboardLayoutPro(
     dataLimitBytes: Long,
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
-    bytesLeft: Long,
-    liveSpeeds: List<Pair<Long, Long>>?,
-    dailyLimitTracker: @Composable () -> Unit
+    bytesLeft: Long
 ) {
     Column {
-        // High density analytics header
+        // High density analytics splits card
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "ANALYTICS ENGINE",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp
-                    )
-                    Text(
-                        text = "REAL-TIME DIAGNOSTIC",
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        fontSize = 9.sp,
-                        letterSpacing = 1.sp
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Real-time Wave Graphic
-                AnalyticalWaveChart(liveSpeeds = liveSpeeds)
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Detailed data splits in horizontal layout
+                // Detailed data splits in horizontal layout (removed duplication of Wave chart)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("MOBILE CYCLE", color = MaterialTheme.colorScheme.onSecondary, fontSize = 9.sp, letterSpacing = 1.sp)
-                        Text(formatBytes(mobileUsage), color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "MOBILE BILLING CYCLE", 
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondary, 
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = formatBytes(mobileUsage), 
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onBackground, 
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("WI-FI TRACKER", color = MaterialTheme.colorScheme.onSecondary, fontSize = 9.sp, letterSpacing = 1.sp)
-                        Text(formatBytes(wifiUsage), color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "LOCAL WI-FI ENGINE", 
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondary, 
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = formatBytes(wifiUsage), 
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onBackground, 
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-
-        dailyLimitTracker()
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // Grid Analytics Section
@@ -593,7 +651,7 @@ fun AnalyticalWaveChart(
             .clip(RoundedCornerShape(16.dp))
             .background(chartBgColor)
             .border(
-                width = 1.dp,
+                width = 0.5.dp,
                 color = chartBorderColor,
                 shape = RoundedCornerShape(16.dp)
             )
@@ -685,8 +743,7 @@ fun DashboardLayoutGrid(
     topApps: List<AppUsageInfo>,
     isUnlimited5GActive: Boolean,
     bytesLeft: Long,
-    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>,
-    dailyLimitTracker: @Composable () -> Unit
+    todayHourlyLogs: List<com.siddharth.datamonitor.data.HourlyUsageLog>
 ) {
     Column {
         Text(
@@ -752,11 +809,7 @@ fun DashboardLayoutGrid(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        dailyLimitTracker()
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "FAST DISPATCH STREAM",
@@ -1047,7 +1100,7 @@ fun DailyDataLimitTracker(
                 Box(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                         .clickable { showDialog = true }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -1143,7 +1196,7 @@ fun DailyDataLimitTracker(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
                     .background(MaterialTheme.colorScheme.background)
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
                     .padding(24.dp)
             ) {
                 Column(
@@ -1214,7 +1267,7 @@ fun DailyDataLimitTracker(
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                                     .border(
-                                        width = 1.dp,
+                                        width = 0.5.dp,
                                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                                         shape = RoundedCornerShape(4.dp)
                                     )
@@ -1246,7 +1299,7 @@ fun DailyDataLimitTracker(
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.surface)
-                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                                 .clickable { showDialog = false },
                             contentAlignment = Alignment.Center
                         ) {
