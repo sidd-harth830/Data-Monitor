@@ -2,7 +2,6 @@ package com.siddharth.datamonitor.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -28,38 +27,53 @@ object FontSettings {
     }
 }
 
-// Loading Plus Jakarta Sans premium Google Font safely
-val PremiumFontFamily: FontFamily = try {
-    val provider = GoogleFont.Provider(
-        providerAuthority = "com.google.android.gms.fonts",
-        providerPackage = "com.google.android.gms",
-        certificates = com.siddharth.datamonitor.R.array.com_google_android_gms_fonts_certs
-    )
-    val fontName = GoogleFont("Plus Jakarta Sans")
+// Safer Google Font Provider Setup
+val googleFontProvider: GoogleFont.Provider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = com.siddharth.datamonitor.R.array.com_google_android_gms_fonts_certs
+)
+
+// Premium Outfit Font Family for all Display, Headline, and Title headers
+val OutfitFontFamily: FontFamily = try {
+    val fontName = GoogleFont("Outfit")
     FontFamily(
-        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Normal),
-        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Medium),
-        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.SemiBold),
-        Font(googleFont = fontName, fontProvider = provider, weight = FontWeight.Bold)
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Normal),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.SemiBold),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Bold)
     )
 } catch (e: Throwable) {
     FontSettings.triggerFontLoadFailed(e)
     FontFamily.SansSerif
 }
 
-val AcornFontFamily = FontFamily(
-    androidx.compose.ui.text.font.Font(com.siddharth.datamonitor.R.font.acorn)
-)
+// Premium Plus Jakarta Sans Font Family for all Body and Label text
+val PlusJakartaSansFontFamily: FontFamily = try {
+    val fontName = GoogleFont("Plus Jakarta Sans")
+    FontFamily(
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Normal),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.SemiBold),
+        Font(googleFont = fontName, fontProvider = googleFontProvider, weight = FontWeight.Bold)
+    )
+} catch (e: Throwable) {
+    FontSettings.triggerFontLoadFailed(e)
+    FontFamily.SansSerif
+}
 
-// Clean default standard system Sans Serif for layout body, microcopy, and actions
-val SansSerifFontFamily = FontFamily.SansSerif
+// Backwards compatibility / alias bindings
+val PremiumFontFamily: FontFamily = PlusJakartaSansFontFamily
+val AcornFontFamily: FontFamily = OutfitFontFamily
+val SansSerifFontFamily: FontFamily = FontFamily.SansSerif
 
 fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
-    val displayFontFamily = AcornFontFamily
-    val bodyFontFamily = SansSerifFontFamily
+    // Standardizing on the premium multi-font typography system
+    val displayFontFamily = OutfitFontFamily
+    val bodyFontFamily = PlusJakartaSansFontFamily
 
     return Typography(
-        // Display & Headers
+        // Display styles using Outfit Font Family
         displayLarge = TextStyle(
             fontFamily = displayFontFamily,
             fontWeight = FontWeight.Bold,
@@ -81,6 +95,8 @@ fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
             lineHeight = 32.sp,
             letterSpacing = 0.sp
         ),
+
+        // Headline styles using Outfit Font Family
         headlineLarge = TextStyle(
             fontFamily = displayFontFamily,
             fontWeight = FontWeight.Bold,
@@ -102,8 +118,8 @@ fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
             lineHeight = 24.sp,
             letterSpacing = 0.sp
         ),
-        
-        // section headers
+
+        // Title Header styles using Outfit Font Family
         titleLarge = TextStyle(
             fontFamily = displayFontFamily,
             fontWeight = FontWeight.Bold,
@@ -118,15 +134,15 @@ fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
             lineHeight = 22.sp,
             letterSpacing = 0.1.sp
         ),
-        
-        // Sans Serif for labels, body, inputs, and button helpers
         titleSmall = TextStyle(
-            fontFamily = bodyFontFamily,
+            fontFamily = displayFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.1.sp
         ),
+
+        // Body styles using Plus Jakarta Sans Font Family
         bodyLarge = TextStyle(
             fontFamily = bodyFontFamily,
             fontWeight = FontWeight.Normal,
@@ -148,6 +164,8 @@ fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
             lineHeight = 16.sp,
             letterSpacing = 0.4.sp
         ),
+
+        // Label styles using Plus Jakarta Sans Font Family
         labelLarge = TextStyle(
             fontFamily = bodyFontFamily,
             fontWeight = FontWeight.SemiBold,
