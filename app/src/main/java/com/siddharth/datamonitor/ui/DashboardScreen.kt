@@ -1073,7 +1073,9 @@ fun DailyDataLimitTracker(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "DAILY DATA LIMIT TRACKER",
                         color = MaterialTheme.colorScheme.onSecondary,
@@ -1088,6 +1090,8 @@ fun DailyDataLimitTracker(
                         fontSize = 12.sp
                     )
                 }
+                
+                Spacer(modifier = Modifier.width(12.dp))
 
                 // Pure Vercel button with 1dp border and flat text
                 Box(

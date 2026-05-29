@@ -187,7 +187,9 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     ) {
         Text(
             text = "CONFIG",
-            style = MaterialTheme.typography.displaySmall,
+            style = MaterialTheme.typography.displaySmall.copy(
+                fontFamily = BricolageFontFamily
+            ),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 1.sp
@@ -200,9 +202,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "THEME SELECTOR",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -258,9 +262,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "APP ICON SELECTOR",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -306,8 +312,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = label,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = BricolageFontFamily
+                                ),
                                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -341,9 +350,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "LIVE NETWORK HEALTH TESTER",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -380,11 +391,22 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = if (latencyValue >= 0) "$latencyValue" else if (isPinging) "..." else "Ping",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = BricolageFontFamily
+                                ),
                                 color = indicatorColor
                             )
                             if (latencyValue >= 0) {
-                                Text("ms", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSecondary)
+                                Text(
+                                    text = "ms",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 9.sp,
+                                        fontFamily = BricolageFontFamily
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSecondary
+                                )
                             }
                         }
                     }
@@ -394,14 +416,20 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "GOOGLE DNS PING",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = BricolageFontFamily
+                            ),
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (latencyValue in 0..100) "Stable Network Signal" else if (latencyValue in 101..300) "Transient Buffer Bloat" else if (latencyValue > 300) "Highly unstable" else "Ready to track lag metrics",
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 11.sp,
+                                fontFamily = BricolageFontFamily
+                            ),
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                         )
                     }
@@ -417,7 +445,14 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text(if (isPinging) "STOP" else "TEST PING", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = if (isPinging) "STOP" else "TEST PING",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = BricolageFontFamily
+                            )
+                        )
                     }
                 }
             }
@@ -430,9 +465,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "DASHBOARD LAYOUT",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -457,9 +494,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "FONT SELECTOR",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -483,19 +522,23 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "DATA CEILING CONFIGURATION",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "DAILY CEILING LIMIT (MB)",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
@@ -511,7 +554,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         unfocusedIndicatorColor = customIndicatorColor,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                    textStyle = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = BricolageFontFamily
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -519,10 +566,12 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
                 Text(
                     text = "MONTHLY BILLING CYCLE LIMIT (MB)",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontFamily = BricolageFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
@@ -538,7 +587,11 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         unfocusedIndicatorColor = customIndicatorColor,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp, fontWeight = FontWeight.Bold),
+                    textStyle = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = BricolageFontFamily
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

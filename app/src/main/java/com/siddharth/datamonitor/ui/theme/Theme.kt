@@ -118,9 +118,6 @@ fun DataMonitorTheme(
         )
     }
 
-    // Force override theme typography to use the premium system-wide AppTypography
-    val typography = AppTypography
-
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -136,7 +133,7 @@ fun DataMonitorTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = typography,
+        typography = AppTypography,
         content = content
     )
 }

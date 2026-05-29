@@ -100,29 +100,6 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     private val _isUnlimited5GActive = MutableStateFlow(false)
     val isUnlimited5GActive: StateFlow<Boolean> = _isUnlimited5GActive.asStateFlow()
 
-    val heatmapIntensities: StateFlow<List<Float>> = combine(_weekHourlyLogs, selectedDateStr) { logs, dateStr ->
-        val dates = get7DaysRange(dateStr)
-        val logsMap = logs.associateBy { Pair(it.dateStr, it.hour) }
-        
-        val values = mutableListOf<Long>()
-        for (d in dates) {
-            for (h in 0..23) {
-                val log = logsMap[Pair(d, h)]
-                val bytes = if (log != null) (log.mobileBytes + log.wifiBytes) else 0L
-                values.add(bytes)
-            }
-        }
-        
-        val maxUsage = values.maxOrNull() ?: 1L
-        val denom = if (maxUsage <= 0L) 1L else maxUsage
-        
-        values.map { (it.toFloat() / denom.toFloat()).coerceIn(0f, 1f) }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = List(168) { 0f }
-    )
-
     init {
         val dao = AppDatabase.getDatabase(application).dataUsageDao()
         repository = DataUsageRepository(dao)

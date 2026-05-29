@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Brush
 @Composable
 fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val history by viewModel.history.collectAsStateWithLifecycle()
-    val heatmapIntensities by viewModel.heatmapIntensities.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDateStr.collectAsStateWithLifecycle()
     
     val billingDay by themeManager.billingCycleDayFlow.collectAsStateWithLifecycle(initialValue = 1)
@@ -114,50 +113,6 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Heatmap: Hourly Tracker Matrix
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(20.dp), 
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Weekly Heatmap (24x7 Activity)",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                val rangeDates = remember(selectedDate) {
-                    val df = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val date = try { df.parse(selectedDate) ?: Date() } catch (e: Exception) { Date() }
-                    val cal = Calendar.getInstance()
-                    cal.time = date
-                    val dates = mutableListOf<String>()
-                    for (i in 0..6) {
-                        dates.add(df.format(cal.time))
-                        cal.add(Calendar.DAY_OF_YEAR, -1)
-                    }
-                    dates.reversed()
-                }
-
-                HourlyHeatmap(dates = rangeDates, intensities = heatmapIntensities)
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Out of Hours (Sleep)", color = MaterialTheme.colorScheme.onSecondary, fontSize = 11.sp)
-                    Text("Peak Traffic Active", color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
-        
         Spacer(modifier = Modifier.height(24.dp))
 
         // Feature 1: Data Burn Rate / Pacing Forecast
@@ -373,42 +328,6 @@ fun formatRelativeTime(timestamp: Long): String {
         else -> {
             val sdf = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
             sdf.format(Date(timestamp))
-        }
-    }
-}
-
-@Composable
-fun HourlyHeatmap(dates: List<String>, intensities: List<Float>) {
-    val colorPrimary = MaterialTheme.colorScheme.primary
-
-    androidx.compose.foundation.Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(130.dp)
-            .padding(vertical = 8.dp)
-    ) {
-        val cols = 24
-        val rows = 7
-        val spacing = 4.dp.toPx()
-        val cellWidth = (size.width - (cols - 1) * spacing) / cols
-        val cellHeight = (size.height - (rows - 1) * spacing) / rows
-        val cornerRadius = 2.dp.toPx()
-        
-        for (r in 0 until rows) {
-            for (c in 0 until cols) {
-                val index = r * cols + c
-                val intensity = if (index < intensities.size) intensities[index].coerceIn(0.08f, 1f) else 0.08f
-                
-                val x = c * (cellWidth + spacing)
-                val y = r * (cellHeight + spacing)
-                
-                drawRoundRect(
-                    color = colorPrimary.copy(alpha = intensity),
-                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
-                    size = androidx.compose.ui.geometry.Size(cellWidth, cellHeight),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
-                )
-            }
         }
     }
 }
