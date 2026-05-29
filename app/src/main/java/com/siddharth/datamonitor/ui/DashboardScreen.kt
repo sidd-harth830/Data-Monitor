@@ -32,6 +32,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import android.widget.ImageView
 import java.util.Locale
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 private val iconCache = java.util.concurrent.ConcurrentHashMap<String, android.graphics.drawable.Drawable>()
 
@@ -73,6 +80,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val downloadSpeed by viewModel.downloadSpeed.collectAsStateWithLifecycle()
     val uploadSpeed by viewModel.uploadSpeed.collectAsStateWithLifecycle()
     val dataLimitMBStr by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
+    val dailyDataLimitMBStr by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
     val topApps by viewModel.topApps.collectAsStateWithLifecycle()
     val isUnlimited5GActive by viewModel.isUnlimited5GActive.collectAsStateWithLifecycle()
     
@@ -135,6 +143,18 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         }
         
         Spacer(modifier = Modifier.height(32.dp))
+
+        DailyDataLimitTracker(
+            todayUsageBytes = mobileUsage,
+            dailyLimitMBStr = dailyDataLimitMBStr,
+            onSaveLimit = { limit ->
+                scope.launch {
+                    themeManager.setDailyDataLimit(limit)
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
         
         when (dashboardLayout) {
             DashboardLayoutPreference.STANDARD -> {
@@ -539,8 +559,8 @@ fun AnalyticalWaveChart(
         return
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val primaryColor = com.siddharth.datamonitor.ui.theme.StatusWifi
+    val secondaryColor = com.siddharth.datamonitor.ui.theme.StatusMobile
 
     Box(
         modifier = modifier
@@ -939,6 +959,303 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
                 Box(modifier = Modifier.size(8.dp).background(WifiActive, RoundedCornerShape(4.dp)))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Wi-Fi", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun DailyDataLimitTracker(
+    todayUsageBytes: Long,
+    dailyLimitMBStr: String,
+    onSaveLimit: (String) -> Unit
+) {
+    val limitMB = dailyLimitMBStr.toFloatOrNull() ?: 1000f
+    val limitBytes = (limitMB * 1024 * 1024).toLong()
+    val progress = if (limitBytes > 0) (todayUsageBytes.toFloat() / limitBytes.toFloat()).coerceIn(0f, 1f) else 0f
+    val percentString = String.format(Locale.getDefault(), "%.1f", progress * 100)
+    val isExceeded = todayUsageBytes > limitBytes
+
+    var showDialog by remember { mutableStateOf(false) }
+
+    GlassCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "DAILY DATA LIMIT TRACKER",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Used Today vs. Daily Soft Limit",
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        fontSize = 12.sp
+                    )
+                }
+
+                // Pure Vercel button with 1dp border and flat text
+                Box(
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        .clickable { showDialog = true }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "CONFIGURE",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Main stats row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = formatBytes(todayUsageBytes),
+                        color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "of ${if (limitMB >= 1024f) String.format(Locale.getDefault(), "%.1f GB", limitMB / 1024f) else String.format(Locale.getDefault(), "%.0f MB", limitMB)}",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(bottom = 3.dp)
+                    )
+                }
+
+                Text(
+                    text = "$percentString%",
+                    color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Premium minimalist progress bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(2.dp)
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .fillMaxHeight()
+                        .background(
+                            color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+
+            if (isExceeded) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "⚠️ Daily data limit exceeded by ${formatBytes(todayUsageBytes - limitBytes)}!",
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+
+    if (showDialog) {
+        var enteredLimit by remember { mutableStateOf(if (limitMB >= 1024f && limitMB % 1024f == 0f) (limitMB / 1024f).toString() else limitMB.toString()) }
+        var selectedUnit by remember { mutableStateOf(if (limitMB >= 1024f) "GB" else "MB") }
+        var errorLocalMsg by remember { mutableStateOf<String?>(null) }
+
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showDialog = false }
+        ) {
+            // Sleek flat Vercel dialog
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.background)
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                    .padding(24.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Daily Data Limit Configuration".uppercase(Locale.getDefault()),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Enter your desired daily maximum soft ceiling to pace billing usage.",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    if (errorLocalMsg != null) {
+                        Text(
+                            text = errorLocalMsg!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+
+                    // Numeric entry
+                    OutlinedTextField(
+                        value = enteredLimit,
+                        onValueChange = {
+                            enteredLimit = it
+                            errorLocalMsg = null
+                        },
+                        label = { Text("Daily Limit Ceiling", color = MaterialTheme.colorScheme.onSecondary) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Unit Picker Layout
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        listOf("MB", "GB").forEach { unit ->
+                            val isSelected = selectedUnit == unit
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(40.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                                    .clickable { selectedUnit = unit }
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = unit,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Action buttons with Vercel styling
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Cancel button
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                .clickable { showDialog = false },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "CANCEL",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+
+                        // Save button
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primary)
+                                .clickable {
+                                    val numericValue = enteredLimit.toFloatOrNull()
+                                    if (numericValue == null || numericValue <= 0f) {
+                                        errorLocalMsg = "Please enter a valid positive number"
+                                        return@clickable
+                                    }
+                                    val finalLimitMB = if (selectedUnit == "GB") {
+                                        (numericValue * 1024f).toInt().toString()
+                                    } else {
+                                        numericValue.toInt().toString()
+                                    }
+                                    onSaveLimit(finalLimitMB)
+                                    showDialog = false
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "SAVE CEILING",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                }
             }
         }
     }

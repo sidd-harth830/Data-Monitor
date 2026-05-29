@@ -27,6 +27,24 @@ class ThemeManager(private val context: Context) {
         val DATA_SAVER_ACTIVE_KEY = booleanPreferencesKey("data_saver_active")
         val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
         val PING_QUALITY_LOG = stringPreferencesKey("ping_quality_log")
+        val DAILY_DATA_LIMIT_KEY = stringPreferencesKey("daily_data_limit_mb")
+        val FONT_PROFILE_KEY = stringPreferencesKey("font_profile_v354")
+        val MONOGRAM_THEME_KEY = stringPreferencesKey("monogram_theme_v354")
+    }
+
+    val monogramThemeFlow: Flow<MonogramTheme> = context.dataStore.data.map { preferences ->
+        when (preferences[MONOGRAM_THEME_KEY]) {
+            MonogramTheme.LIGHT_MONOGRAM.name -> MonogramTheme.LIGHT_MONOGRAM
+            MonogramTheme.DARK_MONOGRAM.name -> MonogramTheme.DARK_MONOGRAM
+            else -> MonogramTheme.SYSTEM_DEFAULT
+        }
+    }
+
+    val fontProfileFlow: Flow<FontProfile> = context.dataStore.data.map { preferences ->
+        when (preferences[FONT_PROFILE_KEY]) {
+            FontProfile.PREMIUM.name -> FontProfile.PREMIUM
+            else -> FontProfile.DEFAULT
+        }
     }
 
     val themeFlow: Flow<AppTheme?> = context.dataStore.data.map { preferences ->
@@ -63,6 +81,10 @@ class ThemeManager(private val context: Context) {
 
     val dataLimitFlow: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[DATA_LIMIT_KEY] ?: "2000"
+    }
+
+    val dailyDataLimitFlow: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[DAILY_DATA_LIMIT_KEY] ?: "1000"
     }
 
     val alertsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -143,6 +165,12 @@ class ThemeManager(private val context: Context) {
         }
     }
 
+    suspend fun setDailyDataLimit(limit: String) {
+        context.dataStore.edit { preferences ->
+            preferences[DAILY_DATA_LIMIT_KEY] = limit
+        }
+    }
+
     suspend fun setAlertsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ALERTS_ENABLED_KEY] = enabled
@@ -172,6 +200,29 @@ class ThemeManager(private val context: Context) {
             preferences[SKIP_LOGIN_KEY] = skip
         }
     }
+
+    suspend fun setFontProfile(profile: FontProfile) {
+        context.dataStore.edit { preferences ->
+            preferences[FONT_PROFILE_KEY] = profile.name
+        }
+    }
+
+    suspend fun setMonogramTheme(theme: MonogramTheme) {
+        context.dataStore.edit { preferences ->
+            preferences[MONOGRAM_THEME_KEY] = theme.name
+        }
+    }
+}
+
+enum class MonogramTheme {
+    SYSTEM_DEFAULT,
+    LIGHT_MONOGRAM,
+    DARK_MONOGRAM
+}
+
+enum class FontProfile {
+    DEFAULT,
+    PREMIUM
 }
 
 enum class AppTheme {

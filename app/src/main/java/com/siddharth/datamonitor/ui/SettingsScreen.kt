@@ -91,15 +91,19 @@ fun changeAppIcon(context: Context, iconChoice: String) {
 @Composable
 fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
+    val dailyDataLimitMB by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
     val alertsEnabled by themeManager.alertsEnabledFlow.collectAsStateWithLifecycle(initialValue = true)
     val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
     val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
 
     val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val defaultThemeSet = if (isSystemDark) AppTheme.MIDNIGHT_AMOLED else AppTheme.LAVENDER_HAZE
-    val currentThemeRaw by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = null)
-    val currentTheme = currentThemeRaw ?: defaultThemeSet
+    val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
+    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT)
+    
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
+    val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
+    val customIndicatorColor = if (isLight) Color.Black.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.15f)
     
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -121,82 +125,38 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
         Spacer(modifier = Modifier.height(48.dp))
         
-        // Horizontal Scroll Theme Selection
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "APPEARANCE THEME",
-                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                fontSize = 12.sp,
-                letterSpacing = 1.5.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                AppTheme.entries.forEach { theme ->
-                    val isSelected = currentTheme == theme
-                    
-                    // Explicit theme previews colors (Primary, Background, Surface companion)
-                    val colors = when (theme) {
-                        AppTheme.SPRING -> Triple(Color(0xFFFFAAB8), Color(0xFFF0FFDF), Color(0xFFFFD8DF))
-                        AppTheme.DESERT -> Triple(Color(0xFFC7522A), Color(0xFFFBF2C4), Color(0xFFE5C185))
-                        AppTheme.FOREST -> Triple(Color(0xFF8BAE66), Color(0xFF1B211A), Color(0xFF628141))
-                        AppTheme.MIDNIGHT_AMOLED -> Triple(Color(0xFF00FFFF), Color(0xFF000000), Color(0xFF000000))
-                        AppTheme.SOLARIZED_LIGHT -> Triple(Color(0xFF268BD2), Color(0xFFFDF6E3), Color(0xFFEEE8D5))
-                        AppTheme.OCEAN_DEEP -> Triple(Color(0xFF00FFFF), Color(0xFF0D1B2A), Color(0xFF1B263B))
-                        AppTheme.SUNSET_BLAZE -> Triple(Color(0xFFFFD700), Color(0xFF3A0A0A), Color(0xFF5A1818))
-                        AppTheme.CYBERPUNK -> Triple(Color(0xFFFFFF00), Color(0xFF000000), Color(0xFF1A001A))
-                        AppTheme.LAVENDER_HAZE -> Triple(Color(0xFF8B5CF6), Color(0xFFF3E8FF), Color(0xFFE9D5FF))
-                        AppTheme.MATRIX -> Triple(Color(0xFF00FF00), Color(0xFF000000), Color(0xFF0A140A))
-                    }
-                    
-                    Card(
-                        onClick = {
-                            scope.launch { themeManager.setTheme(theme) }
-                        },
-                        modifier = Modifier
-                            .width(135.dp)
-                            .height(115.dp)
-                            .border(
-                                width = if (isSelected) 2.dp else 1.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(16.dp)
+        // Premium Theme Selector: System Default, Light Monogram, Dark Monogram
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "THEME SELECTOR",
+                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(
+                        MonogramTheme.SYSTEM_DEFAULT to "System Default",
+                        MonogramTheme.LIGHT_MONOGRAM to "Light Monogram",
+                        MonogramTheme.DARK_MONOGRAM to "Dark Monogram"
+                    ).forEach { (themeOption, label) ->
+                        val isSelected = monogramTheme == themeOption
+                        Button(
+                            onClick = { scope.launch { themeManager.setMonogramTheme(themeOption) } },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
                             ),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = colors.second)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.SpaceBetween
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
                         ) {
-                            Text(
-                                text = theme.name.replace("_", " "),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = com.siddharth.datamonitor.ui.theme.palettes[theme]?.text ?: Color.White
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                // Colors Dots
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .background(colors.first, RoundedCornerShape(6.dp))
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .background(colors.third, RoundedCornerShape(6.dp))
-                                )
-                            }
+                            Text(label, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -269,7 +229,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             },
                             shape = RoundedCornerShape(12.dp),
                             color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else Color.Transparent,
-                            border = androidx.compose.foundation.BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.15f)),
+                            border = androidx.compose.foundation.BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) MaterialTheme.colorScheme.primary else customDividerColor),
                             modifier = Modifier.size(64.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -442,13 +402,77 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
-
-        // Data Limit
+        // Font Selector Section
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "SET DAILY DATA LIMIT (MB)",
+                    text = "FONT SELECTOR",
+                    color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(
+                        com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT to "System Default",
+                        com.siddharth.datamonitor.ui.theme.FontProfile.PREMIUM to "Acorn Premium"
+                    ).forEach { (profile, label) ->
+                        val isSelected = fontProfile == profile
+                        Button(
+                            onClick = { scope.launch { themeManager.setFontProfile(profile) } },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                                contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
+                        ) {
+                            Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Data Limits Configuration
+        GlassCard(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "SET DAILY CEILING LIMIT (MB)",
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    fontSize = 12.sp,
+                    letterSpacing = 1.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = dailyDataLimitMB,
+                    onValueChange = { scope.launch { themeManager.setDailyDataLimit(it) } },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedTextColor = MaterialTheme.colorScheme.primary,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = customIndicatorColor,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "SET MONTHLY BILLING CYCLE LIMIT (MB)",
                     color = MaterialTheme.colorScheme.onSecondary,
                     fontSize = 12.sp,
                     letterSpacing = 1.5.sp,
@@ -465,7 +489,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         focusedTextColor = MaterialTheme.colorScheme.primary,
                         unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                         focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.15f),
+                        unfocusedIndicatorColor = customIndicatorColor,
                         cursorColor = MaterialTheme.colorScheme.primary
                     ),
                     textStyle = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
@@ -486,7 +510,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     onCheckedChange = { scope.launch { themeManager.setDataSaverActive(it) } }
                 )
                 
-                HorizontalDivider(color = Color.White.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(color = customDividerColor, modifier = Modifier.padding(vertical = 12.dp))
 
                 SettingToggle(
                     title = "Trigger Push Warning Alerts",
@@ -495,7 +519,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     onCheckedChange = { scope.launch { themeManager.setAlertsEnabled(it) } }
                 )
                 
-                HorizontalDivider(color = Color.White.copy(alpha = 0.15f), modifier = Modifier.padding(vertical = 12.dp))
+                HorizontalDivider(color = customDividerColor, modifier = Modifier.padding(vertical = 12.dp))
                 
                 SettingToggle(
                     title = "Isolate Wi-Fi vs. Cellular Tracks",

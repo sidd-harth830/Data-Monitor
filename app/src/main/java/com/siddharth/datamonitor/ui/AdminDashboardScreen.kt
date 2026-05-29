@@ -57,6 +57,7 @@ fun AdminDashboardScreen(
     val scope = rememberCoroutineScope()
     val auth = remember { FirebaseAuth.getInstance() }
     val currentUser = auth.currentUser
+    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
 
     // 1. Real-Time Telemetry States
     var liveUserCount by remember { mutableStateOf<Int?>(null) }
@@ -290,8 +291,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color(0xFF00FF87).copy(alpha = 0.05f), RoundedCornerShape(14.dp))
-                                    .border(1.dp, Color(0xFF00FF87).copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+                                    .background(if (isLight) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFF00FF87).copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                    .border(1.dp, if (isLight) Color(0xFF4CAF50).copy(alpha = 0.3f) else Color(0xFF00FF87).copy(alpha = 0.15f), RoundedCornerShape(14.dp))
                                     .padding(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
@@ -299,7 +300,7 @@ fun AdminDashboardScreen(
                                     Icon(
                                         imageVector = Icons.Default.VerifiedUser,
                                         contentDescription = "Pending Staging Review",
-                                        tint = Color(0xFF00FF87),
+                                        tint = if (isLight) Color(0xFF2E7D32) else Color(0xFF00FF87),
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
@@ -311,7 +312,7 @@ fun AdminDashboardScreen(
                                     )
                                 }
                                 
-                                Divider(color = Color.White.copy(alpha = 0.08f))
+                                Divider(color = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.08f))
 
                                 Column {
                                     Text(
@@ -464,8 +465,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                    .background(if (isLight) Color.Black.copy(alpha = 0.03f) else Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
+                                    .border(1.dp, if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
                                     .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -522,8 +523,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(Color.White.copy(alpha = 0.02f), RoundedCornerShape(12.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                    .background(if (isLight) Color.Black.copy(alpha = 0.03f) else Color.White.copy(alpha = 0.02f), RoundedCornerShape(12.dp))
+                                    .border(1.dp, if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
                                     .padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
@@ -534,12 +535,16 @@ fun AdminDashboardScreen(
                                     OutlinedTextField(
                                         value = manualVersionCode,
                                         onValueChange = { manualVersionCode = it },
-                                        label = { Text("Version Code (e.g. 52)", fontSize = 11.sp) },
+                                        label = { Text("Version Code (e.g. 52)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
                                         singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
                                         colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -547,12 +552,16 @@ fun AdminDashboardScreen(
                                     OutlinedTextField(
                                         value = manualVersionName,
                                         onValueChange = { manualVersionName = it },
-                                        label = { Text("Version Name (e.g. 3.5.2)", fontSize = 11.sp) },
+                                        label = { Text("Version Name (e.g. 3.5.2)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
                                         singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
                                         colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -561,12 +570,16 @@ fun AdminDashboardScreen(
                                 OutlinedTextField(
                                     value = manualDownloadUrl,
                                     onValueChange = { manualDownloadUrl = it },
-                                    label = { Text("Public GitHub Download Link (Mirror)", fontSize = 11.sp) },
+                                    label = { Text("Public GitHub Download Link (Mirror)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
                                     singleLine = true,
-                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
                                     colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 )

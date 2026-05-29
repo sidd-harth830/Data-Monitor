@@ -18,28 +18,37 @@ import androidx.compose.runtime.CompositionLocalProvider
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(6.dp), // Stark Vercel style (4dp to 8dp max)
+    shape: Shape = RoundedCornerShape(8.dp), // Elegant modern round corner
     content: @Composable BoxScope.() -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    // Stark stark background matching themes directly
     val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
     
-    val backgroundColor = if (isLight) Color(0xFFFFFFFF) else Color(0xFF000000)
-    val borderColor = if (isLight) Color(0xFFEAEAEA) else Color(0xFF333333) // Subtle 1dp border
+    // Premium Glassmorphism background colors (alpha 0.1 to 0.4 on background/overlays)
+    val backgroundColor = if (isLight) {
+        Color(0xFFFFFFFF).copy(alpha = 0.35f) // Semi-transparent clean white
+    } else {
+        Color(0xFF0F0F0F).copy(alpha = 0.30f) // Deep premium semi-transparent dark slate
+    }
+    
+    // Very thin, elegant, high-contrast border (0.5dp) to remove ugly thick borders
+    val borderColor = if (isLight) {
+        Color.Black.copy(alpha = 0.08f)
+    } else {
+        Color.White.copy(alpha = 0.15f)
+    }
 
     Box(
         modifier = modifier
             .clip(shape)
             .background(backgroundColor)
             .border(
-                width = 1.dp, // Subtle exactly 1dp gray border
+                width = 0.5.dp, // 0.5dp elegant high-contrast border
                 color = borderColor,
                 shape = shape
             )
     ) {
-        // Flat styling - strictly no background blur, no drop shadows, no transparency gradients
-        CompositionLocalProvider(LocalContentColor provides if (isLight) Color.Black else Color.White) {
+        CompositionLocalProvider(LocalContentColor provides if (isLight) colorScheme.onBackground else Color.White) {
             Box(
                 modifier = Modifier,
                 content = content

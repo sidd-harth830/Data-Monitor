@@ -61,7 +61,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.rounded.CloudDownload
 
 @Composable
-fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
+fun MainScreen(
+    viewModel: DataUsageViewModel,
+    themeManager: ThemeManager,
+    gitHubUrl: String = "https://github.com/sid-yadav7307/Data-Monitor-Releases/releases/latest"
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
@@ -288,7 +292,8 @@ fun MainScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         
                         Button(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl))
+                                val targetUrl = if (gitHubUrl.isNotBlank()) gitHubUrl else (if (updateInfo.downloadUrl.isNotBlank()) updateInfo.downloadUrl else "https://github.com/sid-yadav7307/Data-Monitor-Releases/releases/latest")
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl))
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(

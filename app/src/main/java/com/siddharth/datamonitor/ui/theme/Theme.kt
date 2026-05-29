@@ -30,9 +30,9 @@ data class ThemePalette(
             tertiary = primary,
             background = background,
             surface = surface,
-            onPrimary = text,
-            onSecondary = text,
-            onTertiary = text,
+            onPrimary = Color.White,            // High-contrast clean white text on primary
+            onSecondary = Color.Black,          // High-contrast clear dark text on secondary
+            onTertiary = Color.White,
             onBackground = text,
             onSurface = text
         )
@@ -43,9 +43,9 @@ data class ThemePalette(
             tertiary = primary,
             background = background,
             surface = surface,
-            onPrimary = text,
-            onSecondary = text,
-            onTertiary = text,
+            onPrimary = Color.Black,            // High-contrast clean black text on primary
+            onSecondary = Color.White,          // High-contrast clear light text on secondary
+            onTertiary = Color.Black,
             onBackground = text,
             onSurface = text
         )
@@ -55,16 +55,16 @@ data class ThemePalette(
 // Map existing theme enums of Data Monitor cleanly to Next.js/Vercel styling tokens
 // to ensure seamless backwards compatibility while strictly enforcing the Stark Vercel aesthetics
 val palettes = mapOf(
-    AppTheme.SPRING to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
-    AppTheme.DESERT to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
-    AppTheme.FOREST to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
-    AppTheme.MIDNIGHT_AMOLED to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
-    AppTheme.SOLARIZED_LIGHT to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
-    AppTheme.OCEAN_DEEP to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
-    AppTheme.SUNSET_BLAZE to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
-    AppTheme.CYBERPUNK to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
-    AppTheme.LAVENDER_HAZE to ThemePalette(VercelLightPrimary, VercelLightTextSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
-    AppTheme.MATRIX to ThemePalette(VercelDarkPrimary, VercelDarkTextSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false)
+    AppTheme.SPRING to ThemePalette(VercelLightPrimary, VercelLightSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.DESERT to ThemePalette(VercelLightPrimary, VercelLightSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.FOREST to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.MIDNIGHT_AMOLED to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.SOLARIZED_LIGHT to ThemePalette(VercelLightPrimary, VercelLightSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.OCEAN_DEEP to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.SUNSET_BLAZE to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.CYBERPUNK to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false),
+    AppTheme.LAVENDER_HAZE to ThemePalette(VercelLightPrimary, VercelLightSecondary, VercelLightBackground, VercelLightSurface, VercelLightTextPrimary, true),
+    AppTheme.MATRIX to ThemePalette(VercelDarkPrimary, VercelDarkSecondary, VercelDarkBackground, VercelDarkSurface, VercelDarkTextPrimary, false)
 )
 
 private fun Context.findActivity(): Activity? {
@@ -79,6 +79,7 @@ private fun Context.findActivity(): Activity? {
 @Composable
 fun DataMonitorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    fontProfile: FontProfile = FontProfile.DEFAULT,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
@@ -90,8 +91,8 @@ fun DataMonitorTheme(
             tertiary = StatusSuccess,
             background = VercelDarkBackground,
             surface = VercelDarkSurface,
-            onPrimary = VercelDarkBackground,
-            onSecondary = VercelDarkTextPrimary,
+            onPrimary = VercelDarkOnPrimary,      // Black on White (100% readable)
+            onSecondary = VercelDarkOnSecondary,  // White on Slate Gray (100% readable)
             onBackground = VercelDarkTextPrimary,
             onSurface = VercelDarkTextPrimary,
             outline = VercelDarkBorder,
@@ -104,8 +105,8 @@ fun DataMonitorTheme(
             tertiary = StatusSuccess,
             background = VercelLightBackground,
             surface = VercelLightSurface,
-            onPrimary = VercelLightBackground,
-            onSecondary = VercelLightTextPrimary,
+            onPrimary = VercelLightOnPrimary,      // White on Black (100% readable)
+            onSecondary = VercelLightOnSecondary,  // Black on Light Gray (100% readable)
             onBackground = VercelLightTextPrimary,
             onSurface = VercelLightTextPrimary,
             outline = VercelLightBorder,
@@ -113,7 +114,7 @@ fun DataMonitorTheme(
         )
     }
 
-    val typography = createTypography()
+    val typography = createTypography(fontProfile)
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -139,11 +140,12 @@ fun DataMonitorTheme(
 @Composable
 fun DataMonitorTheme(
     theme: AppTheme,
+    fontProfile: FontProfile = FontProfile.DEFAULT,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
     val palette = palettes[theme] ?: palettes[AppTheme.MIDNIGHT_AMOLED]!!
-    DataMonitorTheme(darkTheme = !palette.isLight, appAccentColor = appAccentColor, content = content)
+    DataMonitorTheme(darkTheme = !palette.isLight, fontProfile = fontProfile, appAccentColor = appAccentColor, content = content)
 }
 
 @Composable
@@ -152,17 +154,18 @@ fun DynamicThemeProvider(
     content: @Composable () -> Unit
 ) {
     val isSystemDark = isSystemInDarkTheme()
-    val currentThemeRaw by themeManager.themeFlow.collectAsStateWithLifecycle(initialValue = null)
+    val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
+    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = FontProfile.DEFAULT)
     
-    // Strict priority: Map system preference if currentThemeRaw is not overridden
-    val isDark = if (currentThemeRaw == null) {
-        isSystemDark
-    } else {
-        ! (palettes[currentThemeRaw]?.isLight ?: !isSystemDark)
+    val isDark = when (monogramTheme) {
+        MonogramTheme.SYSTEM_DEFAULT -> isSystemDark
+        MonogramTheme.LIGHT_MONOGRAM -> false
+        MonogramTheme.DARK_MONOGRAM -> true
     }
 
     DataMonitorTheme(
         darkTheme = isDark,
+        fontProfile = fontProfile,
         appAccentColor = null,
         content = content
     )
