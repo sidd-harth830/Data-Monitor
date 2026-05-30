@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -107,16 +109,89 @@ fun MainScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding(),
+            .background(MaterialTheme.colorScheme.background),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            if (showBars) {
-                GlassTopAppBar()
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            // Screen NavHost occupying the full edge-to-edge space so items scroll underneath
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                if (!hasPermission) {
+                    PermissionRequestScreen(
+                        onRequest = {
+                            permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
+                        }
+                    )
+                } else {
+                    key(startDestination) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                            modifier = Modifier.fillMaxSize(),
+                            enterTransition = { fadeIn(tween(400)) },
+                            exitTransition = { fadeOut(tween(400)) }
+                        ) {
+                            composable("login") {
+                                LoginScreen(
+                                    themeManager = themeManager,
+                                    onLoginSuccess = {
+                                        navController.navigate("home") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    },
+                                    onSkip = {
+                                        scope.launch {
+                                            themeManager.setSkipLogin(true)
+                                            navController.navigate("home") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("home") { DashboardScreen(viewModel, themeManager) }
+                            composable("history") { HistoryScreen(viewModel, themeManager) }
+                            composable("profile") { 
+                                ProfileScreen(
+                                    viewModel = viewModel,
+                                    themeManager = themeManager,
+                                    onNavigateToAuth = {
+                                        navController.navigate("login") {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("settings") { 
+                                SettingsScreen(
+                                    viewModel = viewModel,
+                                    themeManager = themeManager
+                                )
+                            }
+                            composable("admin_dashboard") {
+                                AdminDashboardScreen(onBack = { navController.popBackStack() })
+                            }
+                        }
+                    }
+                }
             }
-        },
-        bottomBar = {
+
+            // Translucent glass floating top bar at high z-index
+            if (showBars) {
+                GlassTopAppBar(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .zIndex(2f)
+                )
+            }
+
+            // Custom floating bottom nav pill at high z-index
             if (showBars) {
                 val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
                 FloatingBottomNav(
@@ -129,71 +204,11 @@ fun MainScreen(
                             launchSingleTop = true
                             restoreState = true
                         }
-                    }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .zIndex(2f)
                 )
-            }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
-            
-            if (!hasPermission) {
-                PermissionRequestScreen(
-                    onRequest = {
-                        permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
-                    }
-                )
-            } else {
-                key(startDestination) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = startDestination,
-                        enterTransition = { fadeIn(tween(400)) },
-                        exitTransition = { fadeOut(tween(400)) }
-                    ) {
-                        composable("login") {
-                            LoginScreen(
-                                themeManager = themeManager,
-                                onLoginSuccess = {
-                                    navController.navigate("home") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                },
-                                onSkip = {
-                                    scope.launch {
-                                        themeManager.setSkipLogin(true)
-                                        navController.navigate("home") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                        composable("home") { DashboardScreen(viewModel, themeManager) }
-                        composable("history") { HistoryScreen(viewModel, themeManager) }
-                        composable("profile") { 
-                            ProfileScreen(
-                                viewModel = viewModel,
-                                themeManager = themeManager,
-                                onNavigateToAuth = {
-                                    navController.navigate("login") {
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
-                        composable("settings") { 
-                            SettingsScreen(
-                                viewModel = viewModel,
-                                themeManager = themeManager
-                            )
-                        }
-                        composable("admin_dashboard") {
-                            AdminDashboardScreen(onBack = { navController.popBackStack() })
-                        }
-                    }
-                }
             }
         }
     }
@@ -354,91 +369,89 @@ fun FloatingBottomNav(
     currentRoute: String,
     appAccentHex: String,
     isAdmin: Boolean,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = Modifier
+    Row(
+        modifier = modifier
+            .zIndex(1f)
+            .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
+            .navigationBarsPadding() // Ensures bottom notch or virtual home button doesn't clip content
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .border(0.5.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(50))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        GlassCard(
-            shape = RoundedCornerShape(32.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        val haptic = LocalHapticFeedback.current
+        val items = remember(isAdmin) {
+            val base = mutableListOf(
+                Triple("home", "Home", Icons.Filled.Home),
+                Triple("history", "Analytics", Icons.Filled.List),
+                Triple("profile", "Profile", Icons.Filled.Person),
+                Triple("settings", "Config", Icons.Filled.Settings)
+            )
+            if (isAdmin) {
+                base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
+            }
+            base
+        }
+
+        items.forEach { (route, label, icon) ->
+            val isSelected = currentRoute == route
+            val interactionSource = remember { MutableInteractionSource() }
+            
+            val contentColor = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSecondary
+            }
+
+            val containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+            } else {
+                Color.Transparent
+            }
+
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                    .windowInsetsPadding(WindowInsets.navigationBars),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val haptic = LocalHapticFeedback.current
-                val items = remember(isAdmin) {
-                    val base = mutableListOf(
-                        Triple("home", "Home", Icons.Filled.Home),
-                        Triple("history", "Analytics", Icons.Filled.List),
-                        Triple("profile", "Profile", Icons.Filled.Person),
-                        Triple("settings", "Config", Icons.Filled.Settings)
-                    )
-                    if (isAdmin) {
-                        base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
-                    }
-                    base
-                }
-
-                items.forEach { (route, label, icon) ->
-                    val isSelected = currentRoute == route
-                    val interactionSource = remember { MutableInteractionSource() }
-                    
-                    val contentColor = if (isSelected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSecondary
-                    }
-
-                    val containerColor = if (isSelected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    } else {
-                        Color.Transparent
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(containerColor)
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null
-                            ) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onNavigate(route)
-                            }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(containerColor)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
                     ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = label,
-                            tint = contentColor,
-                            modifier = Modifier.size(24.dp)
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onNavigate(route)
+                    }
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = contentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                AnimatedVisibility(
+                    visible = isSelected,
+                    enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                    exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+                ) {
+                    Row {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = BricolageFontFamily
+                            ),
+                            color = contentColor
                         )
-                        AnimatedVisibility(
-                            visible = isSelected,
-                            enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
-                            exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                        ) {
-                            Row {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = label,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = contentColor
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -606,22 +619,23 @@ fun bytesToMB(bytes: Long): Double {
 }
 
 @Composable
-fun GlassTopAppBar() {
+fun GlassTopAppBar(modifier: Modifier = Modifier) {
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val tintColor = if (isLight) Color.White.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.45f)
-    val borderColor = if (isLight) Color.Black.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.18f)
-    val textColor = if (isLight) Color.Black else Color.White
+    val textColor = if (isLight) Color(0xFF1A1A1A) else Color.White
 
     Box(
-        modifier = Modifier
+        modifier = modifier
+            .zIndex(1f)
             .fillMaxWidth()
-            .padding(top = 12.dp, start = 24.dp, end = 24.dp, bottom = 4.dp)
-            .height(56.dp)
-            .graphicsLayer { alpha = 0.9f }
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .statusBarsPadding()
+            .padding(top = 12.dp, start = 24.dp, end = 24.dp, bottom = 12.dp)
     ) {
         GlassCard(
             shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -645,7 +659,8 @@ fun GlassTopAppBar() {
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp
+                            letterSpacing = 1.2.sp,
+                            fontFamily = BricolageFontFamily
                         ),
                         color = textColor
                     )

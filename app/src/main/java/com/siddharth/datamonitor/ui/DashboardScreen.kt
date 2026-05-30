@@ -112,7 +112,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+                .padding(top = 110.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
                 .navigationBarsPadding()
         ) {
             // Header (Greeting/Authentication badges)

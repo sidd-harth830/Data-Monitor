@@ -181,7 +181,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .padding(top = 110.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
             .navigationBarsPadding()
             .testTag("configs_parent_column")
     ) {
@@ -210,17 +210,72 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                PremiumTabSelector(
-                    options = listOf(
-                        MonogramTheme.SYSTEM_DEFAULT to "System Default",
-                        MonogramTheme.LIGHT_MONOGRAM to "Light Monogram",
-                        MonogramTheme.DARK_MONOGRAM to "Dark Monogram"
-                    ),
-                    selectedOption = monogramTheme,
-                    onOptionSelected = { themeOption ->
-                        scope.launch { themeManager.setMonogramTheme(themeOption) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val themeOptions = listOf(
+                        MonogramTheme.SYSTEM_DEFAULT to "SYSTEM",
+                        MonogramTheme.LIGHT_MONOGRAM to "LIGHT",
+                        MonogramTheme.DARK_MONOGRAM to "DARK"
+                    )
+
+                    themeOptions.forEach { (option, label) ->
+                        val isSelected = option == monogramTheme
+                        val containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        }
+
+                        val contentColor = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onBackground
+                        }
+
+                        val isSystemLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
+                        val customDividerColor = if (isSystemLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
+
+                        val borderStroke = androidx.compose.foundation.BorderStroke(
+                            width = 0.5.dp,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                customDividerColor
+                            }
+                        )
+
+                        Surface(
+                            onClick = {
+                                scope.launch { themeManager.setMonogramTheme(option) }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = containerColor,
+                            border = borderStroke
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = BricolageFontFamily,
+                                        fontSize = 11.sp,
+                                        letterSpacing = 1.sp
+                                    ),
+                                    color = contentColor,
+                                    maxLines = 1
+                                )
+                            }
+                        }
                     }
-                )
+                }
             }
         }
         
