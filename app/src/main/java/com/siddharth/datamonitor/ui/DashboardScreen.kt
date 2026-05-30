@@ -201,48 +201,30 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Pro Wave Graph (Main Analytics Engine as a standalone premium card below the header)
-            Text(
-                text = "REAL-TIME SPECTRUM WAVE CHART",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            AnalyticalWaveChart(
-                liveSpeeds = liveSpeeds,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Daily Data Limit tracker (placed perfectly below the Wave chart)
-            DailyDataLimitTracker(
-                todayUsageBytes = mobileUsage,
-                dailyLimitMBStr = dailyDataLimitMBStr,
-                onSaveLimit = { limit ->
-                    scope.launch {
-                        themeManager.setDailyDataLimit(limit)
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Subheader for layout specific secondary metrics
-            Text(
-                text = "DETAILED GATEWAY METRICS",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
             when (dashboardLayout) {
                 DashboardLayoutPreference.STANDARD -> {
+                    // Daily Data Limit tracker (placed perfectly for Standard)
+                    DailyDataLimitTracker(
+                        todayUsageBytes = mobileUsage,
+                        dailyLimitMBStr = dailyDataLimitMBStr,
+                        onSaveLimit = { limit ->
+                            scope.launch {
+                                themeManager.setDailyDataLimit(limit)
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "DETAILED GATEWAY METRICS",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
                     DashboardLayoutStandard(
                         mobileUsage = mobileUsage,
                         wifiUsage = wifiUsage,
@@ -255,6 +237,45 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     )
                 }
                 DashboardLayoutPreference.PRO -> {
+                    // Pro Wave Graph (Main Analytics Engine as a standalone premium card below the header)
+                    Text(
+                        text = "REAL-TIME SPECTRUM WAVE CHART",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    AnalyticalWaveChart(
+                        liveSpeeds = liveSpeeds,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Daily Data Limit tracker
+                    DailyDataLimitTracker(
+                        todayUsageBytes = mobileUsage,
+                        dailyLimitMBStr = dailyDataLimitMBStr,
+                        onSaveLimit = { limit ->
+                            scope.launch {
+                                themeManager.setDailyDataLimit(limit)
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "DETAILED GATEWAY METRICS",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
                     DashboardLayoutPro(
                         mobileUsage = mobileUsage,
                         wifiUsage = wifiUsage,
@@ -268,6 +289,29 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 }
                 DashboardLayoutPreference.GRID -> {
                     val todayHourlyLogs by viewModel.todayHourlyLogs.collectAsStateWithLifecycle(initialValue = emptyList())
+
+                    // Daily Data Limit tracker
+                    DailyDataLimitTracker(
+                        todayUsageBytes = mobileUsage,
+                        dailyLimitMBStr = dailyDataLimitMBStr,
+                        onSaveLimit = { limit ->
+                            scope.launch {
+                                themeManager.setDailyDataLimit(limit)
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "DETAILED GATEWAY METRICS",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
                     DashboardLayoutGrid(
                         mobileUsage = mobileUsage,
                         wifiUsage = wifiUsage,
