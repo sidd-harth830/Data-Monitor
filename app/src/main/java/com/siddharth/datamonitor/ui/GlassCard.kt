@@ -45,18 +45,20 @@ fun Modifier.glassCard(
         )
     }
     
-    // Crisp ultra-thin 0.5dp border: White for high-end dark contrast, dark translucent for light theme
-    val borderColor = if (isLight) {
-        Color.Black.copy(alpha = 0.08f)
-    } else {
-        Color.White.copy(alpha = 0.15f)
-    }
+    // Glowing gradient border
+    val borderBrush = androidx.compose.ui.graphics.Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.4f),
+            Color.Transparent
+        )
+    )
 
     return this
         .clip(shape)
         .background(backgroundBrush)
         .border(
-            border = BorderStroke(0.5.dp, borderColor),
+            width = 0.5.dp,
+            brush = borderBrush,
             shape = shape
         )
 }

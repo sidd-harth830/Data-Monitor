@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.VerifiedUser
@@ -32,6 +33,7 @@ import kotlinx.coroutines.delay
 import com.siddharth.datamonitor.R
 import com.siddharth.datamonitor.ui.theme.*
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.testTag
 
 fun changeAppIcon(context: Context, iconChoice: String) {
@@ -94,6 +96,7 @@ fun <T> PremiumTabSelector(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
     val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
     
@@ -126,7 +129,10 @@ fun <T> PremiumTabSelector(
             )
 
             Surface(
-                onClick = { onOptionSelected(option) },
+                onClick = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onOptionSelected(option)
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
@@ -142,12 +148,13 @@ fun <T> PremiumTabSelector(
                         text = label,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontFamily = BricolageFontFamily
+                            fontSize = 11.sp,
+                            letterSpacing = 0.5.sp
                         ),
                         color = contentColor,
+                        textAlign = TextAlign.Center,
                         maxLines = 1,
-                        fontSize = 11.sp,
-                        letterSpacing = 0.5.sp
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -167,7 +174,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
     val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
-    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT)
+    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD)
     
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
     val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
@@ -181,15 +188,13 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(top = 110.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+            .padding(top = 8.dp, start = 24.dp, end = 24.dp, bottom = 16.dp)
             .navigationBarsPadding()
             .testTag("configs_parent_column")
     ) {
         Text(
             text = "CONFIG",
-            style = MaterialTheme.typography.displaySmall.copy(
-                fontFamily = BricolageFontFamily
-            ),
+            style = MaterialTheme.typography.displaySmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
             letterSpacing = 1.sp
@@ -203,7 +208,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "THEME SELECTOR",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -265,12 +269,13 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                     text = label,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
-                                        fontFamily = BricolageFontFamily,
                                         fontSize = 11.sp,
                                         letterSpacing = 1.sp
                                     ),
                                     color = contentColor,
-                                    maxLines = 1
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
@@ -318,7 +323,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "APP ICON SELECTOR",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -369,8 +373,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 text = label,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = BricolageFontFamily
+                                    fontWeight = FontWeight.Bold
                                 ),
                                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                             )
@@ -406,7 +409,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "LIVE NETWORK HEALTH TESTER",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -448,8 +450,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 text = if (latencyValue >= 0) "$latencyValue" else if (isPinging) "..." else "Ping",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = BricolageFontFamily
+                                    fontWeight = FontWeight.Bold
                                 ),
                                 color = indicatorColor
                             )
@@ -457,8 +458,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 Text(
                                     text = "ms",
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = 9.sp,
-                                        fontFamily = BricolageFontFamily
+                                        fontSize = 9.sp
                                     ),
                                     color = MaterialTheme.colorScheme.onSecondary
                                 )
@@ -473,8 +473,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             text = "GOOGLE DNS PING",
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = BricolageFontFamily
+                                fontWeight = FontWeight.Bold
                             ),
                             color = MaterialTheme.colorScheme.onSecondary
                         )
@@ -482,8 +481,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         Text(
                             text = if (latencyValue in 0..100) "Stable Network Signal" else if (latencyValue in 101..300) "Transient Buffer Bloat" else if (latencyValue > 300) "Highly unstable" else "Ready to track lag metrics",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 11.sp,
-                                fontFamily = BricolageFontFamily
+                                fontSize = 11.sp
                             ),
                             color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                         )
@@ -504,8 +502,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             text = if (isPinging) "STOP" else "TEST PING",
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = BricolageFontFamily
+                                fontWeight = FontWeight.Bold
                             )
                         )
                     }
@@ -521,7 +518,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "DASHBOARD LAYOUT",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -550,7 +546,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "FONT SELECTOR",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -559,8 +554,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Spacer(modifier = Modifier.height(16.dp))
                 PremiumTabSelector(
                     options = listOf(
-                        com.siddharth.datamonitor.ui.theme.FontProfile.DEFAULT to "System Default",
-                        com.siddharth.datamonitor.ui.theme.FontProfile.PREMIUM to "Plus Jakarta Sans"
+                        com.siddharth.datamonitor.ui.theme.FontProfile.SYSTEM_DEFAULT to "System Default",
+                        com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD to "Oswald",
+                        com.siddharth.datamonitor.ui.theme.FontProfile.BRICOLAGE to "Bricolage",
+                        com.siddharth.datamonitor.ui.theme.FontProfile.AKT to "Akt"
                     ),
                     selectedOption = fontProfile,
                     onOptionSelected = { profile ->
@@ -578,7 +575,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "DATA CEILING CONFIGURATION",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.primary,
@@ -589,7 +585,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "DAILY CEILING LIMIT (MB)",
                     style = MaterialTheme.typography.labelLarge.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.5.sp
                     ),
@@ -611,8 +606,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     ),
                     textStyle = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = BricolageFontFamily
+                        fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -622,7 +616,6 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "MONTHLY BILLING CYCLE LIMIT (MB)",
                     style = MaterialTheme.typography.labelLarge.copy(
-                        fontFamily = BricolageFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.5.sp
                     ),
@@ -644,8 +637,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     ),
                     textStyle = MaterialTheme.typography.titleLarge.copy(
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = BricolageFontFamily
+                        fontWeight = FontWeight.Bold
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -703,8 +695,14 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
 @Composable
 fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { 
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onCheckedChange(!checked)
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -714,8 +712,7 @@ fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedCh
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
-                    fontFamily = BricolageFontFamily
+                    fontSize = 16.sp
                 )
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -724,14 +721,16 @@ fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedCh
                 color = MaterialTheme.colorScheme.onSecondary,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontFamily = BricolageFontFamily
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
             )
         }
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = {
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onCheckedChange(it)
+            },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.background,
                 checkedTrackColor = MaterialTheme.colorScheme.primary,

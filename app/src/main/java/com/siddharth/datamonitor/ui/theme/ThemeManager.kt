@@ -42,8 +42,10 @@ class ThemeManager(private val context: Context) {
 
     val fontProfileFlow: Flow<FontProfile> = context.dataStore.data.map { preferences ->
         when (preferences[FONT_PROFILE_KEY]) {
-            FontProfile.PREMIUM.name -> FontProfile.PREMIUM
-            else -> FontProfile.DEFAULT
+            FontProfile.SYSTEM_DEFAULT.name -> FontProfile.SYSTEM_DEFAULT
+            FontProfile.BRICOLAGE.name -> FontProfile.BRICOLAGE
+            FontProfile.AKT.name -> FontProfile.AKT
+            else -> FontProfile.OSWALD // Default to Oswald as requested
         }
     }
 
@@ -221,8 +223,10 @@ enum class MonogramTheme {
 }
 
 enum class FontProfile {
-    DEFAULT,
-    PREMIUM
+    SYSTEM_DEFAULT,
+    OSWALD,
+    BRICOLAGE,
+    AKT
 }
 
 enum class AppTheme {

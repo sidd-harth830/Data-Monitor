@@ -81,7 +81,7 @@ private fun Context.findActivity(): Activity? {
 @Composable
 fun DataMonitorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    fontProfile: FontProfile = FontProfile.DEFAULT,
+    fontProfile: FontProfile = FontProfile.OSWALD,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
@@ -133,7 +133,7 @@ fun DataMonitorTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = AppTypography,
+        typography = createTypography(fontProfile),
         content = content
     )
 }
@@ -142,7 +142,7 @@ fun DataMonitorTheme(
 @Composable
 fun DataMonitorTheme(
     theme: AppTheme,
-    fontProfile: FontProfile = FontProfile.DEFAULT,
+    fontProfile: FontProfile = FontProfile.OSWALD,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
@@ -157,7 +157,7 @@ fun DynamicThemeProvider(
 ) {
     val isSystemDark = isSystemInDarkTheme()
     val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
-    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = FontProfile.DEFAULT)
+    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = FontProfile.OSWALD)
     
     val isDark = when (monogramTheme) {
         MonogramTheme.SYSTEM_DEFAULT -> isSystemDark

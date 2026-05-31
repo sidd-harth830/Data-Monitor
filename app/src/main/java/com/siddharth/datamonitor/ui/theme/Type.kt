@@ -12,36 +12,19 @@ import com.siddharth.datamonitor.R
 // Secure downloadable fonts provider pointing to Google's authority
 val provider = GoogleFont.Provider(
     providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
+    providerPackage = "com.google.android.gms.fonts",
     certificates = R.array.com_google_android_gms_fonts_certs
 )
 
-// Oswald FontFamily definition using downloadable source
-val OswaldFont = GoogleFont("Oswald")
-val OswaldFontFamily = FontFamily(
-    Font(googleFont = OswaldFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = OswaldFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = OswaldFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = OswaldFont, fontProvider = provider, weight = FontWeight.Bold)
-)
+// Initialize downloadable Google fonts explicitly as requested
+val OswaldFont = FontFamily(Font(googleFont = GoogleFont("Oswald"), fontProvider = provider))
+val BricolageFont = FontFamily(Font(googleFont = GoogleFont("Bricolage Grotesque"), fontProvider = provider))
+val AktFont = FontFamily(Font(googleFont = GoogleFont("Akt"), fontProvider = provider))
 
-// Bricolage Grotesque FontFamily definition using downloadable source
-val BricolageFont = GoogleFont("Bricolage Grotesque")
-val BricolageFontFamily = FontFamily(
-    Font(googleFont = BricolageFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = BricolageFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = BricolageFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = BricolageFont, fontProvider = provider, weight = FontWeight.Bold)
-)
-
-// Akt FontFamily definition using downloadable source
-val AktFont = GoogleFont("Akt")
-val AktFontFamily = FontFamily(
-    Font(googleFont = AktFont, fontProvider = provider, weight = FontWeight.Normal),
-    Font(googleFont = AktFont, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = AktFont, fontProvider = provider, weight = FontWeight.SemiBold),
-    Font(googleFont = AktFont, fontProvider = provider, weight = FontWeight.Bold)
-)
+// Modern aliases for backwards compatibility
+val OswaldFontFamily = OswaldFont
+val BricolageFontFamily = BricolageFont
+val AktFontFamily = AktFont
 
 // Legacy Font Settings hook expected by MainActivity
 object FontSettings {
@@ -61,121 +44,128 @@ val SansSerifFontFamily: FontFamily = BricolageFontFamily
 // Ensure custom Typography object can be explicitly referenced
 val AppTypography: Typography = createTypography()
 
-fun createTypography(profile: FontProfile = FontProfile.DEFAULT): Typography {
+fun createTypography(profile: FontProfile = FontProfile.OSWALD): Typography {
+    val family = when (profile) {
+        FontProfile.SYSTEM_DEFAULT -> FontFamily.Default
+        FontProfile.OSWALD -> OswaldFontFamily
+        FontProfile.BRICOLAGE -> BricolageFontFamily
+        FontProfile.AKT -> AktFontFamily
+    }
+
     return Typography(
-        // Display styles using Oswald
+        // Display styles
         displayLarge = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp,
             lineHeight = 40.sp,
             letterSpacing = (-0.5).sp
         ),
         displayMedium = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
             lineHeight = 36.sp,
             letterSpacing = (-0.2).sp
         ),
         displaySmall = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.SemiBold,
             fontSize = 24.sp,
             lineHeight = 32.sp,
             letterSpacing = 0.sp
         ),
 
-        // Headline styles using Oswald
+        // Headline styles
         headlineLarge = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
             lineHeight = 28.sp,
-            letterSpacing = 0.sp
+            letterSpacing = (-0.5).sp
         ),
         headlineMedium = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.SemiBold,
             fontSize = 20.sp,
             lineHeight = 26.sp,
-            letterSpacing = 0.sp
+            letterSpacing = (-0.25).sp
         ),
         headlineSmall = TextStyle(
-            fontFamily = OswaldFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Medium,
             fontSize = 18.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.sp
         ),
 
-        // Title Header styles using Bricolage Grotesque
+        // Title Header styles
         titleLarge = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.1.sp
         ),
         titleMedium = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
             lineHeight = 22.sp,
             letterSpacing = 0.1.sp
         ),
         titleSmall = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.1.sp
         ),
 
-        // Body styles using Bricolage Grotesque
+        // Body styles
         bodyLarge = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Normal,
             fontSize = 16.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.5.sp
         ),
         bodyMedium = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Normal,
             fontSize = 14.sp,
             lineHeight = 20.sp,
             letterSpacing = 0.25.sp
         ),
         bodySmall = TextStyle(
-            fontFamily = BricolageFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Normal,
             fontSize = 12.sp,
             lineHeight = 16.sp,
             letterSpacing = 0.4.sp
         ),
 
-        // Label styles using Akt
+        // Label styles
         labelLarge = TextStyle(
-            fontFamily = AktFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             lineHeight = 20.sp,
-            letterSpacing = 0.1.sp
+            letterSpacing = 1.sp
         ),
         labelMedium = TextStyle(
-            fontFamily = AktFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Medium,
             fontSize = 12.sp,
             lineHeight = 16.sp,
-            letterSpacing = 0.5.sp
+            letterSpacing = 1.sp
         ),
         labelSmall = TextStyle(
-            fontFamily = AktFontFamily,
+            fontFamily = family,
             fontWeight = FontWeight.Medium,
             fontSize = 10.sp,
             lineHeight = 14.sp,
-            letterSpacing = 0.5.sp
+            letterSpacing = 1.sp
         )
     )
 }

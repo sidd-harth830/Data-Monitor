@@ -181,12 +181,14 @@ fun AdminDashboardScreen(
                     Column {
                         Text(
                             text = "ADMIN PORTAL",
+                            style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Real Telemetry & Core Systems Engine",
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -245,8 +247,7 @@ fun AdminDashboardScreen(
                             text = currentUser?.uid ?: "DEVELOPER_GUEST_UID",
                             color = MaterialTheme.colorScheme.primary,
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -306,6 +307,7 @@ fun AdminDashboardScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = "Proposed Staging Build: v${activeStaging.versionName}",
+                                        style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
@@ -1020,7 +1022,6 @@ fun AdminDashboardScreen(
                                         text = rawTrace,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                         fontSize = 10.sp,
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                         maxLines = 4,
                                         lineHeight = 14.sp
                                     )

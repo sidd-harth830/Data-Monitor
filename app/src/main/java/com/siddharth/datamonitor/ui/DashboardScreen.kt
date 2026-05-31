@@ -75,6 +75,7 @@ fun AppIconImage(packageName: String, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val mobileUsage by viewModel.todayMobile.collectAsStateWithLifecycle()
     val wifiUsage by viewModel.todayWifi.collectAsStateWithLifecycle()
     val downloadSpeed by viewModel.downloadSpeed.collectAsStateWithLifecycle()
@@ -112,7 +113,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = 110.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
+                .padding(top = 8.dp, start = 24.dp, end = 24.dp, bottom = 16.dp)
                 .navigationBarsPadding()
         ) {
             // Header (Greeting/Authentication badges)
@@ -377,9 +378,10 @@ fun DashboardLayoutStandard(
                 Text(
                     text = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
                     color = MaterialTheme.colorScheme.primary,
-                    fontFamily = MaterialTheme.typography.displaySmall.fontFamily,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
             }
         }
@@ -538,7 +540,15 @@ fun DashboardLayoutPro(
             // First Stats Card
             GlassCard(modifier = Modifier.weight(1f).wrapContentHeight()) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
-                    Text("TOTAL BANDWIDTH", color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "TOTAL BANDWIDTH",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            letterSpacing = 1.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = formatBytes(mobileUsage + wifiUsage),
@@ -547,14 +557,26 @@ fun DashboardLayoutPro(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Calculated daily log", color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f), fontSize = 10.sp)
+                    Text(
+                        text = "Calculated daily log",
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp)
+                    )
                 }
             }
             
             // Second Stats Card
             GlassCard(modifier = Modifier.weight(1f).wrapContentHeight()) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.Center) {
-                    Text("REMAINING", color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "REMAINING",
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            letterSpacing = 1.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
@@ -563,7 +585,11 @@ fun DashboardLayoutPro(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(if (isUnlimited5GActive) "5G network bypass" else "Before hard limit", color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f), fontSize = 10.sp)
+                    Text(
+                        text = if (isUnlimited5GActive) "5G network bypass" else "Before hard limit",
+                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp)
+                    )
                 }
             }
         }
@@ -673,11 +699,10 @@ fun AnalyticalWaveChart(
             shape = RoundedCornerShape(16.dp)
         ) {
             Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                androidx.compose.material3.CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+                modifier = Modifier
+                    .fillMaxSize()
+                    .shimmerEffect()
+            )
         }
         return
     }
@@ -950,18 +975,32 @@ fun LiveSpeedCard(title: String, speedColor: androidx.compose.ui.graphics.Color,
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(title, color = MaterialTheme.colorScheme.onSecondary, fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold)
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.onSecondary,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    letterSpacing = 2.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = formatSpeed(speedBytes),
                     color = speedColor,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = MaterialTheme.typography.titleLarge.fontFamily
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("/s", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp, modifier = Modifier.padding(bottom = 4.dp))
+                Text(
+                    text = "/s",
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
             }
         }
     }
@@ -1076,13 +1115,21 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(8.dp).background(MobileActive, RoundedCornerShape(4.dp)))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Cellular", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
+                Text(
+                    text = "Cellular",
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
                 
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 Box(modifier = Modifier.size(8.dp).background(WifiActive, RoundedCornerShape(4.dp)))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Wi-Fi", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
+                Text(
+                    text = "Wi-Fi",
+                    color = MaterialTheme.colorScheme.onSecondary,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
             }
         }
     }
@@ -1094,6 +1141,7 @@ fun DailyDataLimitTracker(
     dailyLimitMBStr: String,
     onSaveLimit: (String) -> Unit
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val limitMB = dailyLimitMBStr.toFloatOrNull() ?: 1000f
     val limitBytes = (limitMB * 1024 * 1024).toLong()
     val progress = if (limitBytes > 0) (todayUsageBytes.toFloat() / limitBytes.toFloat()).coerceIn(0f, 1f) else 0f
@@ -1142,7 +1190,10 @@ fun DailyDataLimitTracker(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
                         .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                        .clickable { showDialog = true }
+                        .clickable { 
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            showDialog = true 
+                        }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
@@ -1163,29 +1214,50 @@ fun DailyDataLimitTracker(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = formatBytes(todayUsageBytes),
-                        color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
+                if (todayUsageBytes == 0L) {
+                    // Shimmer placeholder for loading state
+                    Box(
+                        modifier = Modifier
+                            .height(30.dp)
+                            .width(140.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .shimmerEffect()
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                } else {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = formatBytes(todayUsageBytes),
+                            color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "of ${if (limitMB >= 1024f) String.format(Locale.getDefault(), "%.1f GB", limitMB / 1024f) else String.format(Locale.getDefault(), "%.0f MB", limitMB)}",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
+                    }
+                }
+
+                if (todayUsageBytes == 0L) {
+                    Box(
+                        modifier = Modifier
+                            .height(24.dp)
+                            .width(48.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .shimmerEffect()
+                    )
+                } else {
                     Text(
-                        text = "of ${if (limitMB >= 1024f) String.format(Locale.getDefault(), "%.1f GB", limitMB / 1024f) else String.format(Locale.getDefault(), "%.0f MB", limitMB)}",
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 14.sp,
+                        text = "$percentString%",
+                        color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 3.dp)
                     )
                 }
-
-                Text(
-                    text = "$percentString%",
-                    color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 3.dp)
-                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -1276,7 +1348,13 @@ fun DailyDataLimitTracker(
                             enteredLimit = it
                             errorLocalMsg = null
                         },
-                        label = { Text("Daily Limit Ceiling", color = MaterialTheme.colorScheme.onSecondary) },
+                        label = {
+                            Text(
+                                text = "Daily Limit Ceiling",
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
                         ),
@@ -1312,7 +1390,10 @@ fun DailyDataLimitTracker(
                                         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                                         shape = RoundedCornerShape(4.dp)
                                     )
-                                    .clickable { selectedUnit = unit }
+                                    .clickable { 
+                                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                                        selectedUnit = unit 
+                                    }
                                     .padding(vertical = 8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -1341,7 +1422,10 @@ fun DailyDataLimitTracker(
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.surface)
                                 .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                                .clickable { showDialog = false },
+                                .clickable { 
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                                    showDialog = false 
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -1360,6 +1444,7 @@ fun DailyDataLimitTracker(
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.primary)
                                 .clickable {
+                                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                                     val numericValue = enteredLimit.toFloatOrNull()
                                     if (numericValue == null || numericValue <= 0f) {
                                         errorLocalMsg = "Please enter a valid positive number"

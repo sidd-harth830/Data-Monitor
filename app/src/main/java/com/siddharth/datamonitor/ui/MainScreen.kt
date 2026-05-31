@@ -42,6 +42,24 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.withSaveLayer
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.foundation.Canvas
 
 import com.siddharth.datamonitor.R
 import com.siddharth.datamonitor.ui.theme.ThemeManager
@@ -111,87 +129,15 @@ fun MainScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            // Screen NavHost occupying the full edge-to-edge space so items scroll underneath
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                if (!hasPermission) {
-                    PermissionRequestScreen(
-                        onRequest = {
-                            permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
-                        }
-                    )
-                } else {
-                    key(startDestination) {
-                        NavHost(
-                            navController = navController,
-                            startDestination = startDestination,
-                            modifier = Modifier.fillMaxSize(),
-                            enterTransition = { fadeIn(tween(400)) },
-                            exitTransition = { fadeOut(tween(400)) }
-                        ) {
-                            composable("login") {
-                                LoginScreen(
-                                    themeManager = themeManager,
-                                    onLoginSuccess = {
-                                        navController.navigate("home") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    },
-                                    onSkip = {
-                                        scope.launch {
-                                            themeManager.setSkipLogin(true)
-                                            navController.navigate("home") {
-                                                popUpTo("login") { inclusive = true }
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("home") { DashboardScreen(viewModel, themeManager) }
-                            composable("history") { HistoryScreen(viewModel, themeManager) }
-                            composable("profile") { 
-                                ProfileScreen(
-                                    viewModel = viewModel,
-                                    themeManager = themeManager,
-                                    onNavigateToAuth = {
-                                        navController.navigate("login") {
-                                            popUpTo(0) { inclusive = true }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("settings") { 
-                                SettingsScreen(
-                                    viewModel = viewModel,
-                                    themeManager = themeManager
-                                )
-                            }
-                            composable("admin_dashboard") {
-                                AdminDashboardScreen(onBack = { navController.popBackStack() })
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Translucent glass floating top bar at high z-index
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
             if (showBars) {
                 GlassTopAppBar(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .zIndex(2f)
+                    modifier = Modifier.zIndex(10f)
                 )
             }
-
-            // Custom floating bottom nav pill at high z-index
+        },
+        bottomBar = {
             if (showBars) {
                 val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
                 FloatingBottomNav(
@@ -205,10 +151,73 @@ fun MainScreen(
                             restoreState = true
                         }
                     },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .zIndex(2f)
+                    modifier = Modifier.zIndex(10f)
                 )
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (!hasPermission) {
+                PermissionRequestScreen(
+                    onRequest = {
+                        permissionLauncher.launch(PermissionsUtils.getUsageStatsIntent())
+                    }
+                )
+            } else {
+                key(startDestination) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        modifier = Modifier.fillMaxSize(),
+                        enterTransition = { fadeIn(tween(400)) },
+                        exitTransition = { fadeOut(tween(400)) }
+                    ) {
+                        composable("login") {
+                            LoginScreen(
+                                themeManager = themeManager,
+                                onLoginSuccess = {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                },
+                                onSkip = {
+                                    scope.launch {
+                                        themeManager.setSkipLogin(true)
+                                        navController.navigate("home") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                        composable("home") { DashboardScreen(viewModel, themeManager) }
+                        composable("history") { HistoryScreen(viewModel, themeManager) }
+                        composable("profile") { 
+                            ProfileScreen(
+                                viewModel = viewModel,
+                                themeManager = themeManager,
+                                onNavigateToAuth = {
+                                    navController.navigate("login") {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable("settings") { 
+                            SettingsScreen(
+                                viewModel = viewModel,
+                                themeManager = themeManager
+                            )
+                        }
+                        composable("admin_dashboard") {
+                            AdminDashboardScreen(onBack = { navController.popBackStack() })
+                        }
+                    }
+                }
             }
         }
     }
@@ -372,86 +381,162 @@ fun FloatingBottomNav(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    val haptic = LocalHapticFeedback.current
+    val density = LocalDensity.current
+    val items = remember(isAdmin) {
+        val base = mutableListOf(
+            Triple("home", "Home", Icons.Filled.Home),
+            Triple("history", "Analytics", Icons.Filled.List),
+            Triple("profile", "Profile", Icons.Filled.Person),
+            Triple("settings", "Config", Icons.Filled.Settings)
+        )
+        if (isAdmin) {
+            base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
+        }
+        base
+    }
+
+    val selectedIndex = remember(currentRoute, items) {
+        val idx = items.indexOfFirst { it.first == currentRoute }
+        if (idx >= 0) idx else 0
+    }
+
+    val itemCoords = remember { mutableStateMapOf<Int, Pair<Dp, Dp>>() }
+
+    val targetX = itemCoords[selectedIndex]?.first ?: 0.dp
+    val targetWidth = itemCoords[selectedIndex]?.second ?: 0.dp
+
+    val animatedX by animateDpAsState(
+        targetValue = targetX,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMedium,
+            dampingRatio = Spring.DampingRatioLowBouncy
+        ),
+        label = "magneticX"
+    )
+
+    val animatedWidth by animateDpAsState(
+        targetValue = targetWidth,
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMedium,
+            dampingRatio = Spring.DampingRatioLowBouncy
+        ),
+        label = "magneticWidth"
+    )
+
+    val isMeasured = targetWidth > 0.dp
+    val indicatorAlpha by animateFloatAsState(
+        targetValue = if (isMeasured) 1f else 0f,
+        animationSpec = tween(300),
+        label = "indicatorAlpha"
+    )
+
+    Box(
         modifier = modifier
-            .zIndex(1f)
+            .zIndex(10f)
             .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
-            .navigationBarsPadding() // Ensures bottom notch or virtual home button doesn't clip content
+            .navigationBarsPadding()
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
             .border(0.5.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(50))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        val haptic = LocalHapticFeedback.current
-        val items = remember(isAdmin) {
-            val base = mutableListOf(
-                Triple("home", "Home", Icons.Filled.Home),
-                Triple("history", "Analytics", Icons.Filled.List),
-                Triple("profile", "Profile", Icons.Filled.Person),
-                Triple("settings", "Config", Icons.Filled.Settings)
-            )
-            if (isAdmin) {
-                base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
-            }
-            base
-        }
-
-        items.forEach { (route, label, icon) ->
-            val isSelected = currentRoute == route
-            val interactionSource = remember { MutableInteractionSource() }
-            
-            val contentColor = if (isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSecondary
-            }
-
-            val containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-            } else {
-                Color.Transparent
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            // Elegant, single-cohesive-capsule magnetic transition indicator
+            if (isMeasured) {
+                Box(
+                    modifier = Modifier
+                        .offset(x = animatedX)
+                        .width(animatedWidth)
+                        .height(44.dp)
+                        .align(Alignment.CenterStart)
+                        .graphicsLayer {
+                            alpha = indicatorAlpha
+                        }
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                )
             }
 
             Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(containerColor)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onNavigate(route)
-                    }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = contentColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                AnimatedVisibility(
-                    visible = isSelected,
-                    enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
-                    exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
-                ) {
-                    Row {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = BricolageFontFamily
-                            ),
-                            color = contentColor
+                items.forEachIndexed { index, (route, label, icon) ->
+                    val isSelected = currentRoute == route
+                    val interactionSource = remember { MutableInteractionSource() }
+                    
+                    val contentColor by animateColorAsState(
+                        targetValue = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSecondary
+                        },
+                        animationSpec = tween(250),
+                        label = "navColor"
+                    )
+
+                    val tabScale by animateFloatAsState(
+                        targetValue = if (isSelected) 1f else 0.9f,
+                        animationSpec = spring(
+                            stiffness = Spring.StiffnessMedium,
+                            dampingRatio = Spring.DampingRatioLowBouncy
+                        ),
+                        label = "tabScale"
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .onGloballyPositioned { coordinates ->
+                                val position = coordinates.positionInParent()
+                                val xDp = with(density) { position.x.toDp() }
+                                val widthDp = with(density) { coordinates.size.width.toDp() }
+                                itemCoords[index] = Pair(xDp, widthDp)
+                            }
+                            .graphicsLayer {
+                                scaleX = tabScale
+                                scaleY = tabScale
+                            }
+                            .clip(RoundedCornerShape(24.dp))
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onNavigate(route)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = label,
+                            tint = contentColor,
+                            modifier = Modifier.size(24.dp)
                         )
+                        AnimatedVisibility(
+                            visible = isSelected,
+                            enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = tween(200)),
+                            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = tween(200))
+                        ) {
+                            Row {
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = contentColor
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -625,52 +710,45 @@ fun GlassTopAppBar(modifier: Modifier = Modifier) {
 
     Box(
         modifier = modifier
-            .zIndex(1f)
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .zIndex(10f)
             .statusBarsPadding()
-            .padding(top = 12.dp, start = 24.dp, end = 24.dp, bottom = 12.dp)
+            .padding(start = 24.dp, end = 24.dp, top = 20.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
+            .border(0.5.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(50))
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        GlassCard(
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.NetworkCheck,
-                        contentDescription = "Data Monitor",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "DATA MONITOR SYSTEM",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.2.sp,
-                            fontFamily = BricolageFontFamily
-                        ),
-                        color = textColor
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(Color.Green, RoundedCornerShape(4.dp))
+                Icon(
+                    imageVector = Icons.Rounded.NetworkCheck,
+                    contentDescription = "Data Monitor",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "DATA MONITOR SYSTEM",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    ),
+                    color = textColor
                 )
             }
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color.Green, RoundedCornerShape(4.dp))
+            )
         }
     }
 }
