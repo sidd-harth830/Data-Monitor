@@ -134,8 +134,28 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
+                    
+                    val greetingName = remember(currentUser, userEmail) {
+                        val displayName = currentUser?.displayName
+                        if (!displayName.isNullOrBlank()) {
+                            displayName
+                        } else if (!userEmail.isNullOrBlank()) {
+                            val scrubbed = userEmail.substringBefore("@").replace(Regex("[0-9._-]+"), " ")
+                            val cleaned = scrubbed.trim().replace(Regex("\\s+"), " ")
+                            if (cleaned.isBlank()) {
+                                "Explorer"
+                            } else {
+                                cleaned.split(" ").joinToString(" ") { word ->
+                                    word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                                }
+                            }
+                        } else {
+                            "Explorer"
+                        }
+                    }
+
                     Text(
-                        text = if (userEmail != null) userEmail.substringBefore("@").uppercase(Locale.getDefault()) else "EXPLORER",
+                        text = greetingName,
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onBackground
