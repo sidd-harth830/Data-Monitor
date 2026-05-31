@@ -59,3 +59,8 @@
 -keep class com.patrykandpatrick.vico.** { *; }
 -dontwarn com.patrykandpatrick.vico.**
 
+# Keep Google Fonts provider classes safe from minification
+-keep class androidx.compose.ui.text.googlefonts.** { *; }
+-dontwarn androidx.compose.ui.text.googlefonts.**
+-keep class androidx.core.provider.FontsContractCompat** { *; }
+
