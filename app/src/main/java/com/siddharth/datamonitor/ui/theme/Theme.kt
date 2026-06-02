@@ -7,6 +7,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.ui.platform.LocalContext
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -81,12 +85,18 @@ private fun Context.findActivity(): Activity? {
 @Composable
 fun DataMonitorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    useMaterial3: Boolean = false,
     fontProfile: FontProfile = FontProfile.OSWALD,
     appAccentColor: Color? = null,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
     // Determine light or dark color scheme based strictly on darkTheme preference and next.js design standards
-    val colorScheme = if (darkTheme) {
+    val colorScheme = if (useMaterial3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else if (useMaterial3) {
+        if (darkTheme) darkColorScheme() else lightColorScheme()
+    } else if (darkTheme) {
         darkColorScheme(
             primary = VercelDarkPrimary,
             secondary = VercelDarkSecondary,
@@ -147,7 +157,7 @@ fun DataMonitorTheme(
     content: @Composable () -> Unit
 ) {
     val palette = palettes[theme] ?: palettes[AppTheme.MIDNIGHT_AMOLED]!!
-    DataMonitorTheme(darkTheme = !palette.isLight, fontProfile = fontProfile, appAccentColor = appAccentColor, content = content)
+    DataMonitorTheme(darkTheme = !palette.isLight, useMaterial3 = false, fontProfile = fontProfile, appAccentColor = appAccentColor, content = content)
 }
 
 @Composable
@@ -159,14 +169,16 @@ fun DynamicThemeProvider(
     val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
     val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = FontProfile.OSWALD)
     
+    val useMaterial3 = monogramTheme == MonogramTheme.MATERIAL_3
     val isDark = when (monogramTheme) {
-        MonogramTheme.SYSTEM_DEFAULT -> isSystemDark
         MonogramTheme.LIGHT_MONOGRAM -> false
         MonogramTheme.DARK_MONOGRAM -> true
+        else -> isSystemDark // SYSTEM_DEFAULT and MATERIAL_3 follow system dark mode
     }
 
     DataMonitorTheme(
         darkTheme = isDark,
+        useMaterial3 = useMaterial3,
         fontProfile = fontProfile,
         appAccentColor = null,
         content = content

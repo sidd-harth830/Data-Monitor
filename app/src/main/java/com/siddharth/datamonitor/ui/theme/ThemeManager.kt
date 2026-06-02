@@ -36,6 +36,7 @@ class ThemeManager(private val context: Context) {
         when (preferences[MONOGRAM_THEME_KEY]) {
             MonogramTheme.LIGHT_MONOGRAM.name -> MonogramTheme.LIGHT_MONOGRAM
             MonogramTheme.DARK_MONOGRAM.name -> MonogramTheme.DARK_MONOGRAM
+            MonogramTheme.MATERIAL_3.name -> MonogramTheme.MATERIAL_3
             else -> MonogramTheme.SYSTEM_DEFAULT
         }
     }
@@ -219,7 +220,8 @@ class ThemeManager(private val context: Context) {
 enum class MonogramTheme {
     SYSTEM_DEFAULT,
     LIGHT_MONOGRAM,
-    DARK_MONOGRAM
+    DARK_MONOGRAM,
+    MATERIAL_3
 }
 
 enum class FontProfile {

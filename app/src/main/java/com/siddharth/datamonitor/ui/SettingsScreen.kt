@@ -221,7 +221,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     val themeOptions = listOf(
                         MonogramTheme.SYSTEM_DEFAULT to "SYSTEM",
                         MonogramTheme.LIGHT_MONOGRAM to "LIGHT",
-                        MonogramTheme.DARK_MONOGRAM to "DARK"
+                        MonogramTheme.DARK_MONOGRAM to "DARK",
+                        MonogramTheme.MATERIAL_3 to "MATERIAL 3"
                     )
 
                     themeOptions.forEach { (option, label) ->
