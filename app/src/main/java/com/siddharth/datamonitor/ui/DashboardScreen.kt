@@ -132,7 +132,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "Hello,",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     
                     val greetingName = remember(currentUser, userEmail) {
@@ -157,7 +157,6 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = greetingName,
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
@@ -166,12 +165,12 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Box(
                     modifier = Modifier
                         .background(
-                            color = if (userEmail != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             shape = RoundedCornerShape(12.dp)
                         )
                         .border(
                             width = 0.5.dp,
-                            color = if (userEmail != null) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             shape = RoundedCornerShape(12.dp)
                         )
                         .padding(horizontal = 12.dp, vertical = 6.dp)
@@ -191,8 +190,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         Text(
                             text = if (userEmail != null) "SYNC REGISTRY" else "LOCAL ACCOUNT",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (userEmail != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            color = if (userEmail != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -207,14 +205,13 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                            .background(MaterialTheme.colorScheme.primary)
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Text(
                             text = "⚡ UNLIMITED 5G CARRIER DETECTED",
-                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
-                            letterSpacing = 1.sp
                         )
                     }
                 }
@@ -240,9 +237,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "DETAILED GATEWAY METRICS",
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -263,8 +258,6 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         text = "REAL-TIME SPECTRUM WAVE CHART",
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
@@ -291,9 +284,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "DETAILED GATEWAY METRICS",
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -327,9 +318,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "DETAILED GATEWAY METRICS",
                         style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
+                        color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -384,24 +373,17 @@ fun DashboardLayoutStandard(
                     Text(
                         text = if (isUnlimited5GActive) "CURRENT NETWORK PLAN" else "ESTIMATED DATA LEFT",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.5.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = if (isUnlimited5GActive) "Bypassing warnings on 5G" else "Resets inside monthly cycle", 
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f), 
-                        fontSize = 12.sp
+                        color = MaterialTheme.colorScheme.onSecondary, 
                     )
                 }
                 Text(
                     text = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
                     color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.displaySmall.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.displaySmall
                 )
             }
         }
@@ -471,8 +453,6 @@ fun DashboardLayoutStandard(
                                 Text(
                                     text = app.appName,
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 14.sp,
                                     maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -487,8 +467,6 @@ fun DashboardLayoutStandard(
                             Text(
                                 text = formatBytes(app.bytes),
                                 color = MaterialTheme.colorScheme.onSecondary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -523,13 +501,11 @@ fun DashboardLayoutPro(
                             text = "MOBILE BILLING CYCLE", 
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSecondary, 
-                            letterSpacing = 1.sp
                         )
                         Text(
                             text = formatBytes(mobileUsage), 
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onBackground, 
-                            fontWeight = FontWeight.Bold
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
@@ -537,13 +513,11 @@ fun DashboardLayoutPro(
                             text = "LOCAL WI-FI ENGINE", 
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSecondary, 
-                            letterSpacing = 1.sp
                         )
                         Text(
                             text = formatBytes(wifiUsage), 
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.colorScheme.onBackground, 
-                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -563,24 +537,18 @@ fun DashboardLayoutPro(
                     Text(
                         text = "TOTAL BANDWIDTH",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 10.sp,
-                            letterSpacing = 1.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        style = MaterialTheme.typography.labelSmall
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = formatBytes(mobileUsage + wifiUsage),
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Calculated daily log",
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp)
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -591,24 +559,18 @@ fun DashboardLayoutPro(
                     Text(
                         text = "REMAINING",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 10.sp,
-                            letterSpacing = 1.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        style = MaterialTheme.typography.labelSmall
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = if (isUnlimited5GActive) "UNLIMITED" else formatBytes(bytesLeft),
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = if (isUnlimited5GActive) "5G network bypass" else "Before hard limit",
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp)
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -677,16 +639,12 @@ fun DashboardLayoutPro(
                                     Text(
                                         text = app.appName,
                                         color = MaterialTheme.colorScheme.onBackground,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 13.sp,
                                         maxLines = 1,
                                         modifier = Modifier.weight(1f)
                                     )
                                     Text(
                                         text = formatBytes(app.bytes),
                                         color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -695,7 +653,7 @@ fun DashboardLayoutPro(
                                     progress = { ratio },
                                     modifier = Modifier.fillMaxWidth().height(3.dp),
                                     color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                    trackColor = MaterialTheme.colorScheme.surface
                                 )
                             }
                         }
@@ -727,8 +685,8 @@ fun AnalyticalWaveChart(
         return
     }
 
-    val primaryColor = com.siddharth.datamonitor.ui.theme.StatusWifi
-    val secondaryColor = com.siddharth.datamonitor.ui.theme.StatusMobile
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.tertiary
 
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f
 
@@ -738,13 +696,13 @@ fun AnalyticalWaveChart(
             .height(140.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
+        val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
             val midY = height / 2f
             
             // Draw grid lines - highly clear contrast and beautifully soft
-            val gridColor = if (isLight) Color(0x0D000000) else Color(0x1AFFFFFF)
             for (i in 1..4) {
                 val y = height * (i / 5f)
                 drawLine(gridColor, start = androidx.compose.ui.geometry.Offset(0f, y), end = androidx.compose.ui.geometry.Offset(width, y), strokeWidth = 1.dp.toPx())
@@ -832,8 +790,6 @@ fun DashboardLayoutGrid(
             text = "DENSE SYSTEM GRID",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -928,16 +884,12 @@ fun DashboardLayoutGrid(
                             Text(
                                 text = app.appName,
                                 color = MaterialTheme.colorScheme.onBackground,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
                                 maxLines = 1,
                                 modifier = Modifier.weight(1f)
                             )
                             Text(
                                 text = formatBytes(app.bytes),
                                 color = MaterialTheme.colorScheme.primary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -965,22 +917,16 @@ fun GridBlockCard(
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.onSecondary,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 color = color,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
-                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                fontSize = 8.sp
+                color = MaterialTheme.colorScheme.onSecondary,
             )
         }
     }
@@ -998,28 +944,21 @@ fun LiveSpeedCard(title: String, speedColor: androidx.compose.ui.graphics.Color,
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.onSecondary,
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 10.sp,
-                    letterSpacing = 2.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.labelSmall
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = formatSpeed(speedBytes),
                     color = speedColor,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    style = MaterialTheme.typography.titleLarge
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "/s",
                     color = MaterialTheme.colorScheme.onSecondary,
                     modifier = Modifier.padding(bottom = 4.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -1075,7 +1014,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Glow Effect Cellular
             if (mobileFraction > 0f) {
                 drawArc(
-                    color = MobileActive.copy(alpha = 0.3f),
+                    color = MobileActive,
                     startAngle = 135f,
                     sweepAngle = mobileFraction * 360f,
                     useCenter = false,
@@ -1086,7 +1025,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Glow Effect Wi-Fi
             if (wifiFraction > 0f) {
                 drawArc(
-                    color = WifiActive.copy(alpha = 0.3f),
+                    color = WifiActive,
                     startAngle = 135f + (mobileFraction * 360f),
                     sweepAngle = wifiFraction * 360f,
                     useCenter = false,
@@ -1120,16 +1059,13 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = if (is5G) "Unlimited 5G" else formatBytes(mobileBytes + wifiBytes),
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = if (is5G) "Active" else "Total Tracked",
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                letterSpacing = 1.sp
               )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1138,7 +1074,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
                 Text(
                     text = "Cellular",
                     color = MaterialTheme.colorScheme.onSecondary,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                    style = MaterialTheme.typography.bodySmall
                 )
                 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -1148,7 +1084,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
                 Text(
                     text = "Wi-Fi",
                     color = MaterialTheme.colorScheme.onSecondary,
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -1191,15 +1127,11 @@ fun DailyDataLimitTracker(
                     Text(
                         text = "DAILY DATA LIMIT TRACKER",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "Used Today vs. Daily Soft Limit",
-                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        fontSize = 12.sp
+                        color = MaterialTheme.colorScheme.onSecondary,
                     )
                 }
                 
@@ -1209,7 +1141,7 @@ fun DailyDataLimitTracker(
                 Box(
                     modifier = Modifier
                         .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
-                        .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                        .border(0.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
                         .clickable { 
                             haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                             showDialog = true 
@@ -1219,9 +1151,6 @@ fun DailyDataLimitTracker(
                     Text(
                         text = "CONFIGURE",
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
                     )
                 }
             }
@@ -1248,14 +1177,11 @@ fun DailyDataLimitTracker(
                         Text(
                             text = formatBytes(todayUsageBytes),
                             color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "of ${if (limitMB >= 1024f) String.format(Locale.getDefault(), "%.1f GB", limitMB / 1024f) else String.format(Locale.getDefault(), "%.0f MB", limitMB)}",
                             color = MaterialTheme.colorScheme.onSecondary,
-                            fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 3.dp)
                         )
                     }
@@ -1273,8 +1199,6 @@ fun DailyDataLimitTracker(
                     Text(
                         text = "$percentString%",
                         color = if (isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 3.dp)
                     )
                 }
@@ -1308,8 +1232,6 @@ fun DailyDataLimitTracker(
                 Text(
                     text = "⚠️ Daily data limit exceeded by ${formatBytes(todayUsageBytes - limitBytes)}!",
                     color = MaterialTheme.colorScheme.error,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -1329,7 +1251,7 @@ fun DailyDataLimitTracker(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(6.dp))
                     .background(MaterialTheme.colorScheme.background)
-                    .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(6.dp))
+                    .border(0.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                     .padding(24.dp)
             ) {
                 Column(
@@ -1338,15 +1260,11 @@ fun DailyDataLimitTracker(
                     Text(
                         text = "Daily Data Limit Configuration".uppercase(Locale.getDefault()),
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Enter your desired daily maximum soft ceiling to pace billing usage.",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 12.sp
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -1355,8 +1273,6 @@ fun DailyDataLimitTracker(
                         Text(
                             text = errorLocalMsg!!,
                             color = MaterialTheme.colorScheme.error,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
@@ -1382,7 +1298,7 @@ fun DailyDataLimitTracker(
                             focusedTextColor = MaterialTheme.colorScheme.onBackground,
                             unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         ),
@@ -1407,7 +1323,7 @@ fun DailyDataLimitTracker(
                                     .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
                                     .border(
                                         width = 0.5.dp,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                                         shape = RoundedCornerShape(4.dp)
                                     )
                                     .clickable { 
@@ -1420,8 +1336,6 @@ fun DailyDataLimitTracker(
                                 Text(
                                     text = unit,
                                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -1441,7 +1355,7 @@ fun DailyDataLimitTracker(
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.surface)
-                                .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                .border(0.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
                                 .clickable { 
                                     haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                                     showDialog = false 
@@ -1450,8 +1364,6 @@ fun DailyDataLimitTracker(
                         ) {
                             Text(
                                 text = "CANCEL",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -1482,8 +1394,6 @@ fun DailyDataLimitTracker(
                         ) {
                             Text(
                                 text = "SAVE CEILING",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }

@@ -210,11 +210,17 @@ fun MainScreen(
                         composable("settings") { 
                             SettingsScreen(
                                 viewModel = viewModel,
-                                themeManager = themeManager
+                                themeManager = themeManager,
+                                onNavigateToLimits = {
+                                    navController.navigate("usage_limits")
+                                }
                             )
                         }
                         composable("admin_dashboard") {
                             AdminDashboardScreen(onBack = { navController.popBackStack() })
+                        }
+                        composable("usage_limits") {
+                            UsageLimitsScreen(onNavigateBack = { navController.popBackStack() })
                         }
                     }
                 }
@@ -246,7 +252,7 @@ fun MainScreen(
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.85f)) // Extra dark overlay to ensure premium contrast
+                            .background(Color.Black) // Extra dark overlay to ensure premium contrast
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -261,11 +267,7 @@ fun MainScreen(
                         
                         Text(
                             text = "SYSTEM UPDATE AVAILABLE",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.5.sp,
-                                fontSize = 11.sp
-                            ),
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
                         
@@ -273,10 +275,7 @@ fun MainScreen(
                         
                         Text(
                             text = "v${updateInfo.versionName}",
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 0.5.sp
-                            ),
+                            style = MaterialTheme.typography.headlineLarge,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         
@@ -284,12 +283,8 @@ fun MainScreen(
                         
                         Text(
                             text = "RELEASE NOTES",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp,
-                                fontSize = 11.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.align(Alignment.Start)
                         )
                         
@@ -299,17 +294,14 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 140.dp)
-                                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                .background(Color.White, RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
                             val scrollState = rememberScrollState()
                             Text(
                                 text = updateInfo.releaseNotes.ifEmpty { "Performance optimizations and system stability enhancements." },
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    lineHeight = 18.sp,
-                                    fontSize = 13.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.verticalScroll(scrollState)
                             )
                         }
@@ -333,9 +325,6 @@ fun MainScreen(
                         ) {
                             Text(
                                 "UPDATE NOW",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                letterSpacing = 1.sp
                             )
                         }
                         
@@ -349,21 +338,15 @@ fun MainScreen(
                             ) {
                                 Text(
                                     "REMIND ME LATER",
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp,
-                                    letterSpacing = 1.sp
+                                    color = MaterialTheme.colorScheme.onBackground,
                                 )
                             }
                         } else {
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 "This update is required to maintain core gateway synchronization features.",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 10.sp,
-                                    textAlign = TextAlign.Center
-                                ),
-                                color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -394,6 +377,34 @@ fun FloatingBottomNav(
             base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
         }
         base
+    }
+
+    val uiStyle = com.siddharth.datamonitor.ui.theme.LocalUiStyle.current
+    if (uiStyle == com.siddharth.datamonitor.ui.theme.UiStyle.MATERIAL_3) {
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surface,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            items.forEach { (route, label, icon) ->
+                NavigationBarItem(
+                    selected = currentRoute == route,
+                    onClick = {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                        onNavigate(route)
+                    },
+                    icon = { Icon(icon, contentDescription = label) },
+                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                    colors = NavigationBarItemDefaults.colors(
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+        }
+        return
     }
 
     val selectedIndex = remember(currentRoute, items) {
@@ -438,8 +449,8 @@ fun FloatingBottomNav(
             .navigationBarsPadding()
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
-            .border(0.5.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, Color.Gray, RoundedCornerShape(50))
     ) {
         Box(
             modifier = Modifier
@@ -529,10 +540,7 @@ fun FloatingBottomNav(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = label,
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
+                                    style = MaterialTheme.typography.labelLarge,
                                     color = contentColor
                                 )
                             }
@@ -561,8 +569,6 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
@@ -589,7 +595,7 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                 )
                 Text(
                     text = "Permission Grayed Out? View Guide",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
@@ -614,11 +620,11 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
         Card(
             modifier = Modifier.fillMaxWidth(0.95f),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.12f)
+                containerColor = MaterialTheme.colorScheme.errorContainer
             ),
             border = BorderStroke(
                 width = 0.5.dp,
-                color = MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+                color = MaterialTheme.colorScheme.error
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -638,8 +644,6 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                         text = "RESTRICTED SETTINGS HELPER",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -667,7 +671,7 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                         )
                         Text(
                             text = "Restricted Settings Helper",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 },
@@ -680,7 +684,7 @@ fun PermissionRequestScreen(onRequest: () -> Unit) {
                 },
                 confirmButton = {
                     TextButton(onClick = { showHelpDialog = false }) {
-                        Text("GOT IT", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
+                        Text("GOT IT", style = MaterialTheme.typography.labelLarge)
                     }
                 },
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
@@ -715,8 +719,8 @@ fun GlassTopAppBar(modifier: Modifier = Modifier) {
             .padding(start = 24.dp, end = 24.dp, top = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
-            .border(0.5.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(0.5.dp, Color.Gray, RoundedCornerShape(50))
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         Row(
@@ -736,11 +740,7 @@ fun GlassTopAppBar(modifier: Modifier = Modifier) {
                 )
                 Text(
                     text = "DATA MONITOR SYSTEM",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    ),
+                    style = MaterialTheme.typography.titleMedium,
                     color = textColor
                 )
             }

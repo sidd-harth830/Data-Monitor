@@ -56,15 +56,40 @@ class DataUsageSyncWorker(
         db.dataUsageDao().insertRecord(record)
 
         try {
-            val themeManager = ThemeManager(applicationContext)
-            val alertsEnabled = themeManager.alertsEnabledFlow.first()
-            val limitMBStr = themeManager.dataLimitFlow.first()
-            val limitMB = limitMBStr.toLongOrNull() ?: 2000L
-            val limitBytes = limitMB * 1024L * 1024L
-            val totalBytes = mobileBytes + wifiBytes
+            val prefs = db.userPreferencesDao().getPreferences().first() ?: com.siddharth.datamonitor.data.UserPreferences()
             
-            if (alertsEnabled && totalBytes > (limitBytes * 0.9)) {
-                sendHighUsageNotification(totalBytes, limitBytes)
+            if (prefs.alertsEnabled) {
+                // Check daily limits
+                val dailyLimitBytes = prefs.dailyLimitMb * 1024L * 1024L
+                val totalDailyBytes = mobileBytes + wifiBytes
+                
+                if (totalDailyBytes >= dailyLimitBytes) {
+                    sendHighUsageNotification("Daily", totalDailyBytes, dailyLimitBytes, "100%")
+                } else if (totalDailyBytes >= dailyLimitBytes * 0.8) {
+                    sendHighUsageNotification("Daily", totalDailyBytes, dailyLimitBytes, "80%")
+                }
+                
+                // For monthly logic, we need total usage for the month
+                val monthStart = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+                
+                val currentEnd = System.currentTimeMillis()
+                
+                val monthlyMobile = tracker.getUsageForDay(android.net.NetworkCapabilities.TRANSPORT_CELLULAR, monthStart, currentEnd)
+                val monthlyWifi = tracker.getUsageForDay(android.net.NetworkCapabilities.TRANSPORT_WIFI, monthStart, currentEnd)
+                val totalMonthlyBytes = monthlyMobile + monthlyWifi
+                val monthlyLimitBytes = prefs.monthlyLimitMb * 1024L * 1024L
+                
+                if (totalMonthlyBytes >= monthlyLimitBytes) {
+                    sendHighUsageNotification("Monthly", totalMonthlyBytes, monthlyLimitBytes, "100%")
+                } else if (totalMonthlyBytes >= monthlyLimitBytes * 0.8) {
+                    sendHighUsageNotification("Monthly", totalMonthlyBytes, monthlyLimitBytes, "80%")
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -73,7 +98,7 @@ class DataUsageSyncWorker(
         return Result.success()
     }
 
-    private fun sendHighUsageNotification(usedBytes: Long, limitBytes: Long) {
+    private fun sendHighUsageNotification(period: String, usedBytes: Long, limitBytes: Long, percentStr: String) {
         val context = applicationContext
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "data_limit_alerts_"
@@ -94,12 +119,12 @@ class DataUsageSyncWorker(
         
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.stat_sys_warning)
-            .setContentTitle("⚠️ Data Usage Alert!")
-            .setContentText("You have used $usedMB MB of $limitMB MB limit. That is above 90% of your plan.")
+            .setContentTitle("⚠️ $period Data Usage Alert!")
+            .setContentText("You have used $usedMB MB of $limitMB MB limit. That is at/above $percentStr of your $period limit.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .build()
             
-        notificationManager.notify(1001, notification)
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }

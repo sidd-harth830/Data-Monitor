@@ -30,17 +30,17 @@ fun Modifier.glassCard(
     val backgroundBrush = if (isLight) {
         androidx.compose.ui.graphics.Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.35f),
-                Color.White.copy(alpha = 0.12f),
-                Color.Black.copy(alpha = 0.03f)
+                Color.White,
+                Color.White,
+                Color.Black
             )
         )
     } else {
         androidx.compose.ui.graphics.Brush.linearGradient(
             colors = listOf(
-                Color.White.copy(alpha = 0.08f),
-                Color.White.copy(alpha = 0.03f),
-                Color.Black.copy(alpha = 0.15f)
+                Color.White,
+                Color.White,
+                Color.Black
             )
         )
     }
@@ -48,7 +48,7 @@ fun Modifier.glassCard(
     // Glowing gradient border
     val borderBrush = androidx.compose.ui.graphics.Brush.linearGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.4f),
+            Color.White,
             Color.Transparent
         )
     )
@@ -69,6 +69,20 @@ fun GlassCard(
     shape: Shape = RoundedCornerShape(12.dp),
     content: @Composable BoxScope.() -> Unit
 ) {
+    val uiStyle = com.siddharth.datamonitor.ui.theme.LocalUiStyle.current
+    if (uiStyle == com.siddharth.datamonitor.ui.theme.UiStyle.MATERIAL_3) {
+        androidx.compose.material3.ElevatedCard(
+            modifier = modifier,
+            shape = shape,
+            colors = androidx.compose.material3.CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
+        ) {
+            Box(content = content)
+        }
+        return
+    }
+
     val colorScheme = MaterialTheme.colorScheme
     val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
 

@@ -142,18 +142,12 @@ fun LoginScreen(
             Text(
                 text = "DATA MONITOR",
                 color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 2.5.sp,
                 textAlign = TextAlign.Center
             )
             
             Text(
                 text = "V${BuildConfig.VERSION_NAME} SECURE CORE OVERLORD",
                 color = if (isLight) Color.Black else Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 28.dp)
             )
 
@@ -172,16 +166,13 @@ fun LoginScreen(
                         text = "Authentication Portal",
                         color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
                     if (errorMessage != null) {
                         Text(
                             text = errorMessage ?: "",
-                            color = Color(0xFFFF5252),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(bottom = 12.dp),
                             textAlign = TextAlign.Center
                         )
@@ -191,7 +182,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it; errorMessage = null },
-                        label = { Text("Full Name (Required for sign-up only)", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                        label = { Text("Full Name (Required for sign-up only)", color = MaterialTheme.colorScheme.onSurface) },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = accentColor) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -199,7 +190,7 @@ fun LoginScreen(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = accentColor,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -210,7 +201,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it; errorMessage = null },
-                        label = { Text("Email Address", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                        label = { Text("Email Address", color = MaterialTheme.colorScheme.onSurface) },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email", tint = accentColor) },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -218,7 +209,7 @@ fun LoginScreen(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = accentColor,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -230,12 +221,12 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; errorMessage = null },
-                        label = { Text("Password", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                        label = { Text("Password", color = MaterialTheme.colorScheme.onSurface) },
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Password", tint = accentColor) },
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                                Icon(icon, contentDescription = "Password Visibility", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                                Icon(icon, contentDescription = "Password Visibility", tint = MaterialTheme.colorScheme.onSurface)
                             }
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -244,7 +235,7 @@ fun LoginScreen(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedBorderColor = accentColor,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
                         ),
                         singleLine = true,
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -351,16 +342,13 @@ fun LoginScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 text = "OR CONTINUE WITH",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.padding(horizontal = 12.dp)
                             )
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+                            HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -466,13 +454,10 @@ fun LoginScreen(
                     com.siddharth.datamonitor.utils.UserTelemetrySync.sync("guest_$androidID", "Guest User", "Guest")
                     onSkip()
                 },
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onBackground)
             ) {
                 Text(
                     text = "SKIP / CONTINUE AS GUEST →",
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.1.sp,
-                    fontSize = 13.sp
                 )
             }
         }

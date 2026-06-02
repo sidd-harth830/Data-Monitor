@@ -11,9 +11,9 @@ import androidx.compose.ui.graphics.Color
 
 fun Modifier.shimmerEffect(): Modifier = composed {
     val shimmerColors = listOf(
-        Color.White.copy(alpha = 0.0f),
-        Color.White.copy(alpha = 0.2f),
-        Color.White.copy(alpha = 0.0f)
+        Color.White,
+        Color.White,
+        Color.White
     )
 
     val transition = rememberInfiniteTransition(label = "shimmer_transition")

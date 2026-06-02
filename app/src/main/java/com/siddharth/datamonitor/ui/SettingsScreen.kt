@@ -16,7 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,7 +98,7 @@ fun <T> PremiumTabSelector(
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
+    val customDividerColor = MaterialTheme.colorScheme.onBackground
     
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -110,7 +110,7 @@ fun <T> PremiumTabSelector(
             val containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primary
             } else {
-                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                MaterialTheme.colorScheme.secondary
             }
             
             val contentColor = if (isSelected) {
@@ -146,11 +146,7 @@ fun <T> PremiumTabSelector(
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            letterSpacing = 0.5.sp
-                        ),
+                        style = MaterialTheme.typography.titleMedium,
                         color = contentColor,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
@@ -164,7 +160,7 @@ fun <T> PremiumTabSelector(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
+fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, onNavigateToLimits: () -> Unit) {
     val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
     val dailyDataLimitMB by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
     val alertsEnabled by themeManager.alertsEnabledFlow.collectAsStateWithLifecycle(initialValue = true)
@@ -172,13 +168,16 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
 
     val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val uiStyle by themeManager.uiStyleFlow.collectAsStateWithLifecycle(initialValue = UiStyle.DEFAULT_MONOGRAM)
     val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
+    val materialPalette by themeManager.materialPaletteFlow.collectAsStateWithLifecycle(initialValue = MaterialColorPalette.DYNAMIC)
+    val materialDarkMode by themeManager.materialDarkModeFlow.collectAsStateWithLifecycle(initialValue = MaterialDarkMode.SYSTEM)
     val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
     val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD)
     
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val customDividerColor = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
-    val customIndicatorColor = if (isLight) Color.Black.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.15f)
+    val customDividerColor = MaterialTheme.colorScheme.onBackground
+    val customIndicatorColor = MaterialTheme.colorScheme.onBackground
     
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -195,92 +194,134 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         Text(
             text = "CONFIG",
             style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
-            letterSpacing = 1.sp
         )
 
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Premium Theme Selector: System Default, Light Monogram, Dark Monogram
+        // Global UI Style Selector
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "THEME SELECTOR",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    text = "GLOBAL UI STYLE",
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val themeOptions = listOf(
-                        MonogramTheme.SYSTEM_DEFAULT to "SYSTEM",
-                        MonogramTheme.LIGHT_MONOGRAM to "LIGHT",
-                        MonogramTheme.DARK_MONOGRAM to "DARK",
-                        MonogramTheme.MATERIAL_3 to "MATERIAL 3"
+                PremiumTabSelector(
+                    options = listOf(
+                        UiStyle.DEFAULT_MONOGRAM to "Default UI",
+                        UiStyle.MATERIAL_3 to "Material UI"
+                    ),
+                    selectedOption = uiStyle,
+                    onOptionSelected = { style ->
+                        scope.launch { themeManager.setUiStyle(style) }
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        if (uiStyle == UiStyle.DEFAULT_MONOGRAM) {
+            // Default UI Section
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "THEME SELECTOR",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTabSelector(
+                        options = listOf(
+                            MonogramTheme.SYSTEM_DEFAULT to "System",
+                            MonogramTheme.LIGHT_MONOGRAM to "Light",
+                            MonogramTheme.DARK_MONOGRAM to "Dark"
+                        ),
+                        selectedOption = monogramTheme,
+                        onOptionSelected = { theme ->
+                            scope.launch { themeManager.setMonogramTheme(theme) }
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Text(
+                        text = "FONT SELECTOR",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "System fonts are enforced for the Default UI.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        } else {
+            // Material UI Section
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "DARK MODE",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTabSelector(
+                        options = listOf(
+                            MaterialDarkMode.SYSTEM to "System",
+                            MaterialDarkMode.LIGHT to "Light",
+                            MaterialDarkMode.DARK to "Dark"
+                        ),
+                        selectedOption = materialDarkMode,
+                        onOptionSelected = { mode ->
+                            scope.launch { themeManager.setMaterialDarkMode(mode) }
+                        }
                     )
 
-                    themeOptions.forEach { (option, label) ->
-                        val isSelected = option == monogramTheme
-                        val containerColor = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "MATERIAL COLOR THEME",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTabSelector(
+                        options = listOf(
+                            MaterialColorPalette.DYNAMIC to "Dynamic",
+                            MaterialColorPalette.OCEAN_BLUE to "Blue",
+                            MaterialColorPalette.FOREST_GREEN to "Green",
+                            MaterialColorPalette.AMETHYST_PURPLE to "Purple",
+                            MaterialColorPalette.SUNSET_ORANGE to "Orange"
+                        ),
+                        selectedOption = materialPalette,
+                        onOptionSelected = { palette ->
+                            scope.launch { themeManager.setMaterialPalette(palette) }
                         }
+                    )
 
-                        val contentColor = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onBackground
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "FONT SELECTOR",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTabSelector(
+                        options = listOf(
+                            com.siddharth.datamonitor.ui.theme.FontProfile.SYSTEM_DEFAULT to "Sys",
+                            com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD to "Oswald",
+                            com.siddharth.datamonitor.ui.theme.FontProfile.BRICOLAGE to "Bricolage",
+                            com.siddharth.datamonitor.ui.theme.FontProfile.AKT to "Akt"
+                        ),
+                        selectedOption = fontProfile,
+                        onOptionSelected = { profile ->
+                            scope.launch { themeManager.setFontProfile(profile) }
                         }
-
-                        val isSystemLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-                        val customDividerColor = if (isSystemLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.15f)
-
-                        val borderStroke = androidx.compose.foundation.BorderStroke(
-                            width = 0.5.dp,
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                customDividerColor
-                            }
-                        )
-
-                        Surface(
-                            onClick = {
-                                scope.launch { themeManager.setMonogramTheme(option) }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            shape = RoundedCornerShape(14.dp),
-                            color = containerColor,
-                            border = borderStroke
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
-                                        letterSpacing = 1.sp
-                                    ),
-                                    color = contentColor,
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 1,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
+                    )
                 }
             }
         }
@@ -323,11 +364,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "APP ICON SELECTOR",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
@@ -372,10 +410,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
+                                style = MaterialTheme.typography.bodySmall,
                                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -409,11 +444,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "LIVE NETWORK HEALTH TESTER",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -424,13 +456,15 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 ) {
                     // Gauge Canvas
                     Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
-                        val indicatorColor = if (latencyValue in 0..100) Color.Green else if (latencyValue in 101..300) Color.Yellow else if (latencyValue > 300) Color.Red else Color.Gray.copy(alpha = 0.5f)
+                        val colorScheme = MaterialTheme.colorScheme
+                        val indicatorColor = if (latencyValue in 0..100) colorScheme.primary else if (latencyValue in 101..300) colorScheme.tertiary else if (latencyValue > 300) colorScheme.error else colorScheme.onSurfaceVariant
+                        val trackColor = colorScheme.surfaceVariant
                         val sweepAngle = if (latencyValue >= 0) ((latencyValue.toFloat() / 500f).coerceAtMost(1f) * 360f) else 0f
                         
                         androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                             // Track
                             drawArc(
-                                color = Color.Gray.copy(alpha = 0.2f),
+                                color = trackColor,
                                 startAngle = 0f,
                                 sweepAngle = 360f,
                                 useCenter = false,
@@ -449,18 +483,13 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
                                 text = if (latencyValue >= 0) "$latencyValue" else if (isPinging) "..." else "Ping",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
+                                style = MaterialTheme.typography.titleMedium,
                                 color = indicatorColor
                             )
                             if (latencyValue >= 0) {
                                 Text(
                                     text = "ms",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        fontSize = 9.sp
-                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSecondary
                                 )
                             }
@@ -472,19 +501,14 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "GOOGLE DNS PING",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            ),
+                            style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSecondary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (latencyValue in 0..100) "Stable Network Signal" else if (latencyValue in 101..300) "Transient Buffer Bloat" else if (latencyValue > 300) "Highly unstable" else "Ready to track lag metrics",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 11.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondary
                         )
                     }
                     
@@ -501,10 +525,7 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     ) {
                         Text(
                             text = if (isPinging) "STOP" else "TEST PING",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                            style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
@@ -518,11 +539,8 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
                     text = "DASHBOARD LAYOUT",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 PremiumTabSelector(
@@ -541,107 +559,40 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Font Selector Section
+
+
+
+
+        // Advanced Limits Button
         GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "FONT SELECTOR",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                PremiumTabSelector(
-                    options = listOf(
-                        com.siddharth.datamonitor.ui.theme.FontProfile.SYSTEM_DEFAULT to "System Default",
-                        com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD to "Oswald",
-                        com.siddharth.datamonitor.ui.theme.FontProfile.BRICOLAGE to "Bricolage",
-                        com.siddharth.datamonitor.ui.theme.FontProfile.AKT to "Akt"
-                    ),
-                    selectedOption = fontProfile,
-                    onOptionSelected = { profile ->
-                        scope.launch { themeManager.setFontProfile(profile) }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToLimits() }
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Advanced Usage Limits",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Set custom limits and notifications",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Data Limits Configuration
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "DATA CEILING CONFIGURATION",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "DAILY CEILING LIMIT (MB)",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = dailyDataLimitMB,
-                    onValueChange = { scope.launch { themeManager.setDailyDataLimit(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedTextColor = MaterialTheme.colorScheme.primary,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = customIndicatorColor,
-                        cursorColor = MaterialTheme.colorScheme.primary
-                    ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "MONTHLY BILLING CYCLE LIMIT (MB)",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.5.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = dataLimitMB,
-                    onValueChange = { scope.launch { themeManager.setDataLimit(it) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedTextColor = MaterialTheme.colorScheme.primary,
-                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        unfocusedIndicatorColor = customIndicatorColor,
-                        cursorColor = MaterialTheme.colorScheme.primary
-                    ),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Navigate to limits",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
 
@@ -682,13 +633,10 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
         TextButton(
             onClick = { throw RuntimeException("Test Crash") },
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.35f))
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
             Text(
                 text = "Force Crash (Crashlytics Diagnostic Test)",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Normal,
-                letterSpacing = 0.5.sp
             )
         }
     }
@@ -711,19 +659,13 @@ fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedCh
             Text(
                 text = title,
                 color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
-                )
+                style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 color = MaterialTheme.colorScheme.onSecondary,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
-                )
+                style = MaterialTheme.typography.bodyMedium
             )
         }
         Switch(

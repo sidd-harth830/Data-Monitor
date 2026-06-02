@@ -30,6 +30,35 @@ class ThemeManager(private val context: Context) {
         val DAILY_DATA_LIMIT_KEY = stringPreferencesKey("daily_data_limit_mb")
         val FONT_PROFILE_KEY = stringPreferencesKey("font_profile_v354")
         val MONOGRAM_THEME_KEY = stringPreferencesKey("monogram_theme_v354")
+        
+        val UI_STYLE_KEY = stringPreferencesKey("ui_style_v357")
+        val MATERIAL_PALETTE_KEY = stringPreferencesKey("material_palette_v357")
+        val MATERIAL_DARK_MODE_KEY = stringPreferencesKey("material_dark_mode_v357")
+    }
+
+    val uiStyleFlow: Flow<UiStyle> = context.dataStore.data.map { preferences ->
+        when (preferences[UI_STYLE_KEY]) {
+            UiStyle.MATERIAL_3.name -> UiStyle.MATERIAL_3
+            else -> UiStyle.DEFAULT_MONOGRAM
+        }
+    }
+
+    val materialPaletteFlow: Flow<MaterialColorPalette> = context.dataStore.data.map { preferences ->
+        when (preferences[MATERIAL_PALETTE_KEY]) {
+            MaterialColorPalette.OCEAN_BLUE.name -> MaterialColorPalette.OCEAN_BLUE
+            MaterialColorPalette.FOREST_GREEN.name -> MaterialColorPalette.FOREST_GREEN
+            MaterialColorPalette.AMETHYST_PURPLE.name -> MaterialColorPalette.AMETHYST_PURPLE
+            MaterialColorPalette.SUNSET_ORANGE.name -> MaterialColorPalette.SUNSET_ORANGE
+            else -> MaterialColorPalette.DYNAMIC
+        }
+    }
+
+    val materialDarkModeFlow: Flow<MaterialDarkMode> = context.dataStore.data.map { preferences ->
+        when (preferences[MATERIAL_DARK_MODE_KEY]) {
+            MaterialDarkMode.LIGHT.name -> MaterialDarkMode.LIGHT
+            MaterialDarkMode.DARK.name -> MaterialDarkMode.DARK
+            else -> MaterialDarkMode.SYSTEM
+        }
     }
 
     val monogramThemeFlow: Flow<MonogramTheme> = context.dataStore.data.map { preferences ->
@@ -215,7 +244,29 @@ class ThemeManager(private val context: Context) {
             preferences[MONOGRAM_THEME_KEY] = theme.name
         }
     }
+
+    suspend fun setUiStyle(style: UiStyle) {
+        context.dataStore.edit { preferences ->
+            preferences[UI_STYLE_KEY] = style.name
+        }
+    }
+
+    suspend fun setMaterialPalette(palette: MaterialColorPalette) {
+        context.dataStore.edit { preferences ->
+            preferences[MATERIAL_PALETTE_KEY] = palette.name
+        }
+    }
+
+    suspend fun setMaterialDarkMode(mode: MaterialDarkMode) {
+        context.dataStore.edit { preferences ->
+            preferences[MATERIAL_DARK_MODE_KEY] = mode.name
+        }
+    }
 }
+
+enum class UiStyle { DEFAULT_MONOGRAM, MATERIAL_3 }
+enum class MaterialColorPalette { DYNAMIC, OCEAN_BLUE, FOREST_GREEN, AMETHYST_PURPLE, SUNSET_ORANGE }
+enum class MaterialDarkMode { SYSTEM, LIGHT, DARK }
 
 enum class MonogramTheme {
     SYSTEM_DEFAULT,

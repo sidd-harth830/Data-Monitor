@@ -83,9 +83,6 @@ fun ProfileScreen(
         Text(
             text = "ACCOUNT MANAGEMENT",
             color = MaterialTheme.colorScheme.onSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
@@ -107,7 +104,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp)),
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -122,23 +119,18 @@ fun ProfileScreen(
                             Text(
                                 text = "Guest Account Status",
                                 color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = "Unlock Cloud Sync & Analytics",
                                 color = MaterialTheme.colorScheme.primary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "Real-time remote cloud synchronization and administrative developer logs are disabled in local Guest mode.",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 16.sp
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -159,9 +151,7 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "SIGN IN / REGISTER",
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
-                                letterSpacing = 1.sp
                             )
                         }
                     }
@@ -173,7 +163,7 @@ fun ProfileScreen(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(4.dp)),
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -190,8 +180,6 @@ fun ProfileScreen(
                             Text(
                                 text = if (registeredName.isNotBlank()) registeredName else "Authorized Core User",
                                 color = MaterialTheme.colorScheme.onSurface,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
                             )
                             
                             // Secondary Text below: User's actual email Address and provider badge
@@ -202,8 +190,7 @@ fun ProfileScreen(
                             ) {
                                 Text(
                                     text = currentUser.email ?: "No Registered Email",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontSize = 13.sp
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 
                                 // Elegant Badge next to secondary email representing specific auth provider
@@ -239,7 +226,7 @@ fun ProfileScreen(
                                         Icon(
                                             imageVector = Icons.Default.Email,
                                             contentDescription = "Email Authentication Provider",
-                                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                            tint = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.size(14.dp)
                                         )
                                     }
@@ -257,7 +244,7 @@ fun ProfileScreen(
                                 onNavigateToAuth()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.85f)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         shape = RoundedCornerShape(4.dp), // Stark Vercel flat borders
                         modifier = Modifier
                             .fillMaxWidth()
@@ -272,9 +259,7 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "SIGN OUT / LOGOUT",
-                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onError,
-                                letterSpacing = 1.sp
                             )
                         }
                     }
@@ -307,8 +292,6 @@ fun ProfileScreen(
                         Text(
                             text = "Cloud Synchronization Portal",
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
                         )
                     }
                     
@@ -317,7 +300,6 @@ fun ProfileScreen(
                     Text(
                         text = "Secure your historical usage logs, backup billing cycle configurations, and sync across premium Android environments. Create a persistent account to activate instant automated cloud backups.",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 12.sp,
                         lineHeight = 17.sp
                     )
                     
@@ -340,9 +322,6 @@ fun ProfileScreen(
                     ) {
                         Text(
                             text = "Authenticate Now",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            letterSpacing = 1.sp
                         )
                     }
                 } else {
@@ -350,8 +329,6 @@ fun ProfileScreen(
                     Text(
                         text = "Cloud Sync Gateway (Active)",
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
                     )
                     
                     Spacer(modifier = Modifier.height(14.dp))
@@ -402,8 +379,6 @@ fun ProfileScreen(
                             Text(
                                 text = syncStatusMessage,
                                 color = MaterialTheme.colorScheme.onSecondary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
                             )
                         }
                     } else {
@@ -429,8 +404,6 @@ fun ProfileScreen(
                         ) {
                             Text(
                                 text = "Sync Now",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
@@ -451,9 +424,6 @@ fun ProfileScreen(
                 Text(
                     text = "LIFETIME DATA DISTRIBUTION",
                     color = MaterialTheme.colorScheme.onSecondary,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.5.sp,
-                    fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -542,23 +512,17 @@ fun ProfileScreen(
                     Text(
                         text = "PEAK USAGE",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = formatBytes(peakUsage),
                         color = MaterialTheme.colorScheme.secondary,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     if (peakDate != "N/A") {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = peakDate,
                             color = MaterialTheme.colorScheme.onSecondary,
-                            fontSize = 11.sp
                         )
                     }
                 }
@@ -573,22 +537,16 @@ fun ProfileScreen(
                     Text(
                         text = "AVG DAILY",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 11.sp,
-                        letterSpacing = 1.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = formatBytes(averageUsage),
                         color = MaterialTheme.colorScheme.tertiary,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "per 24h cycle",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 11.sp
                     )
                 }
             }

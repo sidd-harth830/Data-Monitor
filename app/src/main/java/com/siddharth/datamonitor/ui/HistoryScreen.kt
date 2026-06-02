@@ -121,8 +121,6 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "Data Burn Rate / Pacing Forecast",
                     color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
                     modifier = Modifier.fillMaxWidth()
                 )
                 
@@ -136,26 +134,20 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         Text(
                             text = "Billing Cycle Progress",
                             color = MaterialTheme.colorScheme.onSecondary,
-                            fontSize = 12.sp
                         )
                         Text(
                             text = "Day $cycleDayClamped of 30",
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
                         )
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "Quota Used",
                             color = MaterialTheme.colorScheme.onSecondary,
-                            fontSize = 12.sp
                         )
                         Text(
                             text = String.format(Locale.getDefault(), "%.1f%% / %.0f MB", quotaUsagePercent, limitMB),
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
                         )
                     }
                 }
@@ -183,7 +175,7 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             .fillMaxHeight()
                             .width(3.dp)
                             .fillMaxWidth(billingProgressPercent / 100f)
-                            .background(Color.White.copy(alpha = 0.85f))
+                            .background(MaterialTheme.colorScheme.onPrimary)
                     )
                 }
                 
@@ -194,14 +186,10 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "Quota progress",
                         color = warningColor,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "Cycle day cursor",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
                 
@@ -209,9 +197,9 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 
                 // Color coded message badge
                 Surface(
-                    color = warningColor.copy(alpha = 0.12f),
+                    color = warningColor,
                     shape = RoundedCornerShape(12.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, warningColor.copy(alpha = 0.35f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, warningColor),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
@@ -227,16 +215,12 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                             Text(
                                 text = warningLabel,
                                 color = warningColor,
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 11.sp,
-                                letterSpacing = 1.sp
                             )
                         }
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = pacingMessage,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
-                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onBackground,
                             lineHeight = 17.sp
                         )
                     }
@@ -252,8 +236,6 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 Text(
                     text = "Network Quality Log (Last 5 Pings)",
                     color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp,
                     modifier = Modifier.fillMaxWidth()
                 )
                 
@@ -263,7 +245,6 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Text(
                         text = "Waiting for network parameters. Run live Ping latency tests from the Config settings tab to populate stability history logs.",
                         color = MaterialTheme.colorScheme.onSecondary,
-                        fontSize = 13.sp,
                         lineHeight = 18.sp,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -273,7 +254,7 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                         val latency = pair.second
                         val timeLabel = formatRelativeTime(timestamp)
                         
-                        val statusColor = if (latency in 0..100) Color.Green else if (latency in 101..300) Color.Yellow else Color.Red
+                        val statusColor = if (latency in 0..100) MaterialTheme.colorScheme.primary else if (latency in 101..300) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
                         val statusText = if (latency in 0..100) "Stable connection" else if (latency in 101..300) "Transient bufferbloat" else "Unstable packet delivery"
                         
                         Row(
@@ -292,24 +273,20 @@ fun HistoryScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                                 Text(
                                     text = "$latency ms",
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp
                                 )
                                 Text(
                                     text = statusText,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    fontSize = 11.sp
                                 )
                             }
                             Text(
                                 text = timeLabel,
-                                color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.7f),
-                                fontSize = 12.sp
+                                color = MaterialTheme.colorScheme.onSecondary,
                             )
                         }
                         
                         if (index < pingQualityLog.size - 1) {
-                            HorizontalDivider(color = Color.White.copy(alpha = 0.1f), modifier = Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(vertical = 4.dp))
                         }
                     }
                 }

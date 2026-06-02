@@ -14,6 +14,8 @@ import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -82,50 +84,78 @@ private fun Context.findActivity(): Activity? {
     return null
 }
 
+val LocalUiStyle = staticCompositionLocalOf { UiStyle.DEFAULT_MONOGRAM }
+
 @Composable
 fun DataMonitorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    useMaterial3: Boolean = false,
-    fontProfile: FontProfile = FontProfile.OSWALD,
-    appAccentColor: Color? = null,
+    uiStyle: UiStyle = UiStyle.DEFAULT_MONOGRAM,
+    materialPalette: MaterialColorPalette = MaterialColorPalette.DYNAMIC,
+    fontProfile: FontProfile = FontProfile.SYSTEM_DEFAULT,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    // Determine light or dark color scheme based strictly on darkTheme preference and next.js design standards
-    val colorScheme = if (useMaterial3 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else if (useMaterial3) {
-        if (darkTheme) darkColorScheme() else lightColorScheme()
-    } else if (darkTheme) {
-        darkColorScheme(
-            primary = VercelDarkPrimary,
-            secondary = VercelDarkSecondary,
-            tertiary = StatusSuccess,
-            background = VercelDarkBackground,
-            surface = VercelDarkSurface,
-            onPrimary = VercelDarkOnPrimary,      // Black on White (100% readable)
-            onSecondary = VercelDarkOnSecondary,  // White on Slate Gray (100% readable)
-            onBackground = VercelDarkTextPrimary,
-            onSurface = VercelDarkTextPrimary,
-            onSurfaceVariant = VercelDarkTextSecondary,
-            outline = VercelDarkBorder,
-            outlineVariant = VercelDarkBorder
-        )
+    
+    val colorScheme = if (uiStyle == UiStyle.MATERIAL_3) {
+        when (materialPalette) {
+            MaterialColorPalette.DYNAMIC -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            } else {
+                if (darkTheme) darkColorScheme() else lightColorScheme()
+            }
+            MaterialColorPalette.OCEAN_BLUE -> if (darkTheme) {
+                darkColorScheme(primary = Color(0xFF82B1FF), secondary = Color(0xFF448AFF), background = Color(0xFF121212), surface = Color(0xFF1E1E1E))
+            } else {
+                lightColorScheme(primary = Color(0xFF1976D2), secondary = Color(0xFF0D47A1))
+            }
+            MaterialColorPalette.FOREST_GREEN -> if (darkTheme) {
+                darkColorScheme(primary = Color(0xFFA5D6A7), secondary = Color(0xFF81C784), background = Color(0xFF121212), surface = Color(0xFF1E1E1E))
+            } else {
+                lightColorScheme(primary = Color(0xFF388E3C), secondary = Color(0xFF1B5E20))
+            }
+            MaterialColorPalette.AMETHYST_PURPLE -> if (darkTheme) {
+                darkColorScheme(primary = Color(0xFFCE93D8), secondary = Color(0xFFBA68C8), background = Color(0xFF121212), surface = Color(0xFF1E1E1E))
+            } else {
+                lightColorScheme(primary = Color(0xFF7B1FA2), secondary = Color(0xFF4A148C))
+            }
+            MaterialColorPalette.SUNSET_ORANGE -> if (darkTheme) {
+                darkColorScheme(primary = Color(0xFFFFCC80), secondary = Color(0xFFFFB74D), background = Color(0xFF121212), surface = Color(0xFF1E1E1E))
+            } else {
+                lightColorScheme(primary = Color(0xFFF57C00), secondary = Color(0xFFE65100))
+            }
+        }
     } else {
-        lightColorScheme(
-            primary = VercelLightPrimary,
-            secondary = VercelLightSecondary,
-            tertiary = StatusSuccess,
-            background = VercelLightBackground,
-            surface = VercelLightSurface,
-            onPrimary = VercelLightOnPrimary,      // White on Black (100% readable)
-            onSecondary = VercelLightOnSecondary,  // Black on Light Gray (100% readable)
-            onBackground = VercelLightTextPrimary,
-            onSurface = VercelLightTextPrimary,
-            onSurfaceVariant = VercelLightTextSecondary,
-            outline = VercelLightBorder,
-            outlineVariant = VercelLightBorder
-        )
+        if (darkTheme) {
+            darkColorScheme(
+                primary = VercelDarkPrimary,
+                secondary = VercelDarkSecondary,
+                tertiary = StatusSuccess,
+                background = VercelDarkBackground,
+                surface = VercelDarkSurface,
+                onPrimary = VercelDarkOnPrimary,
+                onSecondary = VercelDarkOnSecondary,
+                onBackground = VercelDarkTextPrimary,
+                onSurface = VercelDarkTextPrimary,
+                onSurfaceVariant = VercelDarkTextSecondary,
+                outline = VercelDarkBorder,
+                outlineVariant = VercelDarkBorder
+            )
+        } else {
+            lightColorScheme(
+                primary = VercelLightPrimary,
+                secondary = VercelLightSecondary,
+                tertiary = StatusSuccess,
+                background = VercelLightBackground,
+                surface = VercelLightSurface,
+                onPrimary = VercelLightOnPrimary,
+                onSecondary = VercelLightOnSecondary,
+                onBackground = VercelLightTextPrimary,
+                onSurface = VercelLightTextPrimary,
+                onSurfaceVariant = VercelLightTextSecondary,
+                outline = VercelLightBorder,
+                outlineVariant = VercelLightBorder
+            )
+        }
     }
 
     val view = LocalView.current
@@ -135,17 +165,24 @@ fun DataMonitorTheme(
             if (activity != null) {
                 val window = activity.window
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-                // Draw navigation bar matching backing theme
                 WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = createTypography(fontProfile),
-        content = content
-    )
+    val currentTypography = if (uiStyle == UiStyle.DEFAULT_MONOGRAM) {
+        createTypography(FontProfile.SYSTEM_DEFAULT)
+    } else {
+        createTypography(fontProfile)
+    }
+
+    CompositionLocalProvider(LocalUiStyle provides uiStyle) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = currentTypography,
+            content = content
+        )
+    }
 }
 
 // Deprecated forest-based interface backward compatibility mapping
@@ -157,7 +194,7 @@ fun DataMonitorTheme(
     content: @Composable () -> Unit
 ) {
     val palette = palettes[theme] ?: palettes[AppTheme.MIDNIGHT_AMOLED]!!
-    DataMonitorTheme(darkTheme = !palette.isLight, useMaterial3 = false, fontProfile = fontProfile, appAccentColor = appAccentColor, content = content)
+    DataMonitorTheme(darkTheme = !palette.isLight, uiStyle = UiStyle.DEFAULT_MONOGRAM, fontProfile = fontProfile, content = content)
 }
 
 @Composable
@@ -166,21 +203,31 @@ fun DynamicThemeProvider(
     content: @Composable () -> Unit
 ) {
     val isSystemDark = isSystemInDarkTheme()
+    val uiStyle by themeManager.uiStyleFlow.collectAsStateWithLifecycle(initialValue = UiStyle.DEFAULT_MONOGRAM)
     val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
+    val materialPalette by themeManager.materialPaletteFlow.collectAsStateWithLifecycle(initialValue = MaterialColorPalette.DYNAMIC)
+    val materialDarkMode by themeManager.materialDarkModeFlow.collectAsStateWithLifecycle(initialValue = MaterialDarkMode.SYSTEM)
     val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = FontProfile.OSWALD)
     
-    val useMaterial3 = monogramTheme == MonogramTheme.MATERIAL_3
-    val isDark = when (monogramTheme) {
-        MonogramTheme.LIGHT_MONOGRAM -> false
-        MonogramTheme.DARK_MONOGRAM -> true
-        else -> isSystemDark // SYSTEM_DEFAULT and MATERIAL_3 follow system dark mode
+    val isDark = if (uiStyle == UiStyle.MATERIAL_3) {
+        when (materialDarkMode) {
+            MaterialDarkMode.LIGHT -> false
+            MaterialDarkMode.DARK -> true
+            MaterialDarkMode.SYSTEM -> isSystemDark
+        }
+    } else {
+        when (monogramTheme) {
+            MonogramTheme.LIGHT_MONOGRAM -> false
+            MonogramTheme.DARK_MONOGRAM -> true
+            else -> isSystemDark
+        }
     }
 
     DataMonitorTheme(
         darkTheme = isDark,
-        useMaterial3 = useMaterial3,
+        uiStyle = uiStyle,
+        materialPalette = materialPalette,
         fontProfile = fontProfile,
-        appAccentColor = null,
         content = content
     )
 }

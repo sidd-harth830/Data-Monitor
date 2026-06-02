@@ -183,15 +183,11 @@ fun AdminDashboardScreen(
                             text = "ADMIN PORTAL",
                             style = MaterialTheme.typography.displaySmall,
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Real Telemetry & Core Systems Engine",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.primary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -207,15 +203,13 @@ fun AdminDashboardScreen(
                             Icon(
                                 imageVector = Icons.Default.VerifiedUser,
                                 contentDescription = "Session Verified",
-                                tint = Color(0xFF00FF87),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = "Admin Identity Certificate",
                                 color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp
                             )
                         }
                         
@@ -223,31 +217,21 @@ fun AdminDashboardScreen(
                         
                         Text(
                             text = "ADMIN CREDENTIAL EMAIL:",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = currentUser?.email ?: "Guest mode (Local only)",
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
 
                         Text(
                             text = "SECURE PROVIDER AUTH UID:",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             text = currentUser?.uid ?: "DEVELOPER_GUEST_UID",
                             color = MaterialTheme.colorScheme.primary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -259,10 +243,7 @@ fun AdminDashboardScreen(
             item {
                 Text(
                     text = "RELEASE MANAGEMENT GATEWAY",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -274,14 +255,11 @@ fun AdminDashboardScreen(
                         Text(
                             text = "Gated Build Manager",
                             color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
                         )
 
                         Text(
                             text = "Monitors real-time compiled code staging records. Review proposed staging builds built by secure compiler runners, and approve or reject rollout configurations.",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
@@ -292,8 +270,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(if (isLight) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFF00FF87).copy(alpha = 0.05f), RoundedCornerShape(14.dp))
-                                    .border(1.dp, if (isLight) Color(0xFF4CAF50).copy(alpha = 0.3f) else Color(0xFF00FF87).copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+                                    .background(if (isLight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
+                                    .border(1.dp, if (isLight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary, RoundedCornerShape(14.dp))
                                     .padding(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
@@ -301,7 +279,7 @@ fun AdminDashboardScreen(
                                     Icon(
                                         imageVector = Icons.Default.VerifiedUser,
                                         contentDescription = "Pending Staging Review",
-                                        tint = if (isLight) Color(0xFF2E7D32) else Color(0xFF00FF87),
+                                        tint = if (isLight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
@@ -309,54 +287,41 @@ fun AdminDashboardScreen(
                                         text = "Proposed Staging Build: v${activeStaging.versionName}",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
                                     )
                                 }
                                 
-                                Divider(color = if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.08f))
+                                Divider(color = MaterialTheme.colorScheme.onBackground)
 
                                 Column {
                                     Text(
                                         text = "STAGING TARGET VERSION CODE:",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Text(
                                         text = "${activeStaging.versionCode}",
                                         color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
                                     )
                                 }
 
                                 Column {
                                     Text(
                                         text = "SOURCE CODE RUN ID:",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Text(
                                         text = activeStaging.runId,
                                         color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
                                     )
                                 }
 
                                 Column {
                                     Text(
                                         text = "DEDUCED MIRROR DOWNLOAD LINK:",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Text(
                                         text = activeStaging.downloadUrl,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         lineHeight = 15.sp
                                     )
                                 }
@@ -372,13 +337,10 @@ fun AdminDashboardScreen(
                                     Text(
                                         "Enforce Mandatory Upgrade",
                                         color = MaterialTheme.colorScheme.onSurface,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
                                     )
                                     Text(
                                         "When active, force all clients to complete installer rollout before accessing metrics dashboards.",
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         lineHeight = 15.sp
                                     )
                                 }
@@ -387,7 +349,7 @@ fun AdminDashboardScreen(
                                     onCheckedChange = { isMandatoryUpdate = it },
                                     colors = SwitchDefaults.colors(
                                         checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                        checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                                        checkedTrackColor = MaterialTheme.colorScheme.primary
                                     ),
                                     enabled = !isUploading
                                 )
@@ -415,8 +377,8 @@ fun AdminDashboardScreen(
                                         )
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF00FF87),
-                                        contentColor = Color.Black
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onBackground
                                     ),
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier
@@ -426,8 +388,6 @@ fun AdminDashboardScreen(
                                 ) {
                                     Text(
                                         "Approve Build",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
                                     )
                                 }
 
@@ -447,8 +407,8 @@ fun AdminDashboardScreen(
                                         )
                                     },
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFFFF5252),
-                                        contentColor = Color.White
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.background
                                     ),
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier
@@ -458,8 +418,6 @@ fun AdminDashboardScreen(
                                 ) {
                                     Text(
                                         "Reject Build",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
                                     )
                                 }
                             }
@@ -467,8 +425,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(if (isLight) Color.Black.copy(alpha = 0.03f) else Color.White.copy(alpha = 0.02f), RoundedCornerShape(14.dp))
-                                    .border(1.dp, if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
+                                    .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(14.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(14.dp))
                                     .padding(24.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -476,19 +434,16 @@ fun AdminDashboardScreen(
                                 Icon(
                                     imageVector = Icons.Default.DataObject,
                                     contentDescription = "No Pending Staging",
-                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.size(32.dp)
                                 )
                                 Text(
                                     text = "No Pending Staging Build",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
                                     text = "To trigger, run either manual workflow_dispatch or push branch updates. This stages the APK and alerts the Admin Gate automatically.",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     lineHeight = 15.sp,
                                     textAlign = TextAlign.Center
                                 )
@@ -504,9 +459,7 @@ fun AdminDashboardScreen(
                         ) {
                             Text(
                                 "Emergency Manual Override Bypass",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             TextButton(
                                 onClick = { showManualOverride = !showManualOverride },
@@ -514,8 +467,6 @@ fun AdminDashboardScreen(
                             ) {
                                 Text(
                                     text = if (showManualOverride) "COLLAPSE BYPASS" else "EXPAND BYPASS",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -525,8 +476,8 @@ fun AdminDashboardScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(if (isLight) Color.Black.copy(alpha = 0.03f) else Color.White.copy(alpha = 0.02f), RoundedCornerShape(12.dp))
-                                    .border(1.dp, if (isLight) Color.Black.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.05f), RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.onBackground, RoundedCornerShape(12.dp))
                                     .padding(12.dp),
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
@@ -537,16 +488,16 @@ fun AdminDashboardScreen(
                                     OutlinedTextField(
                                         value = manualVersionCode,
                                         onValueChange = { manualVersionCode = it },
-                                        label = { Text("Version Code (e.g. 52)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                                        label = { Text("Version Code (e.g. 52)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface) },
                                         singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
+                                        textStyle = MaterialTheme.typography.bodySmall,
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
                                             focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -554,16 +505,16 @@ fun AdminDashboardScreen(
                                     OutlinedTextField(
                                         value = manualVersionName,
                                         onValueChange = { manualVersionName = it },
-                                        label = { Text("Version Name (e.g. 3.5.2)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                                        label = { Text("Version Name (e.g. 3.5.2)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface) },
                                         singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
+                                        textStyle = MaterialTheme.typography.bodySmall,
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                             focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
                                             focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface
                                         ),
                                         modifier = Modifier.weight(1f)
                                     )
@@ -572,16 +523,16 @@ fun AdminDashboardScreen(
                                 OutlinedTextField(
                                     value = manualDownloadUrl,
                                     onValueChange = { manualDownloadUrl = it },
-                                    label = { Text("Public GitHub Download Link (Mirror)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) },
+                                    label = { Text("Public GitHub Download Link (Mirror)", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface) },
                                     singleLine = true,
-                                    textStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface),
+                                    textStyle = MaterialTheme.typography.bodySmall,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                                         unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.onSurface,
                                         focusedLabelColor = MaterialTheme.colorScheme.primary,
-                                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        unfocusedLabelColor = MaterialTheme.colorScheme.onSurface
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -638,7 +589,7 @@ fun AdminDashboardScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -651,8 +602,6 @@ fun AdminDashboardScreen(
                                 Text(
                                     text = uploadStatus,
                                     color = MaterialTheme.colorScheme.primary,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
@@ -666,10 +615,7 @@ fun AdminDashboardScreen(
             item {
                 Text(
                     text = "REAL-TIME SYSTEM METRICS",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -694,12 +640,10 @@ fun AdminDashboardScreen(
                             Text(
                                 text = liveUserCount?.toString() ?: "Loading...", 
                                 color = MaterialTheme.colorScheme.primary, 
-                                fontSize = 16.sp, 
-                                fontWeight = FontWeight.Bold
                             )
                         }
 
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), modifier = Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 12.dp))
 
                         // Room File Health 
                         Row(
@@ -719,13 +663,11 @@ fun AdminDashboardScreen(
                             }
                             Text(
                                 text = dbSizeFormatted, 
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), 
-                                fontSize = 14.sp, 
-                                fontWeight = FontWeight.SemiBold
+                                color = MaterialTheme.colorScheme.onSurface, 
                             )
                         }
 
-                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), modifier = Modifier.padding(vertical = 12.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 12.dp))
 
                         // WorkManager background status
                         Row(
@@ -745,9 +687,9 @@ fun AdminDashboardScreen(
                             }
                             
                             val statusColor = when (workerStatus) {
-                                "ENQUEUED" -> Color(0xFF19B1DC)
-                                "RUNNING" -> Color(0xFF00FF87)
-                                "SUCCEEDED" -> Color(0xFF4CAF50)
+                                "ENQUEUED" -> MaterialTheme.colorScheme.tertiary
+                                "RUNNING" -> MaterialTheme.colorScheme.primary
+                                "SUCCEEDED" -> MaterialTheme.colorScheme.primary
                                 else -> MaterialTheme.colorScheme.error
                             }
                             Text(workerStatus, color = statusColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
@@ -762,10 +704,7 @@ fun AdminDashboardScreen(
             item {
                 Text(
                     text = "SYNC OVERLAYS",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -777,14 +716,11 @@ fun AdminDashboardScreen(
                         Text(
                             text = "Force Sync Local Stats to Firestore",
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         Text(
                             text = "Bypasses the Daily Background Daemon, forcing instantaneous upload of local Room database usage footprints and analytics payload to the synchronized Firestore cloud node.",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 16.dp),
                             textAlign = TextAlign.Center
@@ -802,13 +738,13 @@ fun AdminDashboardScreen(
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (forceSyncing) Color(0xFF00FF87) else MaterialTheme.colorScheme.primary
+                                containerColor = if (forceSyncing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
                             ),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth().height(48.dp)
                         ) {
                             if (forceSyncing) {
-                                CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(24.dp))
+                                CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(24.dp))
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.CloudUpload, contentDescription = "Sync", tint = MaterialTheme.colorScheme.onPrimary)
@@ -816,8 +752,6 @@ fun AdminDashboardScreen(
                                     Text(
                                         text = "SYNCHRONIZE NOW",
                                         color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.5.sp
                                     )
                                 }
                             }
@@ -832,10 +766,7 @@ fun AdminDashboardScreen(
             item {
                 Text(
                     text = "CRASH DIAGNOSTICS TEST",
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -847,14 +778,11 @@ fun AdminDashboardScreen(
                         Text(
                             text = "Test Telemetry Exceptions",
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 14.sp,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         Text(
                             text = "Simulates an instantaneous runtime exception in the app. This tests the global error interceptor pipeline, writing crashes and stack trace mappings directly to Firebase Firestore.",
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 16.sp,
                             modifier = Modifier.padding(bottom = 16.dp),
                             textAlign = TextAlign.Center
@@ -874,8 +802,6 @@ fun AdminDashboardScreen(
                                 Text(
                                     text = "TRIGGER DIAGNOSTIC CRASH",
                                     color = MaterialTheme.colorScheme.onError,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
                                 )
                             }
                         }
@@ -894,16 +820,11 @@ fun AdminDashboardScreen(
                 ) {
                     Text(
                         text = "LIVE FAULT CRASH FEED",
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp
+                        color = MaterialTheme.colorScheme.onBackground,
                     )
                     Text(
                         text = "Real Cloud Docs",
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -930,7 +851,6 @@ fun AdminDashboardScreen(
                         Text(
                             text = firestoreErrorMessage ?: "Database sync failed",
                             color = MaterialTheme.colorScheme.onErrorContainer,
-                            fontSize = 12.sp,
                             modifier = Modifier.padding(16.dp),
                             textAlign = TextAlign.Center
                         )
@@ -945,8 +865,7 @@ fun AdminDashboardScreen(
                         ) {
                             Text(
                                 text = "No errors reported in cloud telemetry.\nSystem operation status: NOMINAL.",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
                                 lineHeight = 18.sp
                             )
@@ -968,7 +887,7 @@ fun AdminDashboardScreen(
                     }
 
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                         border = borderStrokeHighContrast(),
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
@@ -990,14 +909,11 @@ fun AdminDashboardScreen(
                                     Text(
                                         text = deviceModel,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
                                     )
                                 }
                                 Text(
                                     text = displayTime,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                                    fontSize = 11.sp
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             
@@ -1006,8 +922,6 @@ fun AdminDashboardScreen(
                             Text(
                                 text = errorMessage,
                                 color = MaterialTheme.colorScheme.error,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
                             )
 
                             if (rawTrace.isNotEmpty()) {
@@ -1015,13 +929,12 @@ fun AdminDashboardScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.onBackground, RoundedCornerShape(8.dp))
                                         .padding(8.dp)
                                 ) {
                                     Text(
                                         text = rawTrace,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 4,
                                         lineHeight = 14.sp
                                     )
@@ -1043,6 +956,6 @@ fun AdminDashboardScreen(
 @Composable
 fun borderStrokeHighContrast(): androidx.compose.foundation.BorderStroke {
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val strokeColor = if (isLight) Color.Black.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.15f)
+    val strokeColor = MaterialTheme.colorScheme.onBackground
     return androidx.compose.foundation.BorderStroke(1.dp, strokeColor)
 }
