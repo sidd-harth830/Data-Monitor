@@ -218,6 +218,11 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                 }
             }
             
+            AiOptimizerCard(
+                dataUsageViewModel = viewModel,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
             Spacer(modifier = Modifier.height(8.dp))
 
             when (dashboardLayout) {
