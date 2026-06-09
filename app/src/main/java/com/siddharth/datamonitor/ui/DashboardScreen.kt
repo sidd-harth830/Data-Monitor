@@ -71,6 +71,7 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
     val wifiUsage by viewModel.todayWifi.collectAsStateWithLifecycle()
     val downloadSpeed by viewModel.downloadSpeed.collectAsStateWithLifecycle()
     val uploadSpeed by viewModel.uploadSpeed.collectAsStateWithLifecycle()
+    val billingCycleUsage by viewModel.billingCycleUsage.collectAsStateWithLifecycle()
     val dataLimitMBStr by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
     val dailyDataLimitMBStr by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
     val topApps by viewModel.topApps.collectAsStateWithLifecycle()
@@ -115,6 +116,33 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+            }
+
+            // Billing Cycle Summary Card
+            GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "BILLING CYCLE USAGE",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 1.5.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = formatBytes(billingCycleUsage),
+                        style = MaterialTheme.typography.displayMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    val fullLimitMB = dataLimitMBStr.toLongOrNull() ?: 2000L
+                    val fullLimitBytes = fullLimitMB * 1024L * 1024L
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Out of ${formatBytes(fullLimitBytes)} this cycle",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             // ChipsRow Filter

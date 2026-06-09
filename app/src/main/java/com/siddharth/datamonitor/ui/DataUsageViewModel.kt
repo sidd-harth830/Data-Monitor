@@ -95,6 +95,9 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
     private val _forecastMessage = MutableStateFlow("Gathering historical parameters to calculate linear trajectory...")
     val forecastMessage: StateFlow<String> = _forecastMessage.asStateFlow()
 
+    private val _billingCycleUsage = MutableStateFlow(0L)
+    val billingCycleUsage: StateFlow<Long> = _billingCycleUsage.asStateFlow()
+
     // Smart 5G / Unlimited Data Mode State
     private val _isUnlimited5GActive = MutableStateFlow(false)
     val isUnlimited5GActive: StateFlow<Boolean> = _isUnlimited5GActive.asStateFlow()
@@ -258,6 +261,7 @@ class DataUsageViewModel(application: Application) : AndroidViewModel(applicatio
             }
             
             val consumedInCycle = cycleRecords.sumOf { it.mobileBytes + it.wifiBytes } + totalTodayUsage
+            _billingCycleUsage.value = consumedInCycle
             val avgRealDailyUsage = (consumedInCycle.toDouble() / daysElapsed).coerceAtLeast(1.0)
             
             val limitBytes = limitMB * 1024L * 1024L
