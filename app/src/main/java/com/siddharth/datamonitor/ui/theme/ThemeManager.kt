@@ -26,6 +26,7 @@ class ThemeManager(private val context: Context) {
         val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
         val PING_QUALITY_LOG = stringPreferencesKey("ping_quality_log")
         val DAILY_DATA_LIMIT_KEY = stringPreferencesKey("daily_data_limit_mb")
+        val SHOW_CHATBOT_KEY = booleanPreferencesKey("show_chatbot")
         
         val THEME_COLOR_KEY = intPreferencesKey("theme_color_mkolor")
         val PURE_BLACK_KEY = booleanPreferencesKey("pure_black_mkolor")
@@ -77,6 +78,10 @@ class ThemeManager(private val context: Context) {
 
     val skipLoginFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[SKIP_LOGIN_KEY] ?: false
+    }
+
+    val showChatbotFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SHOW_CHATBOT_KEY] ?: true
     }
 
     val pingQualityLogFlow: Flow<List<Pair<Long, Long>>> = context.dataStore.data.map { preferences ->
@@ -170,6 +175,12 @@ class ThemeManager(private val context: Context) {
     suspend fun setSkipLogin(skip: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[SKIP_LOGIN_KEY] = skip
+        }
+    }
+
+    suspend fun setShowChatbot(show: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SHOW_CHATBOT_KEY] = show
         }
     }
 

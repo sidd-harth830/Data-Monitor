@@ -89,6 +89,21 @@ fun SettingsScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
 
+        SettingsGroupHeader("AI ASSISTANT")
+        
+        val showChatbot by themeManager.showChatbotFlow.collectAsStateWithLifecycle(initialValue = true)
+        SettingItemToggle(
+            title = "Show AI Assistant",
+            subtitle = "Display chatbot floating action button for data insights",
+            checked = showChatbot,
+            onCheckedChange = { 
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                scope.launch { themeManager.setShowChatbot(it) }
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+
         SettingsGroupHeader("SYSTEM")
         
         SettingItemToggle(

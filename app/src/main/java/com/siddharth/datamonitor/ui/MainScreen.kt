@@ -57,6 +57,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 
+import androidx.compose.ui.res.painterResource
+import com.siddharth.datamonitor.R
+
 @Composable
 fun MainScreen(
     viewModel: DataUsageViewModel,
@@ -71,12 +74,16 @@ fun MainScreen(
     val context = LocalContext.current
 
     val skipAuth by themeManager.skipLoginFlow.collectAsStateWithLifecycle(initialValue = false)
+    val showChatbot by themeManager.showChatbotFlow.collectAsStateWithLifecycle(initialValue = true)
+    
     val scope = rememberCoroutineScope()
     val auth = remember { FirebaseAuth.getInstance() }
     var currentAuthUser by remember { mutableStateOf(auth.currentUser) }
     
     val snackbarHostState = remember { SnackbarHostState() }
     val showBars = hasPermission && currentRoute != "admin_dashboard" && currentRoute != "login"
+    
+    var isChatbotOpen by remember { mutableStateOf(false) }
     
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -186,6 +193,27 @@ fun MainScreen(
             // Floating Navigation Bar
             if (showBars) {
                 val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
+                
+                if (showChatbot) {
+                    AnimatedVisibility(
+                        visible = isNavBarVisible,
+                        enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(300)),
+                        exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(300)),
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = 100.dp, end = 24.dp)
+                            .zIndex(10f)
+                    ) {
+                        FloatingActionButton(
+                            onClick = { isChatbotOpen = true },
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Icon(painterResource(id = R.drawable.ic_chatbot), contentDescription = "Data Assistant")
+                        }
+                    }
+                }
+
                 AnimatedVisibility(
                     visible = isNavBarVisible,
                     enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(300)),
@@ -209,6 +237,10 @@ fun MainScreen(
                 }
             }
         }
+    }
+
+    if (isChatbotOpen) {
+        ChatbotBottomSheet(viewModel = viewModel, onDismissRequest = { isChatbotOpen = false })
     }
 
     val updateState by viewModel.updateState.collectAsStateWithLifecycle()
@@ -311,7 +343,7 @@ fun FloatingNavigationToolbar(
             .padding(horizontal = 24.dp)
             .height(64.dp)
             .clip(CircleShape)
-            .background(Color(0x99222222)) // Glass effect
+            .background(Color(0xFF1A1A1A)) // Solid background instead of glass effect
             .border(1.dp, Color(0x33FFFFFF), CircleShape)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
