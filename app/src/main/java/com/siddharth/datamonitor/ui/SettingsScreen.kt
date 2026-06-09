@@ -168,12 +168,9 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, on
     val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
 
     val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val uiStyle by themeManager.uiStyleFlow.collectAsStateWithLifecycle(initialValue = UiStyle.DEFAULT_MONOGRAM)
-    val monogramTheme by themeManager.monogramThemeFlow.collectAsStateWithLifecycle(initialValue = MonogramTheme.SYSTEM_DEFAULT)
-    val materialPalette by themeManager.materialPaletteFlow.collectAsStateWithLifecycle(initialValue = MaterialColorPalette.DYNAMIC)
-    val materialDarkMode by themeManager.materialDarkModeFlow.collectAsStateWithLifecycle(initialValue = MaterialDarkMode.SYSTEM)
-    val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = DashboardLayoutPreference.STANDARD)
-    val fontProfile by themeManager.fontProfileFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD)
+    val themeColorInt by themeManager.themeColorFlow.collectAsStateWithLifecycle(initialValue = 0xFFED5564.toInt())
+    val pureBlack by themeManager.pureBlackFlow.collectAsStateWithLifecycle(initialValue = false)
+    val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.DashboardLayoutPreference.STANDARD)
     
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
     val customDividerColor = MaterialTheme.colorScheme.onBackground
@@ -203,128 +200,32 @@ fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, on
         GlassCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text(
-                    text = "GLOBAL UI STYLE",
+                    text = "AMOLED SETTINGS",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                PremiumTabSelector(
-                    options = listOf(
-                        UiStyle.DEFAULT_MONOGRAM to "Default UI",
-                        UiStyle.MATERIAL_3 to "Material UI"
-                    ),
-                    selectedOption = uiStyle,
-                    onOptionSelected = { style ->
-                        scope.launch { themeManager.setUiStyle(style) }
-                    }
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Pure Black Mode",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    androidx.compose.material3.Switch(
+                        checked = pureBlack,
+                        onCheckedChange = { checked ->
+                            scope.launch { themeManager.setPureBlack(checked) }
+                        }
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-        
-        if (uiStyle == UiStyle.DEFAULT_MONOGRAM) {
-            // Default UI Section
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text(
-                        text = "THEME SELECTOR",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PremiumTabSelector(
-                        options = listOf(
-                            MonogramTheme.SYSTEM_DEFAULT to "System",
-                            MonogramTheme.LIGHT_MONOGRAM to "Light",
-                            MonogramTheme.DARK_MONOGRAM to "Dark"
-                        ),
-                        selectedOption = monogramTheme,
-                        onOptionSelected = { theme ->
-                            scope.launch { themeManager.setMonogramTheme(theme) }
-                        }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    Text(
-                        text = "FONT SELECTOR",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "System fonts are enforced for the Default UI.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-        } else {
-            // Material UI Section
-            GlassCard(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text(
-                        text = "DARK MODE",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PremiumTabSelector(
-                        options = listOf(
-                            MaterialDarkMode.SYSTEM to "System",
-                            MaterialDarkMode.LIGHT to "Light",
-                            MaterialDarkMode.DARK to "Dark"
-                        ),
-                        selectedOption = materialDarkMode,
-                        onOptionSelected = { mode ->
-                            scope.launch { themeManager.setMaterialDarkMode(mode) }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "MATERIAL COLOR THEME",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PremiumTabSelector(
-                        options = listOf(
-                            MaterialColorPalette.DYNAMIC to "Dynamic",
-                            MaterialColorPalette.OCEAN_BLUE to "Blue",
-                            MaterialColorPalette.FOREST_GREEN to "Green",
-                            MaterialColorPalette.AMETHYST_PURPLE to "Purple",
-                            MaterialColorPalette.SUNSET_ORANGE to "Orange"
-                        ),
-                        selectedOption = materialPalette,
-                        onOptionSelected = { palette ->
-                            scope.launch { themeManager.setMaterialPalette(palette) }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text(
-                        text = "FONT SELECTOR",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    PremiumTabSelector(
-                        options = listOf(
-                            com.siddharth.datamonitor.ui.theme.FontProfile.SYSTEM_DEFAULT to "Sys",
-                            com.siddharth.datamonitor.ui.theme.FontProfile.OSWALD to "Oswald",
-                            com.siddharth.datamonitor.ui.theme.FontProfile.BRICOLAGE to "Bricolage",
-                            com.siddharth.datamonitor.ui.theme.FontProfile.AKT to "Akt"
-                        ),
-                        selectedOption = fontProfile,
-                        onOptionSelected = { profile ->
-                            scope.launch { themeManager.setFontProfile(profile) }
-                        }
-                    )
-                }
-            }
-        }
         
         Spacer(modifier = Modifier.height(24.dp))
         

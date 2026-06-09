@@ -1,5 +1,6 @@
 package com.siddharth.datamonitor.ui
 
+import com.siddharth.datamonitor.utils.formatBytes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -32,8 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.auth.FirebaseAuth
-import com.siddharth.datamonitor.ui.theme.PrimaryNeon
-import com.siddharth.datamonitor.ui.theme.SecondaryNeon
 import com.siddharth.datamonitor.ui.theme.ThemeManager
 import kotlinx.coroutines.launch
 
@@ -351,7 +350,7 @@ fun ProfileScreen(
                             Text("Account Tier", color = MaterialTheme.colorScheme.onSecondary, fontSize = 12.sp)
                             val isAdmin = currentUser.email?.endsWith("@admin.com") == true
                             val tier = if (isAdmin) "Administrator Dev Account" else "Standard Premium Account"
-                            Text(tier, color = if (isAdmin) SecondaryNeon else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(tier, color = if (isAdmin) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                         Row(
                             modifier = Modifier.fillMaxWidth(),

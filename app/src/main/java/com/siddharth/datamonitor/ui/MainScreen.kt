@@ -93,7 +93,6 @@ fun MainScreen(
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
     
     val hasPermission by viewModel.hasPermission.collectAsStateWithLifecycle()
-    val appAccentHex by themeManager.appAccentFlow.collectAsStateWithLifecycle(initialValue = "#19B1DC")
     val context = LocalContext.current
 
     val skipAuth by themeManager.skipLoginFlow.collectAsStateWithLifecycle(initialValue = false)
@@ -142,7 +141,6 @@ fun MainScreen(
                 val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
                 FloatingBottomNav(
                     currentRoute = currentRoute,
-                    appAccentHex = appAccentHex,
                     isAdmin = isAdmin,
                     onNavigate = { route ->
                         navController.navigate(route) {
@@ -359,13 +357,11 @@ fun MainScreen(
 @Composable
 fun FloatingBottomNav(
     currentRoute: String,
-    appAccentHex: String,
     isAdmin: Boolean,
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    val density = LocalDensity.current
     val items = remember(isAdmin) {
         val base = mutableListOf(
             Triple("home", "Home", Icons.Filled.Home),
@@ -379,376 +375,50 @@ fun FloatingBottomNav(
         base
     }
 
-    val uiStyle = com.siddharth.datamonitor.ui.theme.LocalUiStyle.current
-    if (uiStyle == com.siddharth.datamonitor.ui.theme.UiStyle.MATERIAL_3) {
-        NavigationBar(
-            containerColor = MaterialTheme.colorScheme.surface,
-            modifier = modifier.fillMaxWidth()
-        ) {
-            items.forEach { (route, label, icon) ->
-                NavigationBarItem(
-                    selected = currentRoute == route,
-                    onClick = {
-                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                        onNavigate(route)
-                    },
-                    icon = { Icon(icon, contentDescription = label) },
-                    label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
-        }
-        return
-    }
-
-    val selectedIndex = remember(currentRoute, items) {
-        val idx = items.indexOfFirst { it.first == currentRoute }
-        if (idx >= 0) idx else 0
-    }
-
-    val itemCoords = remember { mutableStateMapOf<Int, Pair<Dp, Dp>>() }
-
-    val targetX = itemCoords[selectedIndex]?.first ?: 0.dp
-    val targetWidth = itemCoords[selectedIndex]?.second ?: 0.dp
-
-    val animatedX by animateDpAsState(
-        targetValue = targetX,
-        animationSpec = spring(
-            stiffness = Spring.StiffnessMedium,
-            dampingRatio = Spring.DampingRatioLowBouncy
-        ),
-        label = "magneticX"
-    )
-
-    val animatedWidth by animateDpAsState(
-        targetValue = targetWidth,
-        animationSpec = spring(
-            stiffness = Spring.StiffnessMedium,
-            dampingRatio = Spring.DampingRatioLowBouncy
-        ),
-        label = "magneticWidth"
-    )
-
-    val isMeasured = targetWidth > 0.dp
-    val indicatorAlpha by animateFloatAsState(
-        targetValue = if (isMeasured) 1f else 0f,
-        animationSpec = tween(300),
-        label = "indicatorAlpha"
-    )
-
-    Box(
-        modifier = modifier
-            .zIndex(10f)
-            .padding(start = 24.dp, end = 24.dp, bottom = 32.dp)
-            .navigationBarsPadding()
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(0.5.dp, Color.Gray, RoundedCornerShape(50))
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        modifier = modifier.fillMaxWidth()
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            // Elegant, single-cohesive-capsule magnetic transition indicator
-            if (isMeasured) {
-                Box(
-                    modifier = Modifier
-                        .offset(x = animatedX)
-                        .width(animatedWidth)
-                        .height(44.dp)
-                        .align(Alignment.CenterStart)
-                        .graphicsLayer {
-                            alpha = indicatorAlpha
-                        }
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(MaterialTheme.colorScheme.primary)
+        items.forEach { (route, label, icon) ->
+            NavigationBarItem(
+                selected = currentRoute == route,
+                onClick = {
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onNavigate(route)
+                },
+                icon = { Icon(icon, contentDescription = label) },
+                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                colors = NavigationBarItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                items.forEachIndexed { index, (route, label, icon) ->
-                    val isSelected = currentRoute == route
-                    val interactionSource = remember { MutableInteractionSource() }
-                    
-                    val contentColor by animateColorAsState(
-                        targetValue = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSecondary
-                        },
-                        animationSpec = tween(250),
-                        label = "navColor"
-                    )
-
-                    val tabScale by animateFloatAsState(
-                        targetValue = if (isSelected) 1f else 0.9f,
-                        animationSpec = spring(
-                            stiffness = Spring.StiffnessMedium,
-                            dampingRatio = Spring.DampingRatioLowBouncy
-                        ),
-                        label = "tabScale"
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .onGloballyPositioned { coordinates ->
-                                val position = coordinates.positionInParent()
-                                val xDp = with(density) { position.x.toDp() }
-                                val widthDp = with(density) { coordinates.size.width.toDp() }
-                                itemCoords[index] = Pair(xDp, widthDp)
-                            }
-                            .graphicsLayer {
-                                scaleX = tabScale
-                                scaleY = tabScale
-                            }
-                            .clip(RoundedCornerShape(24.dp))
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null
-                            ) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onNavigate(route)
-                            }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = label,
-                            tint = contentColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        AnimatedVisibility(
-                            visible = isSelected,
-                            enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = tween(200)),
-                            exit = fadeOut(animationSpec = tween(200)) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = tween(200))
-                        ) {
-                            Row {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = contentColor
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            )
         }
     }
+}
+
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun GlassTopAppBar(modifier: Modifier = Modifier) {
+    androidx.compose.material3.TopAppBar(
+        title = { Text("Data Monitor") },
+        modifier = modifier
+    )
 }
 
 @Composable
 fun PermissionRequestScreen(onRequest: () -> Unit) {
-    var showHelpDialog by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "ACCESS REQUIRED",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Enable usage access to monitor real-time network traffic and provide insights.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        TextButton(
-            onClick = { showHelpDialog = true },
-            modifier = Modifier.padding(bottom = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Warning,
-                    contentDescription = "Help Guide",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
-                )
-                Text(
-                    text = "Permission Grayed Out? View Guide",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
-                )
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Usage Access Required", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onRequest) {
+                Text("Grant Permission")
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        GlassCard(
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(0.85f)
-        ) {
-            Button(
-                onClick = onRequest,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.primary),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Text("AUTHENTICATE", fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth(0.95f),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer
-            ),
-            border = BorderStroke(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.error
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Warning,
-                    contentDescription = "Alert Warning Icon",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(24.dp).padding(top = 2.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "RESTRICTED SETTINGS HELPER",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "If permission is grayed out, go to Phone Settings -> Apps -> Data Monitor -> 3 Dots (Top Right) -> Allow Restricted Settings.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        lineHeight = 20.sp
-                    )
-                }
-            }
-        }
-
-        if (showHelpDialog) {
-            AlertDialog(
-                onDismissRequest = { showHelpDialog = false },
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Warning,
-                            contentDescription = "Warning",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Restricted Settings Helper",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                },
-                text = {
-                    Text(
-                        text = "If permission is grayed out, go to Phone Settings -> Apps -> Data Monitor -> 3 Dots (Top Right) -> Allow Restricted Settings.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = { showHelpDialog = false }) {
-                        Text("GOT IT", style = MaterialTheme.typography.labelLarge)
-                    }
-                },
-                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
-            )
-        }
-    }
-}
-
-fun formatBytes(bytes: Long): String {
-    val formatter = DecimalFormat("#,##0.0")
-    return when {
-        bytes >= 1_073_741_824 -> "${formatter.format(bytes / 1_073_741_824.0)} GB"
-        bytes >= 1_048_576 -> "${formatter.format(bytes / 1_048_576.0)} MB"
-        bytes >= 1_024 -> "${formatter.format(bytes / 1_024.0)} KB"
-        else -> "$bytes B"
-    }
-}
-
-fun bytesToMB(bytes: Long): Double {
-    return bytes / 1_048_576.0
-}
-
-@Composable
-fun GlassTopAppBar(modifier: Modifier = Modifier) {
-    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val textColor = if (isLight) Color(0xFF1A1A1A) else Color.White
-
-    Box(
-        modifier = modifier
-            .zIndex(10f)
-            .statusBarsPadding()
-            .padding(start = 24.dp, end = 24.dp, top = 20.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(0.5.dp, Color.Gray, RoundedCornerShape(50))
-            .padding(horizontal = 20.dp, vertical = 14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.NetworkCheck,
-                    contentDescription = "Data Monitor",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = "DATA MONITOR SYSTEM",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(Color.Green, RoundedCornerShape(4.dp))
-            )
         }
     }
 }

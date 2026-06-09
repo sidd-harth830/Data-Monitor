@@ -96,6 +96,8 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.graphics)
+  implementation("com.materialkolor:material-kolor:1.7.0")
+  implementation("androidx.palette:palette-ktx:1.0.0")
   implementation(libs.androidx.compose.ui.text.google.fonts)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)

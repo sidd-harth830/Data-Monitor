@@ -13,7 +13,6 @@ import com.siddharth.datamonitor.data.DataUsageRepository
 import com.siddharth.datamonitor.utils.NetworkUsageTracker
 import com.siddharth.datamonitor.utils.PermissionsUtils
 import com.siddharth.datamonitor.ui.theme.ThemeManager
-import com.siddharth.datamonitor.ui.theme.AppTheme
 import com.siddharth.datamonitor.ui.theme.DashboardLayoutPreference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*

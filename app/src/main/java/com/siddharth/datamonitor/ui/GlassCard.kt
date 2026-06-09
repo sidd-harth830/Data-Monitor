@@ -69,39 +69,13 @@ fun GlassCard(
     shape: Shape = RoundedCornerShape(12.dp),
     content: @Composable BoxScope.() -> Unit
 ) {
-    val uiStyle = com.siddharth.datamonitor.ui.theme.LocalUiStyle.current
-    if (uiStyle == com.siddharth.datamonitor.ui.theme.UiStyle.MATERIAL_3) {
-        androidx.compose.material3.ElevatedCard(
-            modifier = modifier,
-            shape = shape,
-            colors = androidx.compose.material3.CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer
-            )
-        ) {
-            Box(content = content)
-        }
-        return
-    }
-
-    val colorScheme = MaterialTheme.colorScheme
-    val isLight = colorScheme.background.red > 0.5f && colorScheme.background.green > 0.5f
-
-    Box(
-        modifier = modifier
-    ) {
-        // Isolated background glass layer with backdrop blur
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .glassCard(shape)
+    androidx.compose.material3.ElevatedCard(
+        modifier = modifier,
+        shape = shape,
+        colors = androidx.compose.material3.CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
-        
-        // Crisp foreground content container - 100% sharp and unblurred
-        CompositionLocalProvider(LocalContentColor provides if (isLight) colorScheme.onBackground else Color.White) {
-            Box(
-                modifier = Modifier,
-                content = content
-            )
-        }
+    ) {
+        Box(content = content)
     }
 }

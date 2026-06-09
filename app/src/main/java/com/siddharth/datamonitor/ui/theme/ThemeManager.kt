@@ -16,8 +16,6 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class ThemeManager(private val context: Context) {
 
     companion object {
-        val THEME_KEY = stringPreferencesKey("theme")
-        val APP_ACCENT_COLOR_KEY = stringPreferencesKey("app_accent")
         val DATA_LIMIT_KEY = stringPreferencesKey("data_limit_mb")
         val ALERTS_ENABLED_KEY = booleanPreferencesKey("alerts_enabled")
         val TRACK_SEPARATED_KEY = booleanPreferencesKey("track_separated")
@@ -28,75 +26,17 @@ class ThemeManager(private val context: Context) {
         val SKIP_LOGIN_KEY = booleanPreferencesKey("skip_login")
         val PING_QUALITY_LOG = stringPreferencesKey("ping_quality_log")
         val DAILY_DATA_LIMIT_KEY = stringPreferencesKey("daily_data_limit_mb")
-        val FONT_PROFILE_KEY = stringPreferencesKey("font_profile_v354")
-        val MONOGRAM_THEME_KEY = stringPreferencesKey("monogram_theme_v354")
         
-        val UI_STYLE_KEY = stringPreferencesKey("ui_style_v357")
-        val MATERIAL_PALETTE_KEY = stringPreferencesKey("material_palette_v357")
-        val MATERIAL_DARK_MODE_KEY = stringPreferencesKey("material_dark_mode_v357")
+        val THEME_COLOR_KEY = intPreferencesKey("theme_color_mkolor")
+        val PURE_BLACK_KEY = booleanPreferencesKey("pure_black_mkolor")
     }
 
-    val uiStyleFlow: Flow<UiStyle> = context.dataStore.data.map { preferences ->
-        when (preferences[UI_STYLE_KEY]) {
-            UiStyle.MATERIAL_3.name -> UiStyle.MATERIAL_3
-            else -> UiStyle.DEFAULT_MONOGRAM
-        }
+    val themeColorFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[THEME_COLOR_KEY] ?: 0xFFED5564.toInt()
     }
 
-    val materialPaletteFlow: Flow<MaterialColorPalette> = context.dataStore.data.map { preferences ->
-        when (preferences[MATERIAL_PALETTE_KEY]) {
-            MaterialColorPalette.OCEAN_BLUE.name -> MaterialColorPalette.OCEAN_BLUE
-            MaterialColorPalette.FOREST_GREEN.name -> MaterialColorPalette.FOREST_GREEN
-            MaterialColorPalette.AMETHYST_PURPLE.name -> MaterialColorPalette.AMETHYST_PURPLE
-            MaterialColorPalette.SUNSET_ORANGE.name -> MaterialColorPalette.SUNSET_ORANGE
-            else -> MaterialColorPalette.DYNAMIC
-        }
-    }
-
-    val materialDarkModeFlow: Flow<MaterialDarkMode> = context.dataStore.data.map { preferences ->
-        when (preferences[MATERIAL_DARK_MODE_KEY]) {
-            MaterialDarkMode.LIGHT.name -> MaterialDarkMode.LIGHT
-            MaterialDarkMode.DARK.name -> MaterialDarkMode.DARK
-            else -> MaterialDarkMode.SYSTEM
-        }
-    }
-
-    val monogramThemeFlow: Flow<MonogramTheme> = context.dataStore.data.map { preferences ->
-        when (preferences[MONOGRAM_THEME_KEY]) {
-            MonogramTheme.LIGHT_MONOGRAM.name -> MonogramTheme.LIGHT_MONOGRAM
-            MonogramTheme.DARK_MONOGRAM.name -> MonogramTheme.DARK_MONOGRAM
-            MonogramTheme.MATERIAL_3.name -> MonogramTheme.MATERIAL_3
-            else -> MonogramTheme.SYSTEM_DEFAULT
-        }
-    }
-
-    val fontProfileFlow: Flow<FontProfile> = context.dataStore.data.map { preferences ->
-        when (preferences[FONT_PROFILE_KEY]) {
-            FontProfile.SYSTEM_DEFAULT.name -> FontProfile.SYSTEM_DEFAULT
-            FontProfile.BRICOLAGE.name -> FontProfile.BRICOLAGE
-            FontProfile.AKT.name -> FontProfile.AKT
-            else -> FontProfile.OSWALD // Default to Oswald as requested
-        }
-    }
-
-    val themeFlow: Flow<AppTheme?> = context.dataStore.data.map { preferences ->
-        when (preferences[THEME_KEY]) {
-            AppTheme.SPRING.name -> AppTheme.SPRING
-            AppTheme.DESERT.name -> AppTheme.DESERT
-            AppTheme.FOREST.name -> AppTheme.FOREST
-            AppTheme.MIDNIGHT_AMOLED.name -> AppTheme.MIDNIGHT_AMOLED
-            AppTheme.SOLARIZED_LIGHT.name -> AppTheme.SOLARIZED_LIGHT
-            AppTheme.OCEAN_DEEP.name -> AppTheme.OCEAN_DEEP
-            AppTheme.SUNSET_BLAZE.name -> AppTheme.SUNSET_BLAZE
-            AppTheme.CYBERPUNK.name -> AppTheme.CYBERPUNK
-            AppTheme.LAVENDER_HAZE.name -> AppTheme.LAVENDER_HAZE
-            AppTheme.MATRIX.name -> AppTheme.MATRIX
-            else -> null
-        }
-    }
-
-    val appAccentFlow: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[APP_ACCENT_COLOR_KEY] ?: "#19B1DC"
+    val pureBlackFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PURE_BLACK_KEY] ?: false
     }
 
     val dashboardLayoutFlow: Flow<DashboardLayoutPreference> = context.dataStore.data.map { preferences ->
@@ -167,15 +107,15 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    suspend fun setTheme(theme: AppTheme) {
+    suspend fun setThemeColor(color: Int) {
         context.dataStore.edit { preferences ->
-            preferences[THEME_KEY] = theme.name
+            preferences[THEME_COLOR_KEY] = color
         }
     }
 
-    suspend fun setAppAccent(accentHex: String) {
+    suspend fun setPureBlack(enabled: Boolean) {
         context.dataStore.edit { preferences ->
-            preferences[APP_ACCENT_COLOR_KEY] = accentHex
+            preferences[PURE_BLACK_KEY] = enabled
         }
     }
 
@@ -233,66 +173,6 @@ class ThemeManager(private val context: Context) {
         }
     }
 
-    suspend fun setFontProfile(profile: FontProfile) {
-        context.dataStore.edit { preferences ->
-            preferences[FONT_PROFILE_KEY] = profile.name
-        }
-    }
-
-    suspend fun setMonogramTheme(theme: MonogramTheme) {
-        context.dataStore.edit { preferences ->
-            preferences[MONOGRAM_THEME_KEY] = theme.name
-        }
-    }
-
-    suspend fun setUiStyle(style: UiStyle) {
-        context.dataStore.edit { preferences ->
-            preferences[UI_STYLE_KEY] = style.name
-        }
-    }
-
-    suspend fun setMaterialPalette(palette: MaterialColorPalette) {
-        context.dataStore.edit { preferences ->
-            preferences[MATERIAL_PALETTE_KEY] = palette.name
-        }
-    }
-
-    suspend fun setMaterialDarkMode(mode: MaterialDarkMode) {
-        context.dataStore.edit { preferences ->
-            preferences[MATERIAL_DARK_MODE_KEY] = mode.name
-        }
-    }
-}
-
-enum class UiStyle { DEFAULT_MONOGRAM, MATERIAL_3 }
-enum class MaterialColorPalette { DYNAMIC, OCEAN_BLUE, FOREST_GREEN, AMETHYST_PURPLE, SUNSET_ORANGE }
-enum class MaterialDarkMode { SYSTEM, LIGHT, DARK }
-
-enum class MonogramTheme {
-    SYSTEM_DEFAULT,
-    LIGHT_MONOGRAM,
-    DARK_MONOGRAM,
-    MATERIAL_3
-}
-
-enum class FontProfile {
-    SYSTEM_DEFAULT,
-    OSWALD,
-    BRICOLAGE,
-    AKT
-}
-
-enum class AppTheme {
-    SPRING,
-    DESERT,
-    FOREST,
-    MIDNIGHT_AMOLED,
-    SOLARIZED_LIGHT,
-    OCEAN_DEEP,
-    SUNSET_BLAZE,
-    CYBERPUNK,
-    LAVENDER_HAZE,
-    MATRIX
 }
 
 enum class DashboardLayoutPreference {
@@ -300,4 +180,3 @@ enum class DashboardLayoutPreference {
     PRO,
     GRID
 }
-

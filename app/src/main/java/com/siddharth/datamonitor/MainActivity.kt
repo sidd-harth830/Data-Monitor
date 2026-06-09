@@ -49,17 +49,6 @@ class MainActivity : ComponentActivity() {
                 inner.printStackTrace()
             }
         }
-        
-        com.siddharth.datamonitor.ui.theme.FontSettings.onFontLoadFailed = {
-            runOnUiThread {
-                android.widget.Toast.makeText(
-                    this,
-                    "Premium font unavailable, using system default.",
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
         setContent {
             val themeManager = remember { ThemeManager(this) }
             DynamicThemeProvider(themeManager = themeManager) {

@@ -1,5 +1,6 @@
 package com.siddharth.datamonitor.ui
 
+import com.siddharth.datamonitor.utils.formatBytes
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -995,6 +996,10 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
         label = "wifiFraction"
     )
 
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val primaryColor = MaterialTheme.colorScheme.primary
+
     Box(
         modifier = Modifier.size(280.dp),
         contentAlignment = Alignment.Center
@@ -1004,7 +1009,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             
             // Background track
             drawArc(
-                color = GlassWhite,
+                color = surfaceColor,
                 startAngle = 0f,
                 sweepAngle = 360f,
                 useCenter = false,
@@ -1014,7 +1019,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Glow Effect Cellular
             if (mobileFraction > 0f) {
                 drawArc(
-                    color = MobileActive,
+                    color = tertiaryColor,
                     startAngle = 135f,
                     sweepAngle = mobileFraction * 360f,
                     useCenter = false,
@@ -1025,7 +1030,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Glow Effect Wi-Fi
             if (wifiFraction > 0f) {
                 drawArc(
-                    color = WifiActive,
+                    color = primaryColor,
                     startAngle = 135f + (mobileFraction * 360f),
                     sweepAngle = wifiFraction * 360f,
                     useCenter = false,
@@ -1036,7 +1041,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Cellular Usage
             if (mobileFraction > 0f) {
                 drawArc(
-                    color = MobileActive,
+                    color = tertiaryColor,
                     startAngle = 135f,
                     sweepAngle = mobileFraction * 360f,
                     useCenter = false,
@@ -1047,7 +1052,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
             // Wi-Fi Usage
             if (wifiFraction > 0f) {
                 drawArc(
-                    color = WifiActive,
+                    color = primaryColor,
                     startAngle = 135f + (mobileFraction * 360f),
                     sweepAngle = wifiFraction * 360f,
                     useCenter = false,
@@ -1069,7 +1074,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
               )
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(8.dp).background(MobileActive, RoundedCornerShape(4.dp)))
+                Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.tertiary, RoundedCornerShape(4.dp)))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "Cellular",
@@ -1079,7 +1084,7 @@ fun UsageRing(mobileBytes: Long, wifiBytes: Long, dataLimitBytes: Long, is5G: Bo
                 
                 Spacer(modifier = Modifier.width(16.dp))
                 
-                Box(modifier = Modifier.size(8.dp).background(WifiActive, RoundedCornerShape(4.dp)))
+                Box(modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "Wi-Fi",
