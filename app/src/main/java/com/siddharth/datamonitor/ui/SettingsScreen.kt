@@ -4,597 +4,255 @@ import android.widget.Toast
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.delay
-import com.siddharth.datamonitor.R
-import com.siddharth.datamonitor.ui.theme.*
 import kotlinx.coroutines.launch
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.testTag
-
-fun changeAppIcon(context: Context, iconChoice: String) {
-    Toast.makeText(context, "Applying icon...", Toast.LENGTH_SHORT).show()
-    
-    val activity = context as? android.app.Activity
-    activity?.finishAffinity()
-    
-    kotlinx.coroutines.GlobalScope.launch {
-        delay(1000)
-
-        val pm = context.packageManager
-        val basePackage = "com.siddharth.datamonitor"
-        
-        val targets = mapOf(
-            "DEFAULT" to "$basePackage.MainActivityIconDefault",
-            "ICON_1" to "$basePackage.MainActivityIcon1",
-            "ICON_2" to "$basePackage.MainActivityIcon2",
-            "ICON_3" to "$basePackage.MainActivityIcon3",
-            "ICON_4" to "$basePackage.MainActivityIcon4",
-            "ICON_5" to "$basePackage.MainActivityIcon5"
-        )
-        
-        val targetClass = targets[iconChoice] ?: "$basePackage.MainActivityIconDefault"
-        
-        // 1. Enable the requested target FIRST
-        try {
-            pm.setComponentEnabledSetting(
-                ComponentName(context, targetClass),
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        // 2. Disable all OTHER targets
-        targets.forEach { (key, aliasClass) ->
-            if (aliasClass != targetClass) {
-                try {
-                    pm.setComponentEnabledSetting(
-                        ComponentName(context, aliasClass),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-        
-        System.exit(0)
-    }
-}
-
-@Composable
-fun <T> PremiumTabSelector(
-    options: List<Pair<T, String>>,
-    selectedOption: T,
-    onOptionSelected: (T) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
-    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val customDividerColor = MaterialTheme.colorScheme.onBackground
-    
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        options.forEach { (option, label) ->
-            val isSelected = option == selectedOption
-            
-            val containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.secondary
-            }
-            
-            val contentColor = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimary
-            } else {
-                MaterialTheme.colorScheme.onBackground
-            }
-            
-            val borderStroke = androidx.compose.foundation.BorderStroke(
-                width = 0.5.dp,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    customDividerColor
-                }
-            )
-
-            Surface(
-                onClick = { 
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                    onOptionSelected(option)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(56.dp),
-                shape = RoundedCornerShape(14.dp),
-                color = containerColor,
-                border = borderStroke
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = contentColor,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-    }
-}
+import com.siddharth.datamonitor.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager, onNavigateToLimits: () -> Unit) {
-    val dataLimitMB by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
-    val dailyDataLimitMB by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
-    val alertsEnabled by themeManager.alertsEnabledFlow.collectAsStateWithLifecycle(initialValue = true)
-    val trackSeparated by themeManager.trackSeparatedFlow.collectAsStateWithLifecycle(initialValue = true)
-    val dataSaverActive by themeManager.dataSaverActiveFlow.collectAsStateWithLifecycle(initialValue = false)
-
-    val isSystemDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val themeColorInt by themeManager.themeColorFlow.collectAsStateWithLifecycle(initialValue = 0xFFED5564.toInt())
-    val pureBlack by themeManager.pureBlackFlow.collectAsStateWithLifecycle(initialValue = false)
-    val currentLayout by themeManager.dashboardLayoutFlow.collectAsStateWithLifecycle(initialValue = com.siddharth.datamonitor.ui.theme.DashboardLayoutPreference.STANDARD)
-    
-    val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
-    val customDividerColor = MaterialTheme.colorScheme.onBackground
-    val customIndicatorColor = MaterialTheme.colorScheme.onBackground
-    
+fun SettingsScreen(
+    viewModel: DataUsageViewModel,
+    themeManager: ThemeManager,
+    onNavigateToLimits: () -> Unit
+) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var fontDropdownExpanded by remember { mutableStateOf(false) }
+
+    val pureBlack by themeManager.pureBlackFlow.collectAsStateWithLifecycle(initialValue = true)
+    
+    // Limits state for bottom sheet
+    var showLimitsSheet by remember { mutableStateOf(false) }
+    var tempMonthlyLimit by remember { mutableStateOf("") }
+    var tempDailyLimit by remember { mutableStateOf("") }
+    
+    val currentMonthlyLimit by themeManager.dataLimitFlow.collectAsStateWithLifecycle(initialValue = "2000")
+    val currentDailyLimit by themeManager.dailyDataLimitFlow.collectAsStateWithLifecycle(initialValue = "1000")
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(top = 8.dp, start = 24.dp, end = 24.dp, bottom = 16.dp)
-            .navigationBarsPadding()
-            .testTag("configs_parent_column")
+            .padding(top = 16.dp, start = 24.dp, end = 24.dp, bottom = 120.dp)
     ) {
         Text(
-            text = "CONFIG",
-            style = MaterialTheme.typography.displaySmall,
+            text = "SETTINGS",
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        SettingsGroupHeader("APPEARANCE")
         
-        // Global UI Style Selector
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "AMOLED SETTINGS",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Pure Black Mode",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    androidx.compose.material3.Switch(
-                        checked = pureBlack,
-                        onCheckedChange = { checked ->
-                            scope.launch { themeManager.setPureBlack(checked) }
-                        }
-                    )
-                }
+        SettingItemToggle(
+            title = "Pure Black Theme",
+            subtitle = "Enable pure OLED black background to save battery",
+            checked = pureBlack,
+            onCheckedChange = { 
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                scope.launch { themeManager.setPureBlack(it) }
             }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        )
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // App Icon Selection
-         val currentIcon by themeManager.appIconFlow.collectAsStateWithLifecycle(initialValue = "DEFAULT")
-        var showIconConfirmDialog by remember { mutableStateOf<String?>(null) }
-        
-        if (showIconConfirmDialog != null) {
-            AlertDialog(
-                onDismissRequest = { showIconConfirmDialog = null },
-                title = { Text("Change App Icon") },
-                text = { Text("The app must close to apply the new home screen icon. Continue?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val iconToApply = showIconConfirmDialog!!
-                        showIconConfirmDialog = null
-                        scope.launch {
-                            themeManager.setAppIcon(iconToApply)
-                            changeAppIcon(context, iconToApply)
-                        }
-                    }) {
-                        Text("Continue")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showIconConfirmDialog = null }) {
-                        Text("Cancel")
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.surface,
-                titleContentColor = MaterialTheme.colorScheme.onBackground,
-                textContentColor = MaterialTheme.colorScheme.onSecondary
-            )
-        }
-        
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "APP ICON SELECTOR",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    val icons = listOf(
-                        Triple("DEFAULT", "Studio Default", R.drawable.ic_launcher_spring),
-                        Triple("ICON_1", "Custom 1", R.drawable.ic_launcher_custom1),
-                        Triple("ICON_2", "Custom 2", R.drawable.ic_launcher_custom2),
-                        Triple("ICON_3", "Custom 3", R.drawable.ic_launcher_custom3),
-                        Triple("ICON_4", "Custom 4", R.drawable.ic_launcher_custom4),
-                        Triple("ICON_5", "Custom 5", R.drawable.ic_launcher_custom5)
-                    )
-
-                    icons.forEach { (key, label, drawRes) ->
-                        val isSelected = currentIcon == key
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Surface(
-                                onClick = {
-                                    showIconConfirmDialog = key
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                border = androidx.compose.foundation.BorderStroke(
-                                    width = if (isSelected) 2.dp else 1.dp,
-                                    color = if (isSelected) MaterialTheme.colorScheme.primary else customDividerColor
-                                ),
-                                modifier = Modifier.size(64.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        painter = painterResource(id = drawRes),
-                                        contentDescription = label,
-                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(48.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-
-        
-        // Live Network Ping & Latency Tester
-        var latencyValue by remember { mutableStateOf(-1L) }
-        var isPinging by remember { mutableStateOf(false) }
-        
-        LaunchedEffect(isPinging) {
-            if (isPinging) {
-                while (isPinging) {
-                    val result = measureLatency()
-                    latencyValue = result
-                    if (result >= 0) {
-                        themeManager.recordPingResult(result)
-                    }
-                    kotlinx.coroutines.delay(1500)
-                }
-            }
-        }
-
-        GlassCard(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "LIVE NETWORK HEALTH TESTER",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Gauge Canvas
-                    Box(modifier = Modifier.size(72.dp), contentAlignment = Alignment.Center) {
-                        val colorScheme = MaterialTheme.colorScheme
-                        val indicatorColor = if (latencyValue in 0..100) colorScheme.primary else if (latencyValue in 101..300) colorScheme.tertiary else if (latencyValue > 300) colorScheme.error else colorScheme.onSurfaceVariant
-                        val trackColor = colorScheme.surfaceVariant
-                        val sweepAngle = if (latencyValue >= 0) ((latencyValue.toFloat() / 500f).coerceAtMost(1f) * 360f) else 0f
-                        
-                        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                            // Track
-                            drawArc(
-                                color = trackColor,
-                                startAngle = 0f,
-                                sweepAngle = 360f,
-                                useCenter = false,
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                            )
-                            if (sweepAngle > 0f) {
-                                drawArc(
-                                    color = indicatorColor,
-                                    startAngle = -90f,
-                                    sweepAngle = sweepAngle,
-                                    useCenter = false,
-                                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 6.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-                                )
-                            }
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = if (latencyValue >= 0) "$latencyValue" else if (isPinging) "..." else "Ping",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = indicatorColor
-                            )
-                            if (latencyValue >= 0) {
-                                Text(
-                                    text = "ms",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondary
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "GOOGLE DNS PING",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSecondary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (latencyValue in 0..100) "Stable Network Signal" else if (latencyValue in 101..300) "Transient Buffer Bloat" else if (latencyValue > 300) "Highly unstable" else "Ready to track lag metrics",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondary
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(8.dp))
-                    
-                    Button(
-                        onClick = { isPinging = !isPinging },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isPinging) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            contentColor = if (isPinging) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = if (isPinging) "STOP" else "TEST PING",
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Dashboard layout switcher standard vs pro vs grid
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "DASHBOARD LAYOUT",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                PremiumTabSelector(
-                    options = listOf(
-                        DashboardLayoutPreference.STANDARD to "Standard",
-                        DashboardLayoutPreference.PRO to "Pro Wave",
-                        DashboardLayoutPreference.GRID to "Grid Block"
-                    ),
-                    selectedOption = currentLayout,
-                    onOptionSelected = { layout ->
-                        scope.launch { themeManager.setDashboardLayout(layout) }
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-
-
-
-
-        // Advanced Limits Button
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onNavigateToLimits() }
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Advanced Usage Limits",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Set custom limits and notifications",
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Navigate to limits",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Toggles
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                SettingToggle(
-                    title = "Data Saver Mode",
-                    subtitle = "Reduce background syncs to conserve battery/data",
-                    checked = dataSaverActive,
-                    onCheckedChange = { scope.launch { themeManager.setDataSaverActive(it) } }
-                )
-                
-                HorizontalDivider(color = customDividerColor, modifier = Modifier.padding(vertical = 12.dp))
-
-                SettingToggle(
-                    title = "Trigger Push Warning Alerts",
-                    subtitle = "Get notified near limit",
-                    checked = alertsEnabled,
-                    onCheckedChange = { scope.launch { themeManager.setAlertsEnabled(it) } }
-                )
-                
-                HorizontalDivider(color = customDividerColor, modifier = Modifier.padding(vertical = 12.dp))
-                
-                SettingToggle(
-                    title = "Isolate Wi-Fi vs. Cellular Tracks",
-                    subtitle = "Separate network analytics",
-                    checked = trackSeparated,
-                    onCheckedChange = { scope.launch { themeManager.setTrackSeparated(it) } }
-                )
-            }
-        }
-
         Spacer(modifier = Modifier.height(32.dp))
 
-        TextButton(
-            onClick = { throw RuntimeException("Test Crash") },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        SettingsGroupHeader("DATA TRACKING")
+        
+        SettingItemClickable(
+            title = "Usage Limits",
+            subtitle = "Set monthly and daily billing cycle caps",
+            onClick = {
+                tempMonthlyLimit = currentMonthlyLimit
+                tempDailyLimit = currentDailyLimit
+                showLimitsSheet = true
+            }
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+
+        SettingsGroupHeader("SYSTEM")
+        
+        SettingItemToggle(
+            title = "Hide App Icon",
+            subtitle = "Remove app from launcher (Dial #*1234# to open)",
+            checked = isIconHidden(context),
+            onCheckedChange = { hide ->
+                toggleAppIcon(context, hide)
+                Toast.makeText(context, if (hide) "Icon Hidden" else "Icon Restored", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    if (showLimitsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showLimitsSheet = false },
+            sheetState = sheetState,
+            containerColor = Color(0xFF1E1E1E), // Darker than normal surface for contrast
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
-            Text(
-                text = "Force Crash (Crashlytics Diagnostic Test)",
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .navigationBarsPadding(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "DATA LIMITS",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = tempMonthlyLimit,
+                    onValueChange = { tempMonthlyLimit = it },
+                    label = { Text("Monthly Limit (MB)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = tempDailyLimit,
+                    onValueChange = { tempDailyLimit = it },
+                    label = { Text("Daily Limit (MB)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = {
+                        scope.launch {
+                            themeManager.setDataLimit(tempMonthlyLimit)
+                            themeManager.setDailyDataLimit(tempDailyLimit)
+                            showLimitsSheet = false
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("SAVE LIMITS", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
 
 @Composable
-fun SettingToggle(title: String, subtitle: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+fun SettingsGroupHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = 1.5.sp,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
+}
+
+@Composable
+fun SettingItemToggle(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { 
-                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                onCheckedChange(!checked)
-            },
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onCheckedChange(!checked) }
+            .background(Color(0x0DFFFFFF))
+            .padding(20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+        )
+    }
+}
+
+@Composable
+fun SettingItemClickable(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .background(Color(0x0DFFFFFF))
+            .padding(20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
-                color = MaterialTheme.colorScheme.onSecondary,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = {
-                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                onCheckedChange(it)
-            },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = MaterialTheme.colorScheme.background,
-                checkedTrackColor = MaterialTheme.colorScheme.primary,
-                uncheckedThumbColor = MaterialTheme.colorScheme.onSecondary,
-                uncheckedTrackColor = MaterialTheme.colorScheme.surface
-            )
-        )
     }
 }
 
-suspend fun measureLatency(host: String = "8.8.8.8", port: Int = 53, timeoutMs: Int = 1500): Long {
-    return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-        val startTime = System.currentTimeMillis()
-        try {
-            val socket = java.net.Socket()
-            socket.connect(java.net.InetSocketAddress(host, port), timeoutMs)
-            socket.close()
-            System.currentTimeMillis() - startTime
-        } catch (e: Exception) {
-            -1L
-        }
-    }
+fun isIconHidden(context: Context): Boolean {
+    val pm = context.packageManager
+    val componentName = ComponentName(context, "com.siddharth.datamonitor.MainActivityLauncher")
+    val state = pm.getComponentEnabledSetting(componentName)
+    return state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+}
+
+fun toggleAppIcon(context: Context, hide: Boolean) {
+    val pm = context.packageManager
+    val componentName = ComponentName(context, "com.siddharth.datamonitor.MainActivityLauncher")
+    val state = if (hide) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+    pm.setComponentEnabledSetting(componentName, state, PackageManager.DONT_KILL_APP)
 }

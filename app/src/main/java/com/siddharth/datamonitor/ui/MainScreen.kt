@@ -3,84 +3,59 @@ package com.siddharth.datamonitor.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.siddharth.datamonitor.ui.theme.*
-import com.siddharth.datamonitor.utils.PermissionsUtils
-import java.text.DecimalFormat
-
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.withSaveLayer
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.foundation.Canvas
-
-import com.siddharth.datamonitor.R
-import com.siddharth.datamonitor.ui.theme.ThemeManager
-
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material.icons.rounded.NetworkCheck
-
-import androidx.compose.material.icons.rounded.Warning
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
-import android.net.Uri
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.VerifiedUser
+import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.ui.zIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.siddharth.datamonitor.ui.theme.ThemeManager
+import com.siddharth.datamonitor.utils.PermissionsUtils
+import kotlinx.coroutines.launch
+import android.net.Uri
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
 
 @Composable
 fun MainScreen(
@@ -123,35 +98,30 @@ fun MainScreen(
         if (currentAuthUser == null && !skipAuth) "login" else "home"
     }
 
+    // Hide on scroll state
+    var isNavBarVisible by remember { mutableStateOf(true) }
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // If scrolling down (positive y in terms of screen movement), hide
+                if (available.y < -15f) isNavBarVisible = false
+                // If scrolling up, show
+                if (available.y > 15f) isNavBarVisible = true
+                return Offset.Zero
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
+            .nestedScroll(nestedScrollConnection)
             .background(MaterialTheme.colorScheme.background),
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            if (showBars) {
-                GlassTopAppBar(
-                    modifier = Modifier.zIndex(10f)
-                )
-            }
         },
         bottomBar = {
-            if (showBars) {
-                val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
-                FloatingBottomNav(
-                    currentRoute = currentRoute,
-                    isAdmin = isAdmin,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                    modifier = Modifier.zIndex(10f)
-                )
-            }
         }
     ) { paddingValues ->
         Box(
@@ -178,16 +148,12 @@ fun MainScreen(
                             LoginScreen(
                                 themeManager = themeManager,
                                 onLoginSuccess = {
-                                    navController.navigate("home") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
+                                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
                                 },
                                 onSkip = {
                                     scope.launch {
                                         themeManager.setSkipLogin(true)
-                                        navController.navigate("home") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
+                                        navController.navigate("home") { popUpTo("login") { inclusive = true } }
                                     }
                                 }
                             )
@@ -199,9 +165,7 @@ fun MainScreen(
                                 viewModel = viewModel,
                                 themeManager = themeManager,
                                 onNavigateToAuth = {
-                                    navController.navigate("login") {
-                                        popUpTo(0) { inclusive = true }
-                                    }
+                                    navController.navigate("login") { popUpTo(0) { inclusive = true } }
                                 }
                             )
                         }
@@ -209,18 +173,39 @@ fun MainScreen(
                             SettingsScreen(
                                 viewModel = viewModel,
                                 themeManager = themeManager,
-                                onNavigateToLimits = {
-                                    navController.navigate("usage_limits")
-                                }
+                                onNavigateToLimits = { /* Deprecated */ }
                             )
                         }
                         composable("admin_dashboard") {
                             AdminDashboardScreen(onBack = { navController.popBackStack() })
                         }
-                        composable("usage_limits") {
-                            UsageLimitsScreen(onNavigateBack = { navController.popBackStack() })
-                        }
                     }
+                }
+            }
+
+            // Floating Navigation Bar
+            if (showBars) {
+                val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
+                AnimatedVisibility(
+                    visible = isNavBarVisible,
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(300)),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(300)),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .zIndex(10f)
+                ) {
+                    FloatingNavigationToolbar(
+                        currentRoute = currentRoute,
+                        isAdmin = isAdmin,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -233,9 +218,7 @@ fun MainScreen(
         if (!isDismissedByUser || updateInfo.isMandatory) {
             Dialog(
                 onDismissRequest = {
-                    if (!updateInfo.isMandatory) {
-                        isDismissedByUser = true
-                    }
+                    if (!updateInfo.isMandatory) isDismissedByUser = true
                 },
                 properties = DialogProperties(
                     dismissOnBackPress = !updateInfo.isMandatory,
@@ -243,14 +226,12 @@ fun MainScreen(
                 )
             ) {
                 GlassCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
                     shape = RoundedCornerShape(28.dp)
                 ) {
                     Column(
                         modifier = Modifier
-                            .background(Color.Black) // Extra dark overlay to ensure premium contrast
+                            .background(Color.Black)
                             .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -260,52 +241,19 @@ fun MainScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(56.dp)
                         )
-                        
                         Spacer(modifier = Modifier.height(16.dp))
-                        
                         Text(
-                            text = "SYSTEM UPDATE AVAILABLE",
+                            text = "SYSTEM UPDATE",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        
                         Spacer(modifier = Modifier.height(6.dp))
-                        
                         Text(
                             text = "v${updateInfo.versionName}",
                             style = MaterialTheme.typography.headlineLarge,
                             color = MaterialTheme.colorScheme.onBackground
                         )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = "RELEASE NOTES",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(6.dp))
-                        
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 140.dp)
-                                .background(Color.White, RoundedCornerShape(12.dp))
-                                .padding(12.dp)
-                        ) {
-                            val scrollState = rememberScrollState()
-                            Text(
-                                text = updateInfo.releaseNotes.ifEmpty { "Performance optimizations and system stability enhancements." },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier = Modifier.verticalScroll(scrollState)
-                            )
-                        }
-                        
                         Spacer(modifier = Modifier.height(24.dp))
-                        
                         Button(
                             onClick = {
                                 val targetUrl = if (gitHubUrl.isNotBlank()) gitHubUrl else (if (updateInfo.downloadUrl.isNotBlank()) updateInfo.downloadUrl else "https://github.com/sid-yadav7307/Data-Monitor-Releases/releases/latest")
@@ -317,35 +265,18 @@ fun MainScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
+                            modifier = Modifier.fillMaxWidth().height(48.dp)
                         ) {
-                            Text(
-                                "UPDATE NOW",
-                            )
+                            Text("UPDATE NOW")
                         }
-                        
                         if (!updateInfo.isMandatory) {
                             Spacer(modifier = Modifier.height(8.dp))
                             TextButton(
                                 onClick = { isDismissedByUser = true },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(44.dp)
+                                modifier = Modifier.fillMaxWidth().height(44.dp)
                             ) {
-                                Text(
-                                    "REMIND ME LATER",
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
+                                Text("REMIND ME LATER", color = MaterialTheme.colorScheme.onBackground)
                             }
-                        } else {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                "This update is required to maintain core gateway synchronization features.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
                         }
                     }
                 }
@@ -355,7 +286,7 @@ fun MainScreen(
 }
 
 @Composable
-fun FloatingBottomNav(
+fun FloatingNavigationToolbar(
     currentRoute: String,
     isAdmin: Boolean,
     onNavigate: (String) -> Unit,
@@ -364,61 +295,63 @@ fun FloatingBottomNav(
     val haptic = LocalHapticFeedback.current
     val items = remember(isAdmin) {
         val base = mutableListOf(
-            Triple("home", "Home", Icons.Filled.Home),
-            Triple("history", "Analytics", Icons.Filled.List),
-            Triple("profile", "Profile", Icons.Filled.Person),
-            Triple("settings", "Config", Icons.Filled.Settings)
+            Triple("home", Icons.Outlined.Home, Icons.Filled.Home),
+            Triple("history", Icons.Outlined.List, Icons.Filled.List),
+            Triple("profile", Icons.Outlined.Person, Icons.Filled.Person),
+            Triple("settings", Icons.Outlined.Settings, Icons.Filled.Settings)
         )
         if (isAdmin) {
-            base.add(Triple("admin_dashboard", "Admin Core", Icons.Filled.VerifiedUser))
+            base.add(Triple("admin_dashboard", Icons.Outlined.VerifiedUser, Icons.Filled.VerifiedUser))
         }
         base
     }
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        items.forEach { (route, label, icon) ->
-            NavigationBarItem(
-                selected = currentRoute == route,
-                onClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                    onNavigate(route)
-                },
-                icon = { Icon(icon, contentDescription = label) },
-                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
-                colors = NavigationBarItemDefaults.colors(
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        }
-    }
-}
-
-
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-fun GlassTopAppBar(modifier: Modifier = Modifier) {
-    androidx.compose.material3.TopAppBar(
-        title = { Text("Data Monitor") },
+    Box(
         modifier = modifier
-    )
-}
-
-@Composable
-fun PermissionRequestScreen(onRequest: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Usage Access Required", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onRequest) {
-                Text("Grant Permission")
+            .padding(horizontal = 24.dp)
+            .height(64.dp)
+            .clip(CircleShape)
+            .background(Color(0x99222222)) // Glass effect
+            .border(1.dp, Color(0x33FFFFFF), CircleShape)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            items.forEach { (route, unselectedIcon, selectedIcon) ->
+                val selected = currentRoute == route
+                Icon(
+                    imageVector = if (selected) selectedIcon else unselectedIcon,
+                    contentDescription = route,
+                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable {
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            onNavigate(route)
+                        }
+                )
             }
         }
     }
 }
+
+@Composable
+fun PermissionRequestScreen(onRequest: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Usage Access Required", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onRequest,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Grant Permission", color = MaterialTheme.colorScheme.onPrimary)
+            }
+        }
+    }
+}
+
