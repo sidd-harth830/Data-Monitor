@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
             }
             // Aggressive logging enabling
             FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+            com.siddharth.datamonitor.utils.AnalyticsHelper.init(this)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -44,7 +45,7 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("MainActivity_setupDailyWorker", e)
             } catch (inner: Exception) {
                 inner.printStackTrace()
             }
@@ -75,7 +76,7 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("MainActivity_onResume", e)
             } catch (inner: Exception) {
                 inner.printStackTrace()
             }
@@ -94,7 +95,7 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                FirebaseCrashlytics.getInstance().recordException(e)
+                com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("MainActivity_setupDailyWorker_Inner", e)
             } catch (inner: Exception) {
                 inner.printStackTrace()
             }

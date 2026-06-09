@@ -65,7 +65,7 @@ fun LoginScreen(
     // Dynamic resource lookup for default_web_client_id 
     val defaultWebClientId = remember {
         val resourceId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        if (resourceId != 0) context.getString(resourceId) else "236997686171-pe3q3sktef5o2cug9vo0dtc22celp14u.apps.googleusercontent.com"
+        if (resourceId != 0) context.getString(resourceId) else "236997686171-i3j44ute7mnbde7tvc4o6mnnr5njlol5.apps.googleusercontent.com"
     }
 
     val googleSignInClient = remember {
@@ -98,7 +98,7 @@ fun LoginScreen(
                     }
                     .addOnFailureListener { e ->
                         isLoading = false
-                        FirebaseCrashlytics.getInstance().recordException(e)
+                        com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("GoogleSignIn", e)
                         if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                             errorMessage = "Account exists. Please use the method you originally signed up with."
                             Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
@@ -109,11 +109,11 @@ fun LoginScreen(
             } else {
                 isLoading = false
                 errorMessage = "Failed to extract Google Identification Token"
-                FirebaseCrashlytics.getInstance().recordException(Exception("Failed to extract Google Identification Token"))
+                com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("GoogleSignIn_ExtractToken", Exception("Failed to extract Google Identification Token"))
             }
         } catch (e: Exception) {
             isLoading = false
-            FirebaseCrashlytics.getInstance().recordException(e)
+            com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("GoogleSignIn_Catch", e)
             if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                 errorMessage = "Account exists. Please use the method you originally signed up with."
                 Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()
@@ -275,7 +275,7 @@ fun LoginScreen(
                                     .addOnFailureListener { e ->
                                         isLoading = false
                                         errorMessage = e.localizedMessage ?: "Sign In Failed"
-                                        FirebaseCrashlytics.getInstance().recordException(e)
+                                        com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailSignIn", e)
                                     }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
@@ -324,7 +324,7 @@ fun LoginScreen(
                                     .addOnFailureListener { e ->
                                         isLoading = false
                                         errorMessage = e.localizedMessage ?: "Account Creation Failed"
-                                        FirebaseCrashlytics.getInstance().recordException(e)
+                                        com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailCreateAccount", e)
                                     }
                             },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
@@ -406,7 +406,7 @@ fun LoginScreen(
                                             }
                                             .addOnFailureListener { e ->
                                                 isLoading = false
-                                                FirebaseCrashlytics.getInstance().recordException(e)
+                                                com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("GitHubSignIn", e)
                                                 if (e is com.google.firebase.auth.FirebaseAuthUserCollisionException) {
                                                     errorMessage = "Account exists. Please use the method you originally signed up with."
                                                     Toast.makeText(context, "Account exists. Please use the method you originally signed up with.", Toast.LENGTH_LONG).show()

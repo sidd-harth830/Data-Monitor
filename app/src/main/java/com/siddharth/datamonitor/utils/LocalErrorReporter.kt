@@ -13,8 +13,8 @@ object LocalErrorReporter {
     fun reportError(throwable: Throwable) {
         // 1. Send to Crashlytics
         try {
-            FirebaseCrashlytics.getInstance().recordException(throwable)
-            Log.d(TAG, "Logged to Firebase Crashlytics")
+            com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("GlobalException", throwable)
+            Log.d(TAG, "Logged to Firebase Crashlytics and Analytics")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send exception to Crashlytics", e)
         }
