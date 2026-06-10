@@ -158,8 +158,8 @@ fun DashboardScreen(viewModel: DataUsageViewModel, themeManager: ThemeManager) {
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color(0x1AFFFFFF))
-                            .border(1.dp, if (isSelected) Color.Transparent else GlassStroke, RoundedCornerShape(20.dp))
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                             .clickable {
                                 haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                                 selectedFilter = filter

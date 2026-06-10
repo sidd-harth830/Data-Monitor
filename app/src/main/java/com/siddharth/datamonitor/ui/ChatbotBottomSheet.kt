@@ -46,7 +46,7 @@ fun ChatbotBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        containerColor = Color(0xFF161616), // Solid dark color instead of transparent surface
+        containerColor = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxHeight(0.9f)
     ) {
         Column(
@@ -156,7 +156,7 @@ fun ChatBubble(message: ChatMessage) {
         Box(
             modifier = Modifier
                 .background(
-                    color = if (message.isUser) MaterialTheme.colorScheme.primary else Color(0xFF2A2A2A),
+                    color = if (message.isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(
                         topStart = 16.dp,
                         topEnd = 16.dp,

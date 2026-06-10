@@ -27,6 +27,7 @@ class ThemeManager(private val context: Context) {
         val PING_QUALITY_LOG = stringPreferencesKey("ping_quality_log")
         val DAILY_DATA_LIMIT_KEY = stringPreferencesKey("daily_data_limit_mb")
         val SHOW_CHATBOT_KEY = booleanPreferencesKey("show_chatbot")
+        val DARK_MODE_KEY = booleanPreferencesKey("dark_mode_enabled")
         
         val THEME_COLOR_KEY = intPreferencesKey("theme_color_mkolor")
         val PURE_BLACK_KEY = booleanPreferencesKey("pure_black_mkolor")
@@ -38,6 +39,10 @@ class ThemeManager(private val context: Context) {
 
     val pureBlackFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[PURE_BLACK_KEY] ?: false
+    }
+
+    val darkModeFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[DARK_MODE_KEY] ?: true // Default to dark mode for legacy behavior
     }
 
     val dashboardLayoutFlow: Flow<DashboardLayoutPreference> = context.dataStore.data.map { preferences ->
@@ -121,6 +126,12 @@ class ThemeManager(private val context: Context) {
     suspend fun setPureBlack(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PURE_BLACK_KEY] = enabled
+        }
+    }
+
+    suspend fun setDarkMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DARK_MODE_KEY] = enabled
         }
     }
 

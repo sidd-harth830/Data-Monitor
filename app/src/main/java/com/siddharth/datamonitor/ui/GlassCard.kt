@@ -23,8 +23,8 @@ fun GlassCard(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(Color(0x1AFFFFFF)) // Glassy overlay
-            .border(1.dp, GlassStroke, shape),
+            .background(MaterialTheme.colorScheme.surface) // Glassy overlay
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape),
         content = content
     )
 }

@@ -25,7 +25,8 @@ data class GenerateContentRequest(
 
 @Serializable
 data class Content(
-    val parts: List<Part>
+    val parts: List<Part>,
+    val role: String? = null
 )
 
 @Serializable
@@ -84,7 +85,8 @@ suspend fun askGemini(prompt: String, systemPrompt: String): String = withContex
     
     val request = GenerateContentRequest(
         contents = listOf(Content(
-            parts = listOf(Part(text = prompt))
+            parts = listOf(Part(text = prompt)),
+            role = "user"
         )),
         systemInstruction = Content(
             parts = listOf(Part(text = systemPrompt))

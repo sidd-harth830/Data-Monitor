@@ -6,6 +6,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -26,33 +27,54 @@ private fun Context.findActivity(): Activity? {
     return null
 }
 
+val ModernLightColorScheme = lightColorScheme(
+    primary = NeonAccent,
+    onPrimary = Color.White,
+    background = Color(0xFFF5F5F5),
+    onBackground = Color(0xFF1A1A1A),
+    surface = Color.White,
+    onSurface = Color(0xFF1A1A1A),
+    surfaceVariant = Color(0xFFE0E0E0),
+    onSurfaceVariant = Color(0xFF555555),
+    outline = Color(0xFFCCCCCC),
+    tertiaryContainer = Color.White,
+    onTertiaryContainer = NeonAccent,
+    error = Color(0xFFFF4C4C)
+)
+
 val ModernDarkColorScheme = darkColorScheme(
     primary = NeonAccent,
     onPrimary = TextWhite,
     background = PureBlack,
     onBackground = TextWhite,
-    surface = GlassSurface,
+    surface = Color(0xFF121212),
     onSurface = TextWhite,
-    surfaceVariant = GlassSurface,
+    surfaceVariant = Color(0xFF1E1E1E),
     onSurfaceVariant = TextGray,
-    outline = GlassStroke,
-    tertiaryContainer = GlassSurface,
+    outline = Color(0xFF333333),
+    tertiaryContainer = Color(0xFF2C2C2C),
     onTertiaryContainer = NeonAccent,
     error = Color(0xFFFF4C4C)
 )
 
 @Composable
 fun DataMonitorTheme(
-    darkTheme: Boolean = true, // Force dark theme aesthetically
+    darkTheme: Boolean = true,
     pureBlack: Boolean = true,
     themeColor: Color = DefaultThemeColor,
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
 
-    val colorScheme = ModernDarkColorScheme.copy(
+    val baseColorScheme = if (darkTheme) ModernDarkColorScheme else ModernLightColorScheme
+
+    val colorScheme = baseColorScheme.copy(
         primary = themeColor,
-        background = if (pureBlack) PureBlack else MidnightBlue
+        background = if (darkTheme) {
+            if (pureBlack) PureBlack else MidnightBlue
+        } else {
+            baseColorScheme.background
+        }
     )
 
     if (!view.isInEditMode) {
@@ -60,8 +82,8 @@ fun DataMonitorTheme(
             val activity = view.context.findActivity()
             if (activity != null) {
                 val window = activity.window
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }
@@ -80,9 +102,10 @@ fun DynamicThemeProvider(
 ) {
     val themeColorInt by themeManager.themeColorFlow.collectAsStateWithLifecycle(initialValue = DefaultThemeColor.value.toInt())
     val pureBlack by themeManager.pureBlackFlow.collectAsStateWithLifecycle(initialValue = true)
+    val darkMode by themeManager.darkModeFlow.collectAsStateWithLifecycle(initialValue = true)
     
     DataMonitorTheme(
-        darkTheme = true,
+        darkTheme = darkMode,
         pureBlack = pureBlack,
         themeColor = Color(themeColorInt),
         content = content

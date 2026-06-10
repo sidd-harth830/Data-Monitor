@@ -51,7 +51,7 @@ class AiOptimizerViewModel : ViewModel() {
 
                 val request = GenerateContentRequest(
                     contents = listOf(
-                        Content(parts = listOf(Part(text = prompt)))
+                        Content(parts = listOf(Part(text = prompt)), role = "user")
                     )
                 )
 

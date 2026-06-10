@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,15 +65,31 @@ fun SettingsScreen(
 
         SettingsGroupHeader("APPEARANCE")
         
+        val darkMode by themeManager.darkModeFlow.collectAsStateWithLifecycle(initialValue = true)
+        
         SettingItemToggle(
-            title = "Pure Black Theme",
-            subtitle = "Enable pure OLED black background to save battery",
-            checked = pureBlack,
+            title = "Dark Mode",
+            subtitle = "Enable dark theme for improved visibility during night time",
+            checked = darkMode,
             onCheckedChange = { 
                 haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                scope.launch { themeManager.setPureBlack(it) }
+                scope.launch { themeManager.setDarkMode(it) }
             }
         )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        if (darkMode) {
+            SettingItemToggle(
+                title = "Pure Black Theme",
+                subtitle = "Enable pure OLED black background to save battery",
+                checked = pureBlack,
+                onCheckedChange = { 
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    scope.launch { themeManager.setPureBlack(it) }
+                }
+            )
+        }
         
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -106,22 +124,71 @@ fun SettingsScreen(
 
         SettingsGroupHeader("SYSTEM")
         
-        SettingItemToggle(
-            title = "Hide App Icon",
-            subtitle = "Remove app from launcher (Dial #*1234# to open)",
-            checked = isIconHidden(context),
-            onCheckedChange = { hide ->
-                toggleAppIcon(context, hide)
-                Toast.makeText(context, if (hide) "Icon Hidden" else "Icon Restored", Toast.LENGTH_SHORT).show()
-            }
+        var showIconDialog by remember { mutableStateOf(false) }
+
+        SettingItemClickable(
+            title = "Change App Icon",
+            subtitle = "Select a custom launcher icon",
+            onClick = { showIconDialog = true }
         )
+
+        val iconAliases = listOf(
+            Triple("Spring Green", ".MainActivityIconDefault", com.siddharth.datamonitor.R.drawable.ic_launcher_spring),
+            Triple("Neon Purple", ".MainActivityIcon1", com.siddharth.datamonitor.R.drawable.ic_launcher_custom1),
+            Triple("Ocean Deep", ".MainActivityIcon2", com.siddharth.datamonitor.R.drawable.ic_launcher_custom2),
+            Triple("Sunset Blaze", ".MainActivityIcon3", com.siddharth.datamonitor.R.drawable.ic_launcher_custom3),
+            Triple("Lavender Haze", ".MainActivityIcon4", com.siddharth.datamonitor.R.drawable.ic_launcher_custom4),
+            Triple("Midnight AMOLED", ".MainActivityIcon5", com.siddharth.datamonitor.R.drawable.ic_launcher_custom5)
+        )
+
+        if (showIconDialog) {
+            AlertDialog(
+                onDismissRequest = { showIconDialog = false },
+                title = { Text("Select App Icon", color = MaterialTheme.colorScheme.primary) },
+                text = {
+                    Column {
+                        iconAliases.forEach { (name, alias, drawableRes) ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        setAppIcon(context, alias)
+                                        Toast.makeText(context, "Icon changed to $name. It may take a moment to update.", Toast.LENGTH_LONG).show()
+                                        showIconDialog = false
+                                    }
+                                    .padding(vertical = 12.dp, horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = drawableRes),
+                                    contentDescription = name,
+                                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp))
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(
+                                    text = name,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showIconDialog = false }) {
+                        Text("CLOSE")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        }
     }
 
     if (showLimitsSheet) {
         ModalBottomSheet(
             onDismissRequest = { showLimitsSheet = false },
             sheetState = sheetState,
-            containerColor = Color(0xFF1E1E1E), // Darker than normal surface for contrast
+            containerColor = MaterialTheme.colorScheme.surfaceVariant, // Support dark and light theme
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             Column(
@@ -200,7 +267,7 @@ fun SettingItemToggle(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable { onCheckedChange(!checked) }
-            .background(Color(0x0DFFFFFF))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .padding(20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -221,7 +288,12 @@ fun SettingItemToggle(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         )
     }
 }
@@ -237,7 +309,7 @@ fun SettingItemClickable(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .background(Color(0x0DFFFFFF))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .padding(20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -258,16 +330,19 @@ fun SettingItemClickable(
     }
 }
 
-fun isIconHidden(context: Context): Boolean {
+fun setAppIcon(context: Context, activeAlias: String) {
     val pm = context.packageManager
-    val componentName = ComponentName(context, "com.siddharth.datamonitor.MainActivityLauncher")
-    val state = pm.getComponentEnabledSetting(componentName)
-    return state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-}
-
-fun toggleAppIcon(context: Context, hide: Boolean) {
-    val pm = context.packageManager
-    val componentName = ComponentName(context, "com.siddharth.datamonitor.MainActivityLauncher")
-    val state = if (hide) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-    pm.setComponentEnabledSetting(componentName, state, PackageManager.DONT_KILL_APP)
+    val aliases = listOf(
+        ".MainActivityIconDefault",
+        ".MainActivityIcon1",
+        ".MainActivityIcon2",
+        ".MainActivityIcon3",
+        ".MainActivityIcon4",
+        ".MainActivityIcon5"
+    )
+    aliases.forEach { alias ->
+        val componentName = android.content.ComponentName(context.packageName, context.packageName + alias)
+        val state = if (alias == activeAlias) android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED else android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        pm.setComponentEnabledSetting(componentName, state, android.content.pm.PackageManager.DONT_KILL_APP)
+    }
 }

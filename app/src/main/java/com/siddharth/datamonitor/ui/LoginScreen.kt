@@ -62,15 +62,11 @@ fun LoginScreen(
     val accentColor = MaterialTheme.colorScheme.primary
     val isLight = MaterialTheme.colorScheme.background.red > 0.5f && MaterialTheme.colorScheme.background.green > 0.5f
 
-    // Dynamic resource lookup for default_web_client_id 
-    val defaultWebClientId = remember {
-        val resourceId = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
-        if (resourceId != 0) context.getString(resourceId) else "236997686171-i3j44ute7mnbde7tvc4o6mnnr5njlol5.apps.googleusercontent.com"
-    }
+    var isLoginMode by remember { mutableStateOf(true) }
 
     val googleSignInClient = remember {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(defaultWebClientId)
+            .requestIdToken(context.getString(com.siddharth.datamonitor.R.string.default_web_client_id))
             .requestEmail()
             .build()
         GoogleSignIn.getClient(context, gso)
@@ -178,25 +174,25 @@ fun LoginScreen(
                         )
                     }
 
-                    // Required Name field for registration
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it; errorMessage = null },
-                        label = { Text("Full Name (Required for sign-up only)", color = MaterialTheme.colorScheme.onSurface) },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = accentColor) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedBorderColor = accentColor,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (!isLoginMode) {
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { name = it; errorMessage = null },
+                            label = { Text("Full Name", color = MaterialTheme.colorScheme.onSurface) },
+                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = "Name", tint = accentColor) },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = accentColor,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 
                     OutlinedTextField(
                         value = email,
@@ -255,86 +251,100 @@ fun LoginScreen(
                             CircularProgressIndicator(color = accentColor)
                         }
                     } else {
-                        Button(
-                            onClick = {
-                                if (email.isBlank() || password.isBlank()) {
-                                    errorMessage = "Please enter email and password"
-                                    return@Button
-                                }
-                                isLoading = true
-                                auth.signInWithEmailAndPassword(email.trim(), password.trim())
-                                    .addOnSuccessListener {
-                                        isLoading = false
-                                        val user = auth.currentUser
-                                        if (user != null) {
-                                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
-                                        }
-                                        Toast.makeText(context, "Welcome Overlord", Toast.LENGTH_SHORT).show()
-                                        onLoginSuccess()
+                        if (isLoginMode) {
+                            Button(
+                                onClick = {
+                                    if (email.isBlank() || password.isBlank()) {
+                                        errorMessage = "Please enter email and password"
+                                        return@Button
                                     }
-                                    .addOnFailureListener { e ->
-                                        isLoading = false
-                                        errorMessage = e.localizedMessage ?: "Sign In Failed"
-                                        com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailSignIn", e)
-                                    }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
-                            shape = RoundedCornerShape(4.dp), // Stark flat styling
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                        ) {
-                            Text("LOGIN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        OutlinedButton(
-                            onClick = {
-                                if (name.isBlank()) {
-                                    errorMessage = "Name is required for registration"
-                                    return@OutlinedButton
-                                }
-                                if (email.isBlank() || password.isBlank() || password.length < 6) {
-                                    errorMessage = "Password must be at least 6 characters"
-                                    return@OutlinedButton
-                                }
-                                isLoading = true
-                                auth.createUserWithEmailAndPassword(email.trim(), password.trim())
-                                    .addOnSuccessListener { authResult ->
-                                        val user = authResult.user
-                                        if (user != null) {
-                                            val profileUpdates = UserProfileChangeRequest.Builder()
-                                                .setDisplayName(name.trim())
-                                                .build()
-                                            user.updateProfile(profileUpdates)
-                                                .addOnCompleteListener { profileTask ->
-                                                    isLoading = false
-                                                    if (profileTask.isSuccessful) {
-                                                        com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
-                                                    }
-                                                    Toast.makeText(context, "Account Register Succeeded", Toast.LENGTH_SHORT).show()
-                                                    onLoginSuccess()
-                                                }
-                                        } else {
+                                    isLoading = true
+                                    auth.signInWithEmailAndPassword(email.trim(), password.trim())
+                                        .addOnSuccessListener {
                                             isLoading = false
+                                            val user = auth.currentUser
+                                            if (user != null) {
+                                                com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                            }
+                                            Toast.makeText(context, "Welcome Overlord", Toast.LENGTH_SHORT).show()
                                             onLoginSuccess()
                                         }
+                                        .addOnFailureListener { e ->
+                                            isLoading = false
+                                            errorMessage = e.localizedMessage ?: "Sign In Failed"
+                                            com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailSignIn", e)
+                                        }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = accentColor, contentColor = MaterialTheme.colorScheme.onPrimary),
+                                shape = RoundedCornerShape(4.dp), 
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text("LOGIN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    if (name.isBlank()) {
+                                        errorMessage = "Name is required for registration"
+                                        return@OutlinedButton
                                     }
-                                    .addOnFailureListener { e ->
-                                        isLoading = false
-                                        errorMessage = e.localizedMessage ?: "Account Creation Failed"
-                                        com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailCreateAccount", e)
+                                    if (email.isBlank() || password.isBlank() || password.length < 6) {
+                                        errorMessage = "Password must be at least 6 characters"
+                                        return@OutlinedButton
                                     }
-                            },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
-                            shape = RoundedCornerShape(4.dp), // Stark flat styling
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                        ) {
-                            Text("CREATE ACCOUNT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                                    isLoading = true
+                                    auth.createUserWithEmailAndPassword(email.trim(), password.trim())
+                                        .addOnSuccessListener { authResult ->
+                                            val user = authResult.user
+                                            if (user != null) {
+                                                val profileUpdates = UserProfileChangeRequest.Builder()
+                                                    .setDisplayName(name.trim())
+                                                    .build()
+                                                user.updateProfile(profileUpdates)
+                                                    .addOnCompleteListener { profileTask ->
+                                                        isLoading = false
+                                                        if (profileTask.isSuccessful) {
+                                                            com.siddharth.datamonitor.utils.UserTelemetrySync.sync(user.uid, user.email, "Email")
+                                                        }
+                                                        Toast.makeText(context, "Account Register Succeeded", Toast.LENGTH_SHORT).show()
+                                                        onLoginSuccess()
+                                                    }
+                                            } else {
+                                                isLoading = false
+                                                onLoginSuccess()
+                                            }
+                                        }
+                                        .addOnFailureListener { e ->
+                                            isLoading = false
+                                            errorMessage = e.localizedMessage ?: "Account Creation Failed"
+                                            com.siddharth.datamonitor.utils.AnalyticsHelper.logCrash("EmailCreateAccount", e)
+                                        }
+                                },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+                                shape = RoundedCornerShape(4.dp), 
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text("CREATE ACCOUNT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        androidx.compose.foundation.text.ClickableText(
+                            text = androidx.compose.ui.text.AnnotatedString(if (isLoginMode) "Don't have an account? Sign Up" else "Already have an account? Login"),
+                            onClick = { 
+                                isLoginMode = !isLoginMode 
+                                errorMessage = null
+                            },
+                            style = androidx.compose.ui.text.TextStyle(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 14.sp
+                            )
+                        )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
@@ -394,6 +404,7 @@ fun LoginScreen(
                                     if (activity != null) {
                                         isLoading = true
                                         val provider = OAuthProvider.newBuilder("github.com")
+                                        provider.scopes = listOf("user:email")
                                         auth.startActivityForSignInWithProvider(activity, provider.build())
                                             .addOnSuccessListener {
                                                 isLoading = false

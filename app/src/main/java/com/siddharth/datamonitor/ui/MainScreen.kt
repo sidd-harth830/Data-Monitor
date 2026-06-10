@@ -343,8 +343,8 @@ fun FloatingNavigationToolbar(
             .padding(horizontal = 24.dp)
             .height(64.dp)
             .clip(CircleShape)
-            .background(Color(0xFF1A1A1A)) // Solid background instead of glass effect
-            .border(1.dp, Color(0x33FFFFFF), CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant) // Solid background instead of glass effect
+            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
